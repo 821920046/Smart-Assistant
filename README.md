@@ -1,20 +1,71 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🤖 智能助理 (Smart Assistant)
 
-# Run and deploy your AI Studio app
+基于 Google Gemini 大模型驱动的极简思考空间与智能任务管理中心。本项目旨在通过 AI 技术简化信息的记录、整理与回顾过程。
 
-This contains everything you need to run your app locally.
+## ✨ 核心功能
 
-View your app in AI Studio: https://ai.studio/apps/drive/1yne9L14SImqyHNLZ6MOpDXv0e4Z0_yOt
+- **🎙️ 实时语音记事**：集成 Gemini 2.5 Flash Native Audio 模型，支持高精度的实时语音转文字。
+- **📝 智能任务提取**：输入一段文字，AI 自动识别并提取待办事项（Todo），并根据语境分配优先级（高/中/低）。
+- **✨ 智能润色 (Refine)**：一键优化草稿，修复语法错误，提升表达的专业性。
+- **📊 进度可视化**：Memo 卡片顶部配有动态进度条，实时反馈任务完成情况。
+- **🔊 语音朗读 (TTS)**：支持将记录内容转换为流畅的自然语言语音播放。
+- **📅 智能简报**：根据当前筛选的记录，一键生成结构化的每日总结与重点回顾。
+- **🔍 语义化管理**：支持标签分类、全文搜索、截止日期提醒以及卡片归档。
 
-## Run Locally
+## 🛠️ 技术栈
 
-**Prerequisites:**  Node.js
+- **Frontend**: React 19 + Tailwind CSS
+- **AI Engine**: [Google Generative AI SDK (@google/genai)](https://ai.google.dev/)
+- **Module System**: Native ES6 Modules (via esm.sh)
+- **Deployment**: Cloudflare Pages
 
+## 🚀 快速部署到 Cloudflare Pages
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+由于本项目采用了无构建步骤的 ESM 架构，部署极其简单：
+
+### 第一步：获取 API Key
+1. 前往 [Google AI Studio](https://aistudio.google.com/)。
+2. 创建并复制你的 **API Key**。
+
+### 第二步：准备代码
+1. 将本项目的所有文件上传到你的 GitHub 或 GitLab 仓库。
+
+### 第三步：在 Cloudflare 部署
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)，进入 **Workers & Pages**。
+2. 点击 **Create application** -> **Pages** -> **Connect to Git**。
+3. 选择你的项目仓库。
+4. **Build settings (构建设置)**:
+   - **Framework preset**: `None` (或者选择 `All other frameworks`)
+   - **Build command**: `(留空)` (无需构建命令)
+   - **Build output directory**: `.` (根目录)
+5. 点击 **Save and Deploy**。
+
+### 第四步：配置环境变量 (关键)
+1. 部署完成后，进入项目的 **Settings** -> **Environment variables**。
+2. 点击 **Add variable**。
+3. **Variable name**: `API_KEY`
+4. **Value**: 填入你在第一步中获取的 Google API Key。
+5. **重要**：在 "Production" 和 "Preview" 环境下都建议填入。
+6. 重新部署一次以使环境变量生效（在 **Deployments** 页面点击最新记录旁边的三个点，选择 **Retry deployment**）。
+
+## 📂 项目结构
+
+- `index.html`: 入口文件，包含 Import Map 配置。
+- `index.tsx`: 应用挂载点。
+- `App.tsx`: 核心逻辑与页面布局。
+- `components/`: 
+  - `VoiceInterface.tsx`: 语音转写组件。
+  - `MemoEditor.tsx`: 智能编辑器。
+  - `MemoCard.tsx`: 交互式记录卡片。
+- `services/`:
+  - `gemini.ts`: 封装所有 AI 服务接口。
+  - `storage.ts`: 本地持久化存储逻辑。
+- `_headers`: Cloudflare 安全与缓存配置。
+- `_redirects`: SPA 路由重定向规则。
+
+## 🔐 隐私说明
+- 记录内容默认存储在浏览器的 `localStorage` 中，除非清除浏览器缓存，否则数据不会丢失。
+- 语音数据和文本仅在调用 Gemini API 进行处理时传输。
+
+---
+*Inspired by usememos/memos. Enhanced with Gemini Intelligence.*
