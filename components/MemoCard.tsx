@@ -42,9 +42,11 @@ async function decodeAudioData(
 }
 
 const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClick }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [ttsStatus, setTtsStatus] = useState<'idle' | 'loading' | 'playing' | 'paused'>('idle');
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [lastToggledId, setLastToggledId] = useState<string | null>(null);
+  const [animatingAll, setAnimatingAll] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -84,7 +86,8 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     setPlaybackRate(nextSpeed);
   };
 
-  const handleTTSToggle = async () => {
+  const handleTTSToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (ttsStatus === 'playing') {
       pauseAudio();
       return;
@@ -185,6 +188,15 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     onUpdate({ ...memo, todos: newTodos });
   };
 
+  const markAllComplete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!memo.todos) return;
+    setAnimatingAll(true);
+    setTimeout(() => setAnimatingAll(false), 500);
+    const newTodos = memo.todos.map(t => ({ ...t, completed: true }));
+    onUpdate({ ...memo, todos: newTodos });
+  };
+
   const changePriority = (todoId: string, newPriority: Priority) => {
     if (!memo.todos) return;
     const newTodos = memo.todos.map(t => 
@@ -193,8 +205,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     onUpdate({ ...memo, todos: newTodos });
   };
 
-  const toggleFavorite = () => onUpdate({ ...memo, isFavorite: !memo.isFavorite });
-  const toggleArchive = () => onUpdate({ ...memo, isArchived: !memo.isArchived });
+  const toggleFavorite = (e: React.MouseEvent) => { e.stopPropagation(); onUpdate({ ...memo, isFavorite: !memo.isFavorite }); };
+  const toggleArchive = (e: React.MouseEvent) => { e.stopPropagation(); onUpdate({ ...memo, isArchived: !memo.isArchived }); };
+  const handleDelete = (e: React.MouseEvent) => { e.stopPropagation(); onDelete(memo.id); };
+  const toggleExpand = (e: React.MouseEvent) => { e.stopPropagation(); setIsExpanded(!isExpanded); };
 
   const priorityStyles = {
     high: { accent: 'bg-rose-500', container: 'bg-rose-50/30 border-rose-100/50', badge: 'bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200', checkbox: 'text-rose-600 focus:ring-rose-500 border-rose-300' },
@@ -203,13 +217,22 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
   };
 
   const isOverdue = memo.dueDate && memo.dueDate < Date.now() && !memo.todos?.every(t => t.completed);
+  const hasIncomplete = memo.todos?.some(t => !t.completed);
   
   const progress = memo.todos && memo.todos.length > 0 
     ? Math.round((memo.todos.filter(t => t.completed).length / memo.todos.length) * 100) 
     : 0;
 
+  const firstLine = memo.content.split('\n')[0];
+  const remainingLines = memo.content.split('\n').slice(1).join('\n');
+
   return (
-    <div className={`bg-white rounded-[24px] p-7 border group transition-all duration-300 memo-card-shadow relative overflow-hidden ${isOverdue ? 'border-rose-200 bg-rose-50/10' : 'border-slate-200'}`}>
+    <div 
+      className={`bg-white rounded-[24px] transition-all duration-300 border memo-card-shadow relative overflow-hidden group ${
+        isExpanded ? 'p-7 border-slate-200' : 'p-4 border-slate-100 hover:border-slate-200'
+      } ${isOverdue ? 'border-rose-200 bg-rose-50/10' : ''}`}
+    >
+      {/* Progress Bar (Visible Always if todos exist) */}
       {memo.todos && memo.todos.length > 0 && (
         <div className="absolute top-0 left-0 w-full h-[3px] bg-slate-50">
           <div 
@@ -220,112 +243,124 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
       )}
 
       {isOverdue && (
-        <div className="absolute top-0 right-0">
+        <div className="absolute top-0 right-0 z-10">
           <div className="bg-rose-500 text-white text-[8px] font-black px-4 py-1 uppercase tracking-widest rotate-45 translate-x-3 translate-y-1 shadow-sm">
             过期
           </div>
         </div>
       )}
 
-      <div className="flex justify-between items-start mb-6 pt-1">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-              {new Date(memo.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }).toUpperCase()}
-            </span>
-            {memo.dueDate && (
-              <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${isOverdue ? 'text-rose-600 bg-rose-50 border-rose-200 shadow-sm shadow-rose-100' : 'text-sky-600 bg-sky-50 border-sky-100'}`}>
-                <Icons.Calendar />
-                {new Date(memo.dueDate).toLocaleDateString().toUpperCase()}
-              </div>
-            )}
-            {memo.todos && memo.todos.length > 0 && (
-              <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
-                {progress}%
-              </span>
-            )}
-          </div>
+      {/* Header Area */}
+      <div className={`flex justify-between items-center ${isExpanded ? 'mb-6 pt-1' : ''}`}>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+            {new Date(memo.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }).toUpperCase()}
+          </span>
+          {memo.dueDate && isExpanded && (
+            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${isOverdue ? 'text-rose-600 bg-rose-50 border-rose-200 shadow-sm shadow-rose-100' : 'text-sky-600 bg-sky-50 border-sky-100'}`}>
+              <Icons.Calendar />
+              {new Date(memo.dueDate).toLocaleDateString().toUpperCase()}
+            </div>
+          )}
+          {memo.todos && memo.todos.length > 0 && !isExpanded && (
+             <span className="text-[9px] font-black text-sky-500 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-100">
+                {memo.todos.filter(t => t.completed).length}/{memo.todos.length}
+             </span>
+          )}
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-          {/* Enhanced TTS Controls */}
-          <div className="flex items-center bg-slate-50 rounded-xl px-1 mr-1">
-            {ttsStatus === 'loading' ? (
-              <div className="p-2 animate-spin text-sky-500">
-                <div className="w-4 h-4 border-2 border-sky-500/20 border-t-sky-500 rounded-full"></div>
-              </div>
-            ) : (
-              <div className="flex items-center">
-                {/* Unified Play/Pause Button */}
-                <button 
-                  onClick={handleTTSToggle} 
-                  className={`p-2 rounded-xl transition-all duration-300 ${ttsStatus === 'playing' ? 'text-sky-600 bg-sky-50 scale-110' : 'text-slate-400 hover:text-sky-500 hover:bg-sky-50'}`}
-                  title={ttsStatus === 'playing' ? "暂停播放" : ttsStatus === 'paused' ? "继续播放" : "语音朗读"}
-                >
-                  {ttsStatus === 'playing' ? <Icons.Pause /> : <Icons.Play />}
-                </button>
-                
-                {/* Additional Controls visible only when active */}
-                {(ttsStatus === 'playing' || ttsStatus === 'paused') && (
-                  <>
-                    <button onClick={stopAudio} className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors" title="停止播放">
-                      <Icons.Stop />
-                    </button>
-                    <button 
-                      onClick={cycleSpeed}
-                      className="px-2 py-1 text-[9px] font-black text-sky-600 bg-sky-50 rounded-lg transition-colors border-l border-white ml-1 hover:bg-sky-100"
-                      title="调整语速"
-                    >
-                      {playbackRate}x
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          <button onClick={toggleFavorite} className="p-2 rounded-xl hover:bg-slate-50 transition-colors" title="收藏">
+
+        <div className={`flex gap-1 items-center transition-opacity duration-200 ${!isExpanded ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
+          {isExpanded && (
+            <div className="flex items-center bg-slate-50 rounded-xl px-1 mr-1">
+              {ttsStatus === 'loading' ? (
+                <div className="p-2 animate-spin text-sky-500">
+                  <div className="w-4 h-4 border-2 border-sky-500/20 border-t-sky-500 rounded-full"></div>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <button onClick={handleTTSToggle} className={`p-2 rounded-xl transition-all duration-300 ${ttsStatus === 'playing' ? 'text-sky-600 bg-sky-50 scale-110' : 'text-slate-400 hover:text-sky-500 hover:bg-sky-50'}`}>
+                    {ttsStatus === 'playing' ? <Icons.Pause /> : <Icons.Play />}
+                  </button>
+                  {(ttsStatus === 'playing' || ttsStatus === 'paused') && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); stopAudio(); }} className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors">
+                        <Icons.Stop />
+                      </button>
+                      <button onClick={cycleSpeed} className="px-2 py-1 text-[9px] font-black text-sky-600 bg-sky-50 rounded-lg transition-colors border-l border-white ml-1 hover:bg-sky-100">
+                        {playbackRate}x
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <button onClick={toggleFavorite} className="p-2 rounded-xl hover:bg-slate-50 transition-colors">
             <Icons.Star filled={memo.isFavorite} />
           </button>
-          <button onClick={toggleArchive} className="p-2 rounded-xl hover:bg-slate-50 transition-colors" title="归档">
+          <button onClick={toggleArchive} className="p-2 rounded-xl hover:bg-slate-50 transition-colors">
             <Icons.Archive />
           </button>
-          <button onClick={() => onDelete(memo.id)} className="p-2 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors" title="删除">
-            <Icons.Trash />
+          {isExpanded && (
+            <button onClick={handleDelete} className="p-2 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors">
+              <Icons.Trash />
+            </button>
+          )}
+          <button onClick={toggleExpand} className="p-2 rounded-xl hover:bg-slate-100 transition-all text-slate-400 hover:text-slate-900">
+            {isExpanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
           </button>
         </div>
       </div>
 
-      <div className="text-slate-800 text-lg font-medium leading-relaxed mb-6 whitespace-pre-wrap">
-        {memo.content}
-        {ttsStatus === 'playing' && (
-          <span className="inline-flex gap-0.5 ml-2 h-3 items-end overflow-hidden">
-            <span className="w-0.5 bg-sky-400 animate-[bounce_0.8s_infinite] h-full"></span>
-            <span className="w-0.5 bg-sky-400 animate-[bounce_1.2s_infinite] h-2/3"></span>
-            <span className="w-0.5 bg-sky-400 animate-[bounce_1s_infinite] h-1/2"></span>
-          </span>
-        )}
-      </div>
+      {/* Content Area */}
+      <div 
+        className={`mt-4 cursor-pointer group/content`}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className={`text-slate-800 font-medium leading-relaxed whitespace-pre-wrap transition-all ${isExpanded ? 'text-lg mb-6' : 'text-sm line-clamp-1 opacity-80 group-hover/content:opacity-100'}`}>
+          {isExpanded ? memo.content : firstLine}
+          {ttsStatus === 'playing' && isExpanded && (
+            <span className="inline-flex gap-0.5 ml-2 h-3 items-end overflow-hidden">
+              <span className="w-0.5 bg-sky-400 animate-[bounce_0.8s_infinite] h-full"></span>
+              <span className="w-0.5 bg-sky-400 animate-[bounce_1.2s_infinite] h-2/3"></span>
+              <span className="w-0.5 bg-sky-400 animate-[bounce_1s_infinite] h-1/2"></span>
+            </span>
+          )}
+        </div>
 
-      {memo.todos && memo.todos.length > 0 && (
-        <div className="space-y-3 mb-6">
-          {memo.todos.map(todo => {
-            const style = priorityStyles[todo.priority];
-            const itemIsOverdue = isOverdue && !todo.completed;
-            const isJustToggled = lastToggledId === todo.id;
-            
-            return (
-              <div 
-                key={todo.id} 
-                className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 border ${
-                  isJustToggled ? 'animate-springy' : ''
-                } ${
-                  todo.completed 
-                    ? 'bg-slate-50/50 border-slate-100 opacity-60' 
-                    : itemIsOverdue
-                      ? 'bg-rose-50/60 border-rose-200 shadow-sm'
-                      : `${style.container} border-transparent hover:shadow-sm`
-                }`}
-              >
-                <div className="flex-shrink-0">
+        {isExpanded && memo.todos && memo.todos.length > 0 && (
+          <div className="space-y-3 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center justify-between px-1 mb-2">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">待办清单</h4>
+              {hasIncomplete && (
+                <button 
+                  onClick={markAllComplete}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-sky-100 hover:bg-sky-100 transition-all"
+                >
+                  <Icons.CheckCircle />
+                  <span>全标记完成</span>
+                </button>
+              )}
+            </div>
+            {memo.todos.map(todo => {
+              const style = priorityStyles[todo.priority];
+              const isJustToggled = lastToggledId === todo.id || (animatingAll && !todo.completed);
+              
+              return (
+                <div 
+                  key={todo.id} 
+                  className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 border ${
+                    isJustToggled ? 'animate-springy' : ''
+                  } ${
+                    todo.completed 
+                      ? 'bg-slate-50/50 border-slate-100 opacity-60' 
+                      : (isOverdue && !todo.completed)
+                        ? 'bg-rose-50/60 border-rose-200 shadow-sm'
+                        : `${style.container} border-transparent hover:shadow-sm`
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={todo.completed}
@@ -333,70 +368,58 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
                     className={`h-5 w-5 rounded-lg border-2 transition-all cursor-pointer ${
                       todo.completed 
                         ? 'text-slate-300 border-slate-200 focus:ring-slate-200' 
-                        : itemIsOverdue 
+                        : (isOverdue && !todo.completed) 
                           ? 'text-rose-600 border-rose-300 focus:ring-rose-500' 
                           : style.checkbox
                     }`}
                   />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold transition-all duration-500 ${
-                    todo.completed 
-                      ? 'text-slate-400 font-medium line-through opacity-70' 
-                      : itemIsOverdue ? 'text-rose-900' : 'text-slate-900'
-                  }`}>
-                    {todo.text}
-                  </p>
-                </div>
-                
-                {!todo.completed && (
-                  <div className="flex items-center gap-2">
-                    {itemIsOverdue && (
-                      <span className="text-[8px] font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-1.5 py-1 rounded shadow-sm border border-rose-200">
-                        过期
-                      </span>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold transition-all duration-500 ${
+                      todo.completed ? 'text-slate-400 line-through' : 'text-slate-900'
+                    }`}>
+                      {todo.text}
+                    </p>
+                  </div>
+                  {!todo.completed && (
                     <div className="relative group/priority">
-                      <button className={`text-[9px] font-black uppercase tracking-tighter px-2.5 py-1.5 rounded-lg border transition-all ${style.badge}`}>
+                      <button className={`text-[9px] font-black uppercase px-2.5 py-1.5 rounded-lg border transition-all ${style.badge}`}>
                         {todo.priority}
                       </button>
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover/priority:flex gap-1 bg-white p-1 rounded-xl shadow-xl border border-slate-100 z-10 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover/priority:flex gap-1 bg-white p-1 rounded-xl shadow-xl border border-slate-100 z-10">
                         {(['low', 'medium', 'high'] as Priority[]).map((p) => (
                           <button
                             key={p}
                             onClick={() => changePriority(todo.id, p)}
-                            className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border transition-all ${
-                              todo.priority === p 
-                                ? priorityStyles[p].badge 
-                                : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'
-                            }`}
+                            className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border ${todo.priority === p ? priorityStyles[p].badge : 'bg-white'}`}
                           >
                             {p}
                           </button>
                         ))}
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      <div className="flex flex-wrap gap-2">
-        {memo.tags.map(tag => (
-          <button 
-            key={tag} 
-            onClick={() => onTagClick?.(tag)}
-            className="text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl hover:bg-sky-50 hover:text-sky-600 hover:border-sky-100 cursor-pointer transition-all border border-slate-100"
-          >
-            #{tag.toUpperCase()}
-          </button>
-        ))}
-        <div className="ml-auto flex items-center text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">
-          #{memo.id.toUpperCase()}
-        </div>
+        {isExpanded && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50 animate-in fade-in duration-500">
+            {memo.tags.map(tag => (
+              <button 
+                key={tag} 
+                onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
+                className="text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all border border-slate-100"
+              >
+                #{tag.toUpperCase()}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">
+              #{memo.id.toUpperCase()}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
