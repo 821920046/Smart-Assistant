@@ -162,16 +162,37 @@ const App: React.FC = () => {
           </div>
 
           {summary && (
-            <div className="animate-in fade-in zoom-in-95 duration-500 glass border border-sky-100 p-6 rounded-[28px] assistant-glow bg-gradient-to-br from-white to-sky-50/30">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="flex items-center gap-2 text-sky-600">
-                   <Icons.Sparkles />
-                   <h3 className="text-xs font-black uppercase tracking-widest">智能简报</h3>
-                 </div>
-                 <button onClick={() => setSummary(null)} className="text-slate-300 hover:text-slate-500">×</button>
+            <div className="animate-in fade-in zoom-in-95 duration-500 glass border border-indigo-100 p-8 rounded-[32px] assistant-glow bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/50 relative overflow-hidden">
+              {/* Decorative Background Element */}
+              <div className="absolute -right-8 -top-8 text-indigo-500/5 rotate-12 scale-[3]">
+                <Icons.Sparkles />
               </div>
-              <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap font-medium italic">
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
+                    <Icons.Sparkles />
+                   </div>
+                   <div>
+                     <h3 className="text-sm font-black text-indigo-900 uppercase tracking-[0.2em]">AI Briefing</h3>
+                     <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">智能内容简报</p>
+                   </div>
+                 </div>
+                 <button 
+                  onClick={() => setSummary(null)} 
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/80 border border-indigo-100 text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:bg-rose-50 transition-all shadow-sm"
+                  title="关闭简报"
+                 >
+                   <span className="text-lg leading-none">&times;</span>
+                 </button>
+              </div>
+              <div className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap font-medium relative z-10 pl-2 border-l-2 border-indigo-200/50">
                 {summary}
+              </div>
+              
+              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold text-indigo-300 uppercase tracking-widest relative z-10">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div>
+                内容基于当前筛选的 {filteredMemos.length} 条记录自动生成
               </div>
             </div>
           )}
