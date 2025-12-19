@@ -20,13 +20,13 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#0f172a');
   const [brushSize, setBrushSize] = useState(3);
   const [tool, setTool] = useState<'pen' | 'eraser' | 'text'>('pen');
   const [recentColors, setRecentColors] = useState<string[]>([]);
-  
+
   const [textInput, setTextInput] = useState<{ x: number, y: number, value: string, visible: boolean } | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -37,34 +37,49 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) return;
-    
-    context.scale(dpr, dpr);
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    context.strokeStyle = color;
-    context.lineWidth = brushSize;
-    contextRef.current = context;
+    const setupCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      // Only resize if actually needed to avoid context reset on every render
+      if (Math.abs(canvas.width - rect.width * dpr) > 1 || Math.abs(canvas.height - rect.height * dpr) > 1) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) return;
+
+        context.scale(dpr, dpr);
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        context.strokeStyle = color;
+        context.lineWidth = brushSize;
+        contextRef.current = context;
+
+        // Redraw content if it was there
+        if (history.length > 0) {
+          context.putImageData(history[history.length - 1], 0, 0);
+        }
+      }
+    };
+
+    // Initial setup with a tiny delay to ensure layout is final
+    const timer = setTimeout(setupCanvas, 100);
 
     if (initialData) {
       const img = new Image();
       img.onload = () => {
-        context.drawImage(img, 0, 0, rect.width, rect.height);
-        saveToHistory();
+        const context = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        if (context) {
+          context.drawImage(img, 0, 0, rect.width, rect.height);
+          saveToHistory();
+        }
       };
       img.src = initialData;
     } else {
       saveToHistory();
     }
-
-    const saved = localStorage.getItem('whiteboard_recent_colors');
-    if (saved) setRecentColors(JSON.parse(saved));
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -75,8 +90,15 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         redo();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', setupCanvas);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', setupCanvas);
+    };
   }, []);
 
   useEffect(() => {
@@ -88,11 +110,15 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
   const saveToHistory = () => {
     const canvas = canvasRef.current;
-    const context = contextRef.current;
+    const context = contextRef.current || canvas?.getContext('2d');
     if (!canvas || !context) return;
-    const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
-    setHistory(prev => [...prev, snapshot].slice(-20));
-    setRedoStack([]);
+    try {
+      const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+      setHistory(prev => [...prev, snapshot].slice(-20));
+      setRedoStack([]);
+    } catch (e) {
+      console.warn("Failed to save history", e);
+    }
   };
 
   const undo = () => {
@@ -103,7 +129,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
     const current = history[history.length - 1];
     const previous = history[history.length - 2];
-    
+
     setRedoStack(prev => [...prev, current]);
     setHistory(prev => prev.slice(0, -1));
     context.putImageData(previous, 0, 0);
@@ -122,7 +148,8 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   };
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+    // Prevent default to stop scrolling/pull-to-refresh on mobile
+    if (e.cancelable) e.preventDefault();
     const { offsetX, offsetY } = getCoordinates(e);
 
     if (tool === 'text') {
@@ -138,7 +165,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing || tool === 'text') return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const { offsetX, offsetY } = getCoordinates(e);
     contextRef.current?.lineTo(offsetX, offsetY);
     contextRef.current?.stroke();
@@ -146,7 +173,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
   const stopDrawing = () => {
     if (isDrawing) {
-      contextRef.current?.closePath();
       setIsDrawing(false);
       saveToHistory();
     }
@@ -156,17 +182,27 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const canvas = canvasRef.current;
     if (!canvas) return { offsetX: 0, offsetY: 0 };
     const rect = canvas.getBoundingClientRect();
+
+    let clientX, clientY;
     if ('touches' in e) {
-      return {
-        offsetX: e.touches[0].clientX - rect.left,
-        offsetY: e.touches[0].clientY - rect.top,
-      };
+      if (e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if ('changedTouches' in e && (e as any).changedTouches.length > 0) {
+        clientX = (e as any).changedTouches[0].clientX;
+        clientY = (e as any).changedTouches[0].clientY;
+      } else {
+        return { offsetX: 0, offsetY: 0 };
+      }
     } else {
-      return {
-        offsetX: (e as React.MouseEvent).nativeEvent.offsetX,
-        offsetY: (e as React.MouseEvent).nativeEvent.offsetY,
-      };
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
     }
+
+    return {
+      offsetX: clientX - rect.left,
+      offsetY: clientY - rect.top,
+    };
   };
 
   const finalizeText = () => {
@@ -179,8 +215,8 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const fontSize = Math.max(12, brushSize * 4);
     ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
     ctx.fillStyle = color;
-    ctx.fillText(textInput.value, textInput.x, textInput.y + (fontSize/4));
-    
+    ctx.fillText(textInput.value, textInput.x, textInput.y + (fontSize / 4));
+
     setTextInput(null);
     saveToHistory();
   };
@@ -224,36 +260,36 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 leading-none mb-1">Creative Canvas</span>
             <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">Pixel Perfect Design</span>
           </div>
-          
+
           <div className="flex items-center gap-1 ml-4 bg-slate-50 p-1 rounded-2xl">
-            <button 
-              onClick={undo} 
+            <button
+              onClick={undo}
               disabled={history.length <= 1}
               className={`p-2.5 rounded-xl transition-all ${history.length <= 1 ? 'text-slate-200' : 'text-slate-600 hover:bg-white active:scale-90 shadow-sm'}`}
               title="撤销 (Ctrl+Z)"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
             </button>
-            <button 
-              onClick={redo} 
+            <button
+              onClick={redo}
               disabled={redoStack.length === 0}
               className={`p-2.5 rounded-xl transition-all ${redoStack.length === 0 ? 'text-slate-200' : 'text-slate-600 hover:bg-white active:scale-90 shadow-sm'}`}
               title="重做 (Ctrl+Y)"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6" /><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" /></svg>
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button 
-            onClick={handleClear} 
+          <button
+            onClick={handleClear}
             className="px-5 py-2.5 rounded-xl text-rose-500 hover:bg-rose-50 text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
           >
             清空画布
           </button>
-          <button 
-            onClick={handleSave} 
+          <button
+            onClick={handleSave}
             className="px-10 py-3.5 bg-slate-900 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
           >
             完成并保存
@@ -296,37 +332,37 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
             }}
           />
         )}
-        
+
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 w-full px-6 max-w-5xl">
           <div className="glass px-8 py-6 rounded-[48px] shadow-2xl border border-white/80 w-full flex flex-col gap-8">
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
               {/* Tool Selector */}
               <div className="flex items-center bg-slate-100/50 p-1.5 rounded-[28px] relative overflow-hidden">
-                <div 
+                <div
                   className="absolute bg-slate-900 rounded-[22px] transition-all duration-300 ease-out z-0"
-                  style={{ 
-                    width: 'calc(33.33% - 4px)', 
+                  style={{
+                    width: 'calc(33.33% - 4px)',
                     height: 'calc(100% - 12px)',
                     left: tool === 'pen' ? '6px' : tool === 'text' ? '33.33%' : 'calc(66.66% - 6px)',
                     top: '6px'
-                  }} 
+                  }}
                 />
-                <button 
+                <button
                   onClick={() => setTool('pen')}
                   className={`flex items-center gap-2.5 px-6 py-3.5 rounded-[22px] transition-all relative z-10 ${tool === 'pen' ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Icons.Pen />
                   <span className="text-[11px] font-black uppercase tracking-widest">笔刷</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setTool('text')}
                   className={`flex items-center gap-2.5 px-6 py-3.5 rounded-[22px] transition-all relative z-10 ${tool === 'text' ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Icons.Type />
                   <span className="text-[11px] font-black uppercase tracking-widest">文字</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setTool('eraser')}
                   className={`flex items-center gap-2.5 px-6 py-3.5 rounded-[22px] transition-all relative z-10 ${tool === 'eraser' ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`}
                 >
@@ -342,12 +378,12 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                   <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{brushSize}px</span>
                 </div>
                 <div className="relative flex items-center h-4">
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="50" 
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
                     step="1"
-                    value={brushSize} 
+                    value={brushSize}
                     onChange={(e) => setBrushSize(parseInt(e.target.value))}
                     className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-slate-900"
                   />
@@ -365,9 +401,9 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                 >
                   <div className="w-6 h-6 rounded-lg shadow-sm" style={{ background: 'conic-gradient(from 0deg, #ff4d4d, #f9cb28, #32cd32, #00ced1, #1e90ff, #ff00ff, #ff4d4d)' }} />
                 </button>
-                <input 
+                <input
                   ref={colorInputRef}
-                  type="color" 
+                  type="color"
                   value={color}
                   onChange={(e) => selectColor(e.target.value)}
                   className="hidden"
