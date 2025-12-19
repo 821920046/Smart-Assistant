@@ -55,7 +55,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text: memo.content }] }],
-        config: { responseModalalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
+        config: { 
+          responseModalities: [Modality.AUDIO], 
+          speechConfig: { 
+            voiceConfig: { 
+              prebuiltVoiceConfig: { voiceName: 'Kore' } 
+            } 
+          } 
+        },
       });
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
@@ -63,8 +70,13 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
         const decoded = await decodeAudioData(decode(base64Audio), audioContextRef.current!, 24000, 1);
         setAudioBuffer(decoded);
         startPlayback(decoded, 0);
+      } else {
+        setTtsStatus('idle');
       }
-    } catch (error) { setTtsStatus('idle'); }
+    } catch (error) { 
+      console.error("TTS generation failed:", error);
+      setTtsStatus('idle'); 
+    }
   };
 
   const startPlayback = (buffer: AudioBuffer, offset: number) => {

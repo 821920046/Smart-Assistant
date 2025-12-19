@@ -86,6 +86,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
                 session.sendRealtimeInput({
                   media: { data: base64, mimeType: 'audio/pcm;rate=16000' }
                 });
+              }).catch(err => {
+                console.error("Realtime input failed", err);
               });
             };
 
@@ -93,7 +95,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
             scriptProcessor.connect(inputAudioContext.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            // 关键修复：使用 inputAudioTranscription 来获取用户的语音转写
             if (message.serverContent?.inputTranscription) {
               const text = message.serverContent.inputTranscription.text;
               transcriptionBufferRef.current += text;
@@ -102,7 +103,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
               );
             }
             
-            // 如果对话结束或模型有响应，也可以捕获
             if (message.serverContent?.turnComplete) {
               console.log("Turn complete");
             }
@@ -117,10 +117,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
         },
         config: {
           responseModalities: [Modality.AUDIO],
-          // 关键配置：开启用户输入的实时转写
           inputAudioTranscription: {},
           systemInstruction: '你是一个备忘录听写助手。你的任务是准确地将用户的语音转换为文字，不要添加任何额外的评论或回复。',
         },
+      });
+
+      sessionPromise.catch(err => {
+        console.error("Session connection failed", err);
+        stopListening();
       });
 
     } catch (err) {
@@ -146,7 +150,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
       
       {isListening && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-end justify-center pb-24 px-4 z-[110] pointer-events-none">
-          <div className="w-full max-w-lg bg-white p-6 rounded-[32px] shadow-2xl border border-sky-100 pointer-events-auto animate-slide-up">
+          <div className="w-full max-w-lg bg-white p-6 rounded-[32px] shadow-2xl border border-sky-100 pointer-events-auto animate-card">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3 text-[10px] font-black text-sky-500 uppercase tracking-widest">
                 <span className="flex h-3 w-3 relative">
