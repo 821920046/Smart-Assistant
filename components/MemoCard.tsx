@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Memo, Priority } from '../types.js';
 import { Icons } from '../constants.js';
+import { generateSpeech } from '../services/gemini.js';
 
 interface MemoCardProps {
   memo: Memo;
@@ -26,17 +27,52 @@ const PriorityTag = ({ priority }: { priority: Priority }) => {
 
 const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   const handleToggleTodo = (todoId: string) => {
     const updatedTodos = memo.todos?.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
     const anyDone = updatedTodos?.some(t => t.completed);
     
     if (anyDone) {
-      // Immediate auto-deletion as per user request
       setIsDeleting(true);
       setTimeout(() => onDelete(memo.id), 400);
     } else {
       onUpdate({ ...memo, todos: updatedTodos });
+    }
+  };
+
+  const handlePlayTTS = async () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    try {
+      const base64Audio = await generateSpeech(memo.content);
+      if (!base64Audio) return;
+
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      const binaryString = atob(base64Audio);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const dataInt16 = new Int16Array(bytes.buffer);
+      const audioBuffer = audioContext.createBuffer(1, dataInt16.length, 24000);
+      const channelData = audioBuffer.getChannelData(0);
+      for (let i = 0; i < dataInt16.length; i++) {
+        channelData[i] = dataInt16[i] / 32768.0;
+      }
+
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      source.onended = () => {
+        setIsPlaying(false);
+        audioContext.close();
+      };
+      source.start();
+    } catch (e) {
+      console.error(e);
+      setIsPlaying(false);
     }
   };
 
@@ -62,7 +98,19 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
              </div>
            )}
         </div>
-        <button onClick={() => onDelete(memo.id)} className="p-3 text-slate-300 hover:text-rose-500 transition-colors active:scale-90"><Icons.Trash /></button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handlePlayTTS} 
+            disabled={isPlaying}
+            className={`p-3 rounded-full transition-all ${isPlaying ? 'bg-indigo-500 text-white animate-pulse' : 'text-slate-300 hover:text-indigo-500 hover:bg-indigo-50'}`}
+            title="播放朗读"
+          >
+            <Icons.Volume />
+          </button>
+          <button onClick={() => onDelete(memo.id)} className="p-3 text-slate-300 hover:text-rose-500 transition-colors active:scale-90" title="删除">
+            <Icons.Trash />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-6">

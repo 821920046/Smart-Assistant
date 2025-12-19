@@ -2,10 +2,11 @@
   "name": "Smart Assistant",
   "short_name": "Smart Assistant",
   "description": "A minimalist intelligent thinking center built on Gemini 2.5/3 series models, integrating voice transcription and AI auto-summarization.",
-  "theme_color": "#0ea5e9",
+  "theme_color": "#6366f1",
   "background_color": "#fcfcfd",
   "display": "standalone",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }

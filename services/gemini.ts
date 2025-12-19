@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { TodoItem, Priority } from "../types.js";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -60,34 +60,45 @@ export async function suggestTags(content: string): Promise<string[]> {
   }
 }
 
-export async function refineText(content: string): Promise<string> {
-  try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Improve this note for clarity and professional formatting. Keep original meaning.
-      Note: "${content}"`,
-    });
-    return response.text || content;
-  } catch (e) {
-    return content;
-  }
-}
-
 export async function askAssistant(query: string, contextMemos: string[]): Promise<string> {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes.
+      contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes. If the notes don't have the answer, use Google Search to provide an accurate response.
       
       USER NOTES:
       ${contextMemos.join('\n---\n')}
       
       QUESTION: "${query}"`,
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
     });
     return response.text || "我无法理解这个问题。";
   } catch (e) {
     return "对话发生错误，请重试。";
+  }
+}
+
+export async function generateSpeech(text: string): Promise<string | undefined> {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text: `Please read this clearly: ${text}` }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  } catch (e) {
+    console.error("TTS failed", e);
+    return undefined;
   }
 }

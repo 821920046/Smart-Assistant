@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Memo } from './types.js';
 import { storage } from './services/storage.js';
 import { syncService } from './services/sync.js';
@@ -17,6 +17,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  
+  const notifiedIds = useRef<Set<string>>(new Set());
 
   const performSync = useCallback(async (currentMemos: Memo[]) => {
     const config = syncService.getConfig();
@@ -34,6 +36,40 @@ const App: React.FC = () => {
       setIsSyncing(false);
     }
   }, []);
+
+  // Notification Scheduler
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      memos.forEach(memo => {
+        if (memo.reminderAt && now >= memo.reminderAt && !notifiedIds.current.has(memo.id)) {
+          notifiedIds.current.add(memo.id);
+          
+          if (Notification.permission === "granted") {
+            new Notification("任务提醒", {
+              body: memo.content || "你有一个待办事项到期了",
+              icon: '/favicon.ico'
+            });
+          } else {
+            alert(`提醒: ${memo.content}`);
+          }
+
+          // Handle repeat logic
+          if (memo.reminderRepeat && memo.reminderRepeat !== 'none') {
+            const nextTime = memo.reminderAt + (memo.reminderRepeat === 'daily' ? 86400000 : 86400000 * 7);
+            updateMemo({ ...memo, reminderAt: nextTime });
+            notifiedIds.current.delete(memo.id); // Allow re-notification for the new time
+          }
+        }
+      });
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [memos]);
 
   useEffect(() => {
     const initApp = async () => {
@@ -98,8 +134,6 @@ const App: React.FC = () => {
       result = result.filter(m => m.content.toLowerCase().includes(q));
     }
 
-    // Default Sorting Order: Important (3) > Normal (2) > Secondary (1)
-    // Sub-sorting: Newest Time First
     const priorityWeight = { important: 3, normal: 2, secondary: 1 };
     return [...result].sort((a, b) => {
       const pA = priorityWeight[a.priority || 'normal'];
