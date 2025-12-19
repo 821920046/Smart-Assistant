@@ -1,11 +1,11 @@
 
 const CACHE_NAME = 'smart-assistant-v3.0';
 const ASSETS = [
-  './',
-  './index.html',
-  './metadata.json',
-  './icon-192.png',
-  './icon-512.png',
+  '/',
+  '/index.html',
+  '/metadata.json',
+  '/icon-192.png',
+  '/icon-512.png',
   'https://cdn.tailwindcss.com'
 ];
 
