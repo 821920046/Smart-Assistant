@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { Icons } from '../constants';
 
@@ -8,14 +9,10 @@ interface WhiteboardProps {
 }
 
 const COLOR_PALETTE = [
-  // Grayscale
   '#0f172a', '#475569', '#94a3b8', '#ffffff',
-  // Warm
   '#ef4444', '#f97316', '#f59e0b', '#eab308',
-  // Cool
   '#22c55e', '#10b981', '#14b8a6', '#06b6d4',
   '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7',
-  // Vibrant
   '#d946ef', '#ec4899', '#f43f5e', '#78350f'
 ];
 
@@ -29,6 +26,10 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
 
+  // Undo/Redo States
+  const [history, setHistory] = useState<ImageData[]>([]);
+  const [redoStack, setRedoStack] = useState<ImageData[]>([]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -38,7 +39,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) return;
     
     context.scale(dpr, dpr);
@@ -52,13 +53,28 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
       const img = new Image();
       img.onload = () => {
         context.drawImage(img, 0, 0, rect.width, rect.height);
+        saveToHistory(); // Initial state
       };
       img.src = initialData;
+    } else {
+      saveToHistory(); // Initial blank state
     }
 
-    // Load recent colors from local storage
     const saved = localStorage.getItem('whiteboard_recent_colors');
     if (saved) setRecentColors(JSON.parse(saved));
+
+    // Keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -67,6 +83,41 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
       contextRef.current.lineWidth = tool === 'eraser' ? brushSize * 4 : brushSize;
     }
   }, [color, brushSize, tool]);
+
+  const saveToHistory = () => {
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    if (!canvas || !context) return;
+    const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+    setHistory(prev => [...prev, snapshot].slice(-20)); // Keep last 20 steps
+    setRedoStack([]); // Clear redo on new action
+  };
+
+  const undo = () => {
+    if (history.length <= 1) return;
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    if (!canvas || !context) return;
+
+    const current = history[history.length - 1];
+    const previous = history[history.length - 2];
+    
+    setRedoStack(prev => [...prev, current]);
+    setHistory(prev => prev.slice(0, -1));
+    context.putImageData(previous, 0, 0);
+  };
+
+  const redo = () => {
+    if (redoStack.length === 0) return;
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    if (!canvas || !context) return;
+
+    const next = redoStack[redoStack.length - 1];
+    setHistory(prev => [...prev, next]);
+    setRedoStack(prev => prev.slice(0, -1));
+    context.putImageData(next, 0, 0);
+  };
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -85,15 +136,17 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   };
 
   const stopDrawing = () => {
-    contextRef.current?.closePath();
-    setIsDrawing(false);
+    if (isDrawing) {
+      contextRef.current?.closePath();
+      setIsDrawing(false);
+      saveToHistory();
+    }
   };
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { offsetX: 0, offsetY: 0 };
     const rect = canvas.getBoundingClientRect();
-
     if ('touches' in e) {
       return {
         offsetX: e.touches[0].clientX - rect.left,
@@ -112,6 +165,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const context = contextRef.current;
     if (!canvas || !context) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
+    saveToHistory();
   };
 
   const handleSave = () => {
@@ -124,8 +178,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const selectColor = (newColor: string) => {
     setColor(newColor);
     setTool('pen');
-    
-    // Update recent colors if it's not in the main palette
     if (!COLOR_PALETTE.includes(newColor)) {
       setRecentColors(prev => {
         const filtered = prev.filter(c => c !== newColor);
@@ -138,12 +190,30 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
   return (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col animate-card overflow-hidden">
-      {/* Header */}
       <header className="h-20 border-b border-slate-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-6">
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-900 transition-colors font-bold text-sm">取消</button>
           <div className="h-4 w-[1px] bg-slate-100" />
           <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-900">绘图板</span>
+          
+          <div className="flex items-center gap-2 ml-4">
+            <button 
+              onClick={undo} 
+              disabled={history.length <= 1}
+              className={`p-2.5 rounded-xl transition-all ${history.length <= 1 ? 'text-slate-200' : 'text-slate-600 hover:bg-slate-50 active:scale-90'}`}
+              title="撤销 (Ctrl+Z)"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </button>
+            <button 
+              onClick={redo} 
+              disabled={redoStack.length === 0}
+              className={`p-2.5 rounded-xl transition-all ${redoStack.length === 0 ? 'text-slate-200' : 'text-slate-600 hover:bg-slate-50 active:scale-90'}`}
+              title="重做 (Ctrl+Y)"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -162,7 +232,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         </div>
       </header>
 
-      {/* Drawing Area */}
       <div className="flex-1 relative bg-slate-50/30 overflow-hidden cursor-crosshair" style={{
         backgroundImage: 'radial-gradient(#e2e8f0 0.8px, transparent 0.8px)',
         backgroundSize: '24px 24px'
@@ -179,11 +248,8 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
           className="w-full h-full block"
         />
         
-        {/* Floating Tool Palette */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 w-full px-4 max-w-4xl">
           <div className="glass px-6 py-5 rounded-[48px] shadow-2xl border border-white/60 w-full flex flex-col gap-6">
-            
-            {/* Top Row: Tools & Brush Sizes */}
             <div className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-2">
                 <button 
@@ -220,24 +286,11 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                     className="w-full h-1 bg-slate-100 rounded-full appearance-none cursor-pointer accent-indigo-500"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  {[4, 12, 24].map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setBrushSize(s)}
-                      className={`flex items-center justify-center transition-all ${brushSize === s ? 'text-indigo-600' : 'text-slate-200 hover:text-slate-400'}`}
-                    >
-                      <div className="rounded-full bg-current" style={{ width: Math.max(6, (s/2) + 4), height: Math.max(6, (s/2) + 4) }} />
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
 
-            {/* Bottom Row: Color Selection */}
             <div className={`flex flex-col gap-4 ${tool === 'eraser' ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
               <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
-                {/* Custom Picker Trigger */}
                 <button
                   onClick={() => colorInputRef.current?.click()}
                   className="w-10 h-10 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center transition-all hover:border-indigo-400 hover:bg-indigo-50 shrink-0"
@@ -253,7 +306,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                   className="hidden"
                 />
 
-                {/* Recent Colors */}
                 {recentColors.length > 0 && (
                   <>
                     <div className="w-[1px] h-8 bg-slate-100 shrink-0 mx-1" />
@@ -270,7 +322,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
                 <div className="w-[1px] h-8 bg-slate-100 shrink-0 mx-1" />
 
-                {/* Main Palette */}
                 {COLOR_PALETTE.map(c => (
                   <button
                     key={c}
@@ -281,7 +332,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </div>

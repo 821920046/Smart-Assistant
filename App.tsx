@@ -29,6 +29,11 @@ const App: React.FC = () => {
           m.id === dueMemo.id ? { ...m, reminderAt: undefined } : m
         );
         saveMemos(updatedMemos);
+        
+        // Browser notification if allowed
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("记录提醒", { body: dueMemo.content.substring(0, 50) });
+        }
       }
     }, 15000);
     return () => clearInterval(interval);
@@ -62,7 +67,41 @@ const App: React.FC = () => {
   };
 
   const deleteMemo = (id: string) => {
-    saveMemos(memos.filter(m => m.id !== id));
+    if (confirm('确定要删除这条记录吗？')) {
+      saveMemos(memos.filter(m => m.id !== id));
+    }
+  };
+
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(memos, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `memo-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImportData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedMemos = JSON.parse(event.target?.result as string) as Memo[];
+        if (Array.isArray(importedMemos)) {
+          if (confirm(`准备恢复 ${importedMemos.length} 条记录。这将会合并到当前数据中，确定吗？`)) {
+            // Merge logic: avoid duplicate IDs
+            const currentIds = new Set(memos.map(m => m.id));
+            const uniqueImports = importedMemos.filter(m => !currentIds.has(m.id));
+            saveMemos([...memos, ...uniqueImports].sort((a, b) => b.createdAt - a.createdAt));
+            alert('数据恢复成功！');
+          }
+        }
+      } catch (e) {
+        alert('解析备份文件失败，请确保它是有效的 JSON 格式。');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const filteredMemos = useMemo(() => {
@@ -120,11 +159,12 @@ const App: React.FC = () => {
       <Sidebar 
         activeFilter={filter} 
         setActiveFilter={(f) => { setFilter(f); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
-        tags={allTags} 
+        tags={allTags}
+        onExport={handleExportData}
+        onImport={handleImportData}
       />
       
       <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 md:px-16 pt-12 md:pt-32 pb-40">
-        {/* Header Section */}
         <header className="flex flex-col gap-12 mb-16">
           <div className="flex items-end justify-between">
             <div className="space-y-3">
@@ -163,7 +203,6 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* AI Insight Card */}
         {summary && (
           <section className="mb-20 animate-card">
             <div className="ai-summary-card p-10 rounded-[48px] relative overflow-hidden">
@@ -189,12 +228,10 @@ const App: React.FC = () => {
           </section>
         )}
 
-        {/* Desktop Editor Area */}
         <section className="hidden md:block mb-24 animate-card">
           <MemoEditor onSave={addMemo} />
         </section>
 
-        {/* Memos Feed */}
         <div className="grid grid-cols-1 gap-10">
           {filteredMemos.length > 0 ? (
             filteredMemos.map((memo, idx) => (
@@ -221,7 +258,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile Floating Tab Bar */}
       <nav className="md:hidden fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] glass rounded-[36px] p-2.5 flex items-center justify-between z-50 shadow-2xl border border-white/50">
         <div className="flex flex-1 justify-around">
           {[
@@ -265,7 +301,6 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Editor Overlay */}
       {isEditorOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:hidden">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditorOpen(false)} />

@@ -1,20 +1,37 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Icons } from '../constants';
 
 interface SidebarProps {
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
   tags: string[];
+  onExport: () => void;
+  onImport: (file: File) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags, onExport, onImport }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const menuItems = [
     { id: 'all', icon: Icons.Plus, label: '主时间轴' },
     { id: 'todo', icon: Icons.CheckCircle, label: '待办任务' },
     { id: 'favorites', icon: Icons.Star, label: '收藏夹' },
     { id: 'archived', icon: Icons.Archive, label: '已归档' },
   ];
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImport(file);
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   return (
     <aside className="hidden md:flex flex-col w-72 lg:w-80 p-8 sticky top-0 h-screen overflow-y-auto bg-white border-r border-slate-100 no-scrollbar z-10">
@@ -53,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
             <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.25em]">主题标签</p>
             <div className="w-8 h-[1px] bg-slate-100" />
           </div>
-          <div className="px-1 space-y-1 max-h-[40vh] overflow-y-auto no-scrollbar">
+          <div className="px-1 space-y-1 max-h-[30vh] overflow-y-auto no-scrollbar">
             {tags.length > 0 ? tags.map(tag => (
               <button
                 key={tag}
@@ -77,15 +94,37 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
       </div>
 
       <div className="mt-auto pt-16">
-        <div className="p-7 bg-slate-50 rounded-[32px] border border-slate-100/50 space-y-4">
+        <div className="p-7 bg-slate-50 rounded-[32px] border border-slate-100/50 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl assistant-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-              <Icons.Sparkles />
+            <div className="w-10 h-10 rounded-xl assistant-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Pro Workspace</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Unlimited Syncing</p>
+              <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">数据管理</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">备份与恢复</p>
             </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={onExport}
+              className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
+            >
+              导出备份
+            </button>
+            <button 
+              onClick={handleImportClick}
+              className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
+            >
+              恢复数据
+            </button>
+            <input 
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
         </div>
         <div className="mt-8 flex items-center gap-4 px-3 opacity-20">
