@@ -1,9 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Smart Assistant | Second Brain</title>
     <meta name="theme-color" content="#6366f1">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -13,7 +14,7 @@
          * Robust process shim - must be the very first thing to run.
          * Ensures @google/genai and other ESM modules don't crash on 'process' access.
          */
-        (function() {
+        (function () {
             const shim = { env: { API_KEY: '' } };
             if (typeof window.process === 'undefined') {
                 window.process = shim;
@@ -30,11 +31,11 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 // Only attempt registration in secure contexts (HTTPS or localhost)
-                const isSecureContext = window.isSecureContext || 
-                                       window.location.protocol === 'https:' || 
-                                       window.location.hostname === 'localhost' || 
-                                       window.location.hostname === '127.0.0.1';
-                                       
+                const isSecureContext = window.isSecureContext ||
+                    window.location.protocol === 'https:' ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+
                 if (isSecureContext) {
                     navigator.serviceWorker.register('./sw.js')
                         .then(reg => console.log('SW registered on scope:', reg.scope))
@@ -48,17 +49,20 @@
         }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --bg-main: #fcfcfd;
-            --sidebar-bg: #ffffff;
+            --bg-main: #f8fafc;
+            --sidebar-bg: rgba(255, 255, 255, 0.7);
             --accent-primary: #6366f1;
-            --accent-secondary: #a855f7;
+            --accent-secondary: #8b5cf6;
             --text-main: #0f172a;
-            --card-border: rgba(241, 245, 249, 0.8);
+            --text-secondary: #64748b;
+            --card-border: rgba(226, 232, 240, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.75);
         }
-        
+
         * {
             -webkit-tap-highlight-color: transparent;
             outline: none !important;
@@ -66,56 +70,101 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-family: 'Outfit', -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
             background-color: var(--bg-main);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.04) 0px, transparent 50%);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 40%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 35%),
+                radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.03) 0px, transparent 50%);
+            background-attachment: fixed;
             color: var(--text-main);
             overflow-x: hidden;
             overscroll-behavior-y: none;
             padding-bottom: env(safe-area-inset-bottom);
+            min-height: 100vh;
+            letter-spacing: -0.01em;
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+        h1,
+        h2,
+        h3 {
+            letter-spacing: -0.03em;
+            font-weight: 800;
+        }
+
+        .premium-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
         }
 
         .memo-card {
             background: #ffffff;
             border: 1px solid var(--card-border);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.01);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 20px;
         }
 
         @media (min-width: 768px) {
             .memo-card:hover {
-                border-color: rgba(99, 102, 241, 0.15);
-                box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.08);
-                transform: translateY(-4px);
+                border-color: rgba(99, 102, 241, 0.2);
+                box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.1);
+                transform: translateY(-6px) scale(1.01);
             }
         }
 
+        .sidebar-item {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(99, 102, 241, 0.05);
+            color: var(--accent-primary);
+        }
+
+        .active-sidebar-item {
+            background: #111827;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
         .assistant-gradient {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        @keyframes fadeInScale {
-            from { transform: translateY(10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        .animate-card {
-            animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
         }
 
         .active-scale:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
     </style>
     <script type="importmap">
@@ -132,8 +181,10 @@
 }
 </script>
 </head>
+
 <body>
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
 </body>
+
 </html>

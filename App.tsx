@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  
+
   const notifiedIds = useRef<Set<string>>(new Set());
 
   const performSync = useCallback(async (currentMemos: Memo[]) => {
@@ -29,7 +29,7 @@ const App: React.FC = () => {
       if (config.provider === 'supabase') merged = await syncService.syncWithSupabase(config, currentMemos);
       else if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
       else if (config.provider === 'gist') merged = await syncService.syncWithGist(config, currentMemos);
-      
+
       await storage.saveMemos(merged);
       setMemos(merged.filter(m => !m.isDeleted));
       return merged;
@@ -52,7 +52,7 @@ const App: React.FC = () => {
       memos.forEach(memo => {
         if (memo.reminderAt && now >= memo.reminderAt && !notifiedIds.current.has(memo.id)) {
           notifiedIds.current.add(memo.id);
-          
+
           if (Notification.permission === "granted") {
             try {
               new Notification("任务提醒", {
@@ -162,29 +162,29 @@ const App: React.FC = () => {
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-t-indigo-500 border-4 border-slate-100 rounded-full animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#fcfcfd]">
-      <Sidebar 
-        activeFilter={filter} setActiveFilter={setFilter} 
-        tags={[]} onExport={() => {}} onImport={() => {}}
+    <div className="min-h-screen flex flex-col md:flex-row bg-transparent">
+      <Sidebar
+        activeFilter={filter} setActiveFilter={setFilter}
+        tags={[]} onExport={() => { }} onImport={() => { }}
         onOpenSyncSettings={() => setIsSyncSettingsOpen(true)} isSyncing={isSyncing}
         memos={memos}
       />
-      
-      <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto px-4 md:px-12 pt-16 pb-32">
-        <header className="mb-16">
-          <div className="flex items-center gap-3 text-indigo-500 font-black text-[10px] uppercase tracking-[0.3em] mb-4">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.5)]" />
+
+      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 md:px-16 pt-20 pb-40">
+        <header className="mb-20">
+          <div className="flex items-center gap-3 text-indigo-500 font-black text-[11px] uppercase tracking-[0.4em] mb-6">
+            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-pulse" />
             Active Tasks Only
           </div>
-          <h1 className="text-4xl md:text-7xl font-black tracking-tighter mb-10 leading-none">
+          <h1 className="text-5xl md:text-8xl font-black tracking-[-0.04em] mb-12 leading-[0.9] text-slate-900">
             {filter === 'all' ? 'Task Center' : filter === 'important' ? 'Priority High' : 'Archive'}
           </h1>
           <div className="relative group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors"><Icons.Search /></div>
+            <div className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-all duration-300 scale-110"><Icons.Search /></div>
             <input
               type="text" placeholder="搜索待办任务..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-20 bg-white border border-slate-100 rounded-[35px] pl-16 pr-8 text-xl outline-none focus:border-indigo-200 focus:shadow-2xl focus:shadow-indigo-50 transition-all shadow-sm font-bold"
+              className="w-full h-24 bg-white/70 backdrop-blur-xl border border-white/50 rounded-[40px] pl-20 pr-10 text-2xl outline-none focus:border-indigo-200/50 focus:bg-white focus:shadow-[0_20px_60px_-15px_rgba(99,102,241,0.1)] transition-all duration-500 shadow-sm font-semibold text-slate-800 placeholder:text-slate-300"
             />
           </div>
         </header>

@@ -15,8 +15,8 @@ interface SidebarProps {
   memos: Memo[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos 
+const Sidebar: React.FC<SidebarProps> = ({
+  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos
 }) => {
   const menuItems = [
     { id: 'all', icon: Icons.List, label: 'Task Center' },
@@ -26,43 +26,42 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-72 lg:w-80 p-8 sticky top-0 h-screen overflow-y-auto bg-white border-r border-slate-100 no-scrollbar z-10">
-      <div className="flex items-center gap-4 mb-12 px-2">
+    <aside className="hidden md:flex flex-col w-80 p-10 sticky top-0 h-screen overflow-y-auto premium-glass border-r border-white/20 no-scrollbar z-10">
+      <div className="flex items-center gap-5 mb-16 px-2 animate-float">
         <Icons.Logo />
         <div className="flex flex-col">
-          <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-none">Smart Assistant</h1>
-          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-2">v2.8 Data Driven</span>
+          <h1 className="text-2xl font-black text-slate-900 tracking-[-0.05em] leading-none">Smart Assistant</h1>
+          <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.25em] mt-3 opacity-80">v3.0 Premium Docs</span>
         </div>
       </div>
 
-      <div className="space-y-10">
-        <nav className="space-y-1">
+      <div className="space-y-12">
+        <nav className="space-y-2">
           {menuItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveFilter(item.id)}
-              className={`flex items-center gap-4 w-full px-5 py-4 rounded-3xl text-[14px] font-bold transition-all ${
-                activeFilter === item.id ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50'
-              }`}
+              className={`sidebar-item flex items-center gap-4 w-full px-6 py-5 text-[15px] font-bold transition-all ${activeFilter === item.id ? 'active-sidebar-item' : 'text-slate-500'
+                }`}
             >
-              <item.icon /> {item.label}
+              <span className={activeFilter === item.id ? 'text-white' : 'text-slate-400'}><item.icon /></span> {item.label}
             </button>
           ))}
         </nav>
 
-        <div className="mx-1 p-6 rounded-[32px] bg-slate-50 border border-slate-100 space-y-6">
-          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">数据洞察</span>
+        <div className="mx-1 p-8 rounded-[35px] bg-white/40 border border-white/60 shadow-sm space-y-6">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">数据洞察</span>
           <TaskInsights memos={memos} />
         </div>
 
-        <div className="mx-1 p-5 rounded-[28px] border border-slate-100 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cloud Sync</span>
-            <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+        <div className="mx-1 p-6 rounded-[30px] border border-white/60 bg-white/20 space-y-5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cloud Sync</span>
+            <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]'}`} />
           </div>
-          <button 
+          <button
             onClick={onOpenSyncSettings}
-            className="w-full py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-indigo-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
+            className="w-full py-3.5 bg-slate-900 border border-slate-800 rounded-2xl text-[11px] font-black uppercase text-white hover:bg-indigo-600 hover:border-indigo-500 transition-all shadow-lg active:scale-95"
           >
             {isSyncing ? 'Syncing...' : 'Connectivity'}
           </button>
