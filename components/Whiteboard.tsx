@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { Icons } from '../constants';
 
@@ -8,8 +7,24 @@ interface WhiteboardProps {
   initialData?: string;
 }
 
+const PRESET_COLORS = [
+  '#0f172a', // Slate 900
+  '#64748b', // Slate 500
+  '#ef4444', // Red 500
+  '#f59e0b', // Amber 500
+  '#10b981', // Emerald 500
+  '#3b82f6', // Blue 500
+  '#6366f1', // Indigo 500
+  '#a855f7', // Purple 500
+  '#ec4899', // Pink 500
+  '#f43f5e', // Rose 500
+  '#14b8a6', // Teal 500
+  '#8b5cf6', // Violet 500
+];
+
 const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#0f172a');
   const [brushSize, setBrushSize] = useState(3);
@@ -20,7 +35,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Set high resolution
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -36,7 +50,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     context.lineWidth = brushSize;
     contextRef.current = context;
 
-    // Load initial data if exists
     if (initialData) {
       const img = new Image();
       img.onload = () => {
@@ -102,15 +115,17 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const handleSave = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    // We export at standard resolution for storage efficiency
     const dataUrl = canvas.toDataURL('image/png', 0.8);
     onSave(dataUrl);
   };
 
+  const handleCustomColorClick = () => {
+    colorInputRef.current?.click();
+  };
+
   return (
     <div className="fixed inset-0 z-[200] bg-white flex flex-col animate-card overflow-hidden">
-      {/* Header Toolbar */}
-      <header className="h-20 border-b border-slate-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md">
+      <header className="h-20 border-b border-slate-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-6">
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-900 transition-colors font-bold text-sm">取消</button>
           <div className="h-4 w-[1px] bg-slate-100" />
@@ -133,7 +148,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         </div>
       </header>
 
-      {/* Main Drawing Area */}
       <div className="flex-1 relative bg-slate-50/30 overflow-hidden cursor-crosshair" style={{
         backgroundImage: 'radial-gradient(#e2e8f0 0.8px, transparent 0.8px)',
         backgroundSize: '24px 24px'
@@ -150,71 +164,87 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
           className="w-full h-full block"
         />
         
-        {/* Floating Tool Palette */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass px-8 py-5 rounded-[40px] flex items-center gap-6 md:gap-8 shadow-2xl border border-white/50 max-w-[90vw]">
-          {/* Tool Selector */}
-          <div className="flex items-center gap-2 md:gap-3">
-            <button 
-              onClick={() => setTool('pen')}
-              className={`p-3 rounded-2xl transition-all ${tool === 'pen' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
-              title="画笔"
-            >
-              <Icons.Pen />
-            </button>
-            <button 
-              onClick={() => setTool('eraser')}
-              className={`p-3 rounded-2xl transition-all ${tool === 'eraser' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
-              title="橡皮擦"
-            >
-              <Icons.Eraser />
-            </button>
-          </div>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 w-full px-4 max-w-2xl">
+          <div className="glass px-6 py-4 rounded-[40px] flex items-center gap-4 md:gap-6 shadow-2xl border border-white/50 w-full overflow-x-auto no-scrollbar">
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={() => setTool('pen')}
+                className={`p-3 rounded-2xl transition-all ${tool === 'pen' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+                title="画笔"
+              >
+                <Icons.Pen />
+              </button>
+              <button 
+                onClick={() => setTool('eraser')}
+                className={`p-3 rounded-2xl transition-all ${tool === 'eraser' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+                title="橡皮擦"
+              >
+                <Icons.Eraser />
+              </button>
+            </div>
 
-          <div className="h-8 w-[1px] bg-slate-200" />
+            <div className="h-8 w-[1px] bg-slate-200 shrink-0" />
 
-          {/* Color Palette (Disabled if Eraser is active) */}
-          <div className={`flex items-center gap-3 md:gap-4 ${tool === 'eraser' ? 'opacity-20 pointer-events-none' : ''}`}>
-            {['#0f172a', '#6366f1', '#a855f7', '#f43f5e', '#10b981'].map(c => (
+            <div className={`flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1 shrink-0 ${tool === 'eraser' ? 'opacity-20 pointer-events-none' : ''}`}>
+              {PRESET_COLORS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => { setColor(c); setTool('pen'); }}
+                  className={`w-7 h-7 rounded-full transition-all border-2 shrink-0 ${color === c ? 'border-indigo-400 scale-125 shadow-sm' : 'border-white'}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+              
+              <div className="w-[1px] h-6 bg-slate-200 mx-1 shrink-0" />
+              
               <button
-                key={c}
-                onClick={() => { setColor(c); setTool('pen'); }}
-                className={`w-6 h-6 md:w-7 md:h-7 rounded-full transition-all border-2 ${color === c ? 'border-indigo-400 scale-125' : 'border-transparent'}`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
-
-          <div className="h-8 w-[1px] bg-slate-200" />
-
-          {/* Brush Size Controls */}
-          <div className="flex items-center gap-4 md:gap-6 min-w-[120px] md:min-w-[160px]">
-            <div className="flex-1 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">大小</span>
-                <span className="text-[10px] font-black text-slate-900">{brushSize}px</span>
-              </div>
+                onClick={handleCustomColorClick}
+                className={`w-7 h-7 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center transition-all hover:border-indigo-400 hover:scale-110 shrink-0 ${!PRESET_COLORS.includes(color) && tool === 'pen' ? 'border-indigo-400 scale-110' : ''}`}
+                style={{ backgroundColor: !PRESET_COLORS.includes(color) ? color : 'transparent' }}
+                title="自定义颜色"
+              >
+                {!PRESET_COLORS.includes(color) ? null : <span className="text-slate-400 text-xs">+</span>}
+              </button>
               <input 
-                type="range" 
-                min="1" 
-                max="24" 
-                step="1"
-                value={brushSize} 
-                onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                ref={colorInputRef}
+                type="color" 
+                value={color}
+                onChange={(e) => { setColor(e.target.value); setTool('pen'); }}
+                className="hidden"
               />
             </div>
-            
-            {/* Quick Presets */}
-            <div className="flex items-center gap-2">
-              {[2, 6, 12].map(s => (
-                <button
-                  key={s}
-                  onClick={() => setBrushSize(s)}
-                  className={`flex items-center justify-center transition-all ${brushSize === s ? 'text-slate-900' : 'text-slate-300 hover:text-slate-500'}`}
-                >
-                  <div className="rounded-full bg-current" style={{ width: Math.max(6, s + 2), height: Math.max(6, s + 2) }} />
-                </button>
-              ))}
+
+            <div className="h-8 w-[1px] bg-slate-200 shrink-0" />
+
+            <div className="flex items-center gap-4 md:gap-6 min-w-[140px] shrink-0">
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">大小</span>
+                  <span className="text-[10px] font-black text-slate-900">{brushSize}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="24" 
+                  step="1"
+                  value={brushSize} 
+                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {[2, 6, 12].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setBrushSize(s)}
+                    className={`flex items-center justify-center transition-all ${brushSize === s ? 'text-slate-900' : 'text-slate-300 hover:text-slate-500'}`}
+                  >
+                    <div className="rounded-full bg-current" style={{ width: Math.max(6, s + 1.5), height: Math.max(6, s + 1.5) }} />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
