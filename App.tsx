@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Memo } from './types';
-import { storage } from './services/storage';
-import { syncService } from './services/sync';
-import Sidebar from './components/Sidebar';
-import MemoEditor from './components/MemoEditor';
-import MemoCard from './components/MemoCard';
-import ChatAssistant from './components/ChatAssistant';
-import SyncSettings from './components/SyncSettings';
-import { Icons } from './constants';
-import { generateSummary } from './services/gemini';
+import { Memo } from './types.js';
+import { storage } from './services/storage.js';
+import { syncService } from './services/sync.js';
+import Sidebar from './components/Sidebar.js';
+import MemoEditor from './components/MemoEditor.js';
+import MemoCard from './components/MemoCard.js';
+import ChatAssistant from './components/ChatAssistant.js';
+import SyncSettings from './components/SyncSettings.js';
+import { Icons } from './constants.js';
+import { generateSummary } from './services/gemini.js';
 
 const App: React.FC = () => {
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -76,7 +76,6 @@ const App: React.FC = () => {
     setMemos(updatedLocal);
     await storage.upsertMemo(newMemo);
     setIsEditorOpen(false);
-    // 异步触发同步
     const all = await storage.getMemos(true);
     performSync(all);
   };
@@ -239,7 +238,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* 移动端底部操作栏 */}
       <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] glass rounded-3xl p-2.5 flex items-center justify-between z-[80] shadow-2xl border border-white/40 ring-1 ring-slate-900/5">
         <button 
           onClick={() => setFilter('all')} 
@@ -261,7 +259,6 @@ const App: React.FC = () => {
         </button>
       </nav>
 
-      {/* 移动端全屏编辑器浮层 */}
       {isEditorOpen && (
         <div className="fixed inset-0 z-[100] md:hidden flex flex-col">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsEditorOpen(false)} />

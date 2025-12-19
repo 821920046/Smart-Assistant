@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Icons } from '../constants';
+import { Icons } from '../constants.js';
 
 interface SidebarProps {
   activeFilter: string;
@@ -33,7 +33,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="space-y-12">
-        {/* Sync Status Card */}
         <div className="mx-1 p-5 rounded-[28px] bg-slate-50 border border-slate-100 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">多端同步</span>
