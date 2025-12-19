@@ -15,14 +15,14 @@ export interface Memo {
   todos?: TodoItem[];
   tags: string[];
   createdAt: number;
-  updatedAt: number; // 用于同步冲突检测
+  updatedAt: number;
   dueDate?: number;
   reminderAt?: number;
   sketchData?: string; 
   isArchived: boolean;
   isFavorite: boolean;
-  isDeleted?: boolean; // 软删除，方便同步删除指令
-  remoteId?: string;   // 远程数据库对应的 ID
+  isDeleted?: boolean;
+  remoteId?: string;
 }
 
 export interface TranscriptionTurn {
@@ -30,5 +30,4 @@ export interface TranscriptionTurn {
   text: string;
 }
 
-// Dummy export to ensure the file is not empty after TS compilation
-export const MODULE_LOADED = true;
+export const APP_VERSION = '2.5.1';
