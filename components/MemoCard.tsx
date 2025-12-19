@@ -122,6 +122,9 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
            {memo.type === 'todo' && (
              <div className="text-indigo-600 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-100/50 text-[10px] font-black uppercase tracking-widest">Active Task</div>
            )}
+           {memo.type === 'sketch' && (
+             <div className="text-rose-600 px-4 py-2 rounded-2xl bg-rose-50 border border-rose-100/50 text-[10px] font-black uppercase tracking-widest">Creative Sketch</div>
+           )}
         </div>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
            <button onClick={handleTTSToggle} className={`p-3.5 rounded-2xl transition-all shadow-sm active:scale-90 ${ttsStatus === 'playing' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}>
@@ -134,8 +137,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
       </div>
 
       <div className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-        <p className={`text-slate-900 font-bold leading-[1.6] whitespace-pre-wrap transition-all tracking-tight ${isExpanded ? 'text-3xl md:text-4xl' : 'text-xl line-clamp-2'}`}>
-          {memo.content}
+        {memo.sketchData && (
+          <div className={`mb-8 rounded-[32px] overflow-hidden border border-slate-100 bg-slate-50/30 transition-all ${isExpanded ? 'scale-100' : 'scale-[0.98] grayscale-[0.2] opacity-80'}`}>
+            <img src={memo.sketchData} className="w-full h-auto object-contain max-h-[500px]" alt="Sketch" />
+          </div>
+        )}
+
+        <p className={`text-slate-900 font-bold leading-[1.6] whitespace-pre-wrap transition-all tracking-tight ${isExpanded ? 'text-2xl md:text-3xl' : 'text-xl line-clamp-2'}`}>
+          {memo.content === '[手绘内容]' && memo.sketchData ? '' : memo.content}
         </p>
 
         {isExpanded && memo.todos && memo.todos.length > 0 && (

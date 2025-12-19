@@ -14,25 +14,9 @@ export const Icons = {
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
       </defs>
-      {/* Background Squircle */}
       <rect x="10" y="10" width="80" height="80" rx="28" fill="url(#logo-gradient)" />
-      
-      {/* Abstract 'A' / Intelligence Wave */}
-      <path 
-        d="M35 70L50 30L65 70" 
-        stroke="white" 
-        strokeWidth="9" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-      />
-      <path 
-        d="M42 55H58" 
-        stroke="white" 
-        strokeWidth="7" 
-        strokeLinecap="round" 
-      />
-      
-      {/* AI Sparkle Node */}
+      <path d="M35 70L50 30L65 70" stroke="white" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M42 55H58" stroke="white" strokeWidth="7" strokeLinecap="round" />
       <circle cx="75" cy="25" r="7" fill="white" filter="url(#glow)">
         <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
       </circle>
@@ -56,4 +40,7 @@ export const Icons = {
   ChevronUp: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>,
   Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   Bell: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+  Pen: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
+  Eraser: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>,
+  Image: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
 };
