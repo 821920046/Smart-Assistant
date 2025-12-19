@@ -48,6 +48,7 @@ const App: React.FC = () => {
       tags: memoData.tags || [],
       dueDate: memoData.dueDate,
       reminderAt: memoData.reminderAt,
+      sketchData: memoData.sketchData,
       createdAt: Date.now(),
       isArchived: false,
       isFavorite: false,

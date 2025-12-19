@@ -49,12 +49,21 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     e.stopPropagation();
     if (ttsStatus === 'playing') { pauseAudio(); return; }
     if (ttsStatus === 'paused' || audioBuffer) { playAudio(); return; }
+    
+    // Filter out content that shouldn't be read or is empty
+    const speakableContent = memo.content.replace(/\[手绘内容\]/g, '').trim();
+    if (!speakableContent) {
+      alert("没有可朗读的文字内容。");
+      return;
+    }
+
     setTtsStatus('loading');
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Using an explicit command like "Read this:" helps the model output audio instead of text
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: memo.content }] }],
+        contents: [{ parts: [{ text: `Read the following text clearly: ${speakableContent}` }] }],
         config: { 
           responseModalities: [Modality.AUDIO], 
           speechConfig: { 
@@ -64,13 +73,16 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
           } 
         },
       });
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      
+      const base64Audio = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+      
       if (base64Audio) {
         initAudioContext();
         const decoded = await decodeAudioData(decode(base64Audio), audioContextRef.current!, 24000, 1);
         setAudioBuffer(decoded);
         startPlayback(decoded, 0);
       } else {
+        console.warn("Model did not return audio data parts. Check if the prompt was too short or contained restricted content.");
         setTtsStatus('idle');
       }
     } catch (error) { 
@@ -84,7 +96,12 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     const source = audioContextRef.current!.createBufferSource();
     source.buffer = buffer;
     source.connect(audioContextRef.current!.destination);
-    source.onended = () => { if (sourceRef.current === source && ttsStatus !== 'paused') { setTtsStatus('idle'); pausedAtRef.current = 0; } };
+    source.onended = () => { 
+      if (sourceRef.current === source && ttsStatus !== 'paused') { 
+        setTtsStatus('idle'); 
+        pausedAtRef.current = 0; 
+      } 
+    };
     source.start(0, offset);
     sourceRef.current = source;
     startTimeRef.current = audioContextRef.current!.currentTime - offset;
