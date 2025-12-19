@@ -209,6 +209,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
   const toggleArchive = (e: React.MouseEvent) => { e.stopPropagation(); onUpdate({ ...memo, isArchived: !memo.isArchived }); };
   const handleDelete = (e: React.MouseEvent) => { e.stopPropagation(); onDelete(memo.id); };
   const toggleExpand = (e: React.MouseEvent) => { e.stopPropagation(); setIsExpanded(!isExpanded); };
+  const removeReminder = (e: React.MouseEvent) => { e.stopPropagation(); onUpdate({ ...memo, reminderAt: undefined }); };
 
   const priorityStyles = {
     high: { accent: 'bg-rose-500', container: 'bg-rose-50/30 border-rose-100/50', badge: 'bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200', checkbox: 'text-rose-600 focus:ring-rose-500 border-rose-300' },
@@ -224,7 +225,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     : 0;
 
   const firstLine = memo.content.split('\n')[0];
-  const remainingLines = memo.content.split('\n').slice(1).join('\n');
 
   return (
     <div 
@@ -252,16 +252,30 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
 
       {/* Header Area */}
       <div className={`flex justify-between items-center ${isExpanded ? 'mb-6 pt-1' : ''}`}>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
             {new Date(memo.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }).toUpperCase()}
           </span>
+          
           {memo.dueDate && isExpanded && (
             <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${isOverdue ? 'text-rose-600 bg-rose-50 border-rose-200 shadow-sm shadow-rose-100' : 'text-sky-600 bg-sky-50 border-sky-100'}`}>
               <Icons.Calendar />
               {new Date(memo.dueDate).toLocaleDateString().toUpperCase()}
             </div>
           )}
+
+          {memo.reminderAt && (
+             <div 
+               onClick={removeReminder}
+               className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border text-amber-600 bg-amber-50 border-amber-100 cursor-pointer hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all group/reminder`}
+               title="点击取消提醒"
+             >
+               <Icons.Bell />
+               <span className="group-hover/reminder:hidden">{new Date(memo.reminderAt).toLocaleString([], { hour: '2-digit', minute: '2-digit' })}</span>
+               <span className="hidden group-hover/reminder:inline text-[9px]">取消提醒</span>
+             </div>
+          )}
+
           {memo.todos && memo.todos.length > 0 && !isExpanded && (
              <span className="text-[9px] font-black text-sky-500 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-100">
                 {memo.todos.filter(t => t.completed).length}/{memo.todos.length}

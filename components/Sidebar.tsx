@@ -18,7 +18,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
 
   const handleTagClick = (tag: string) => {
     const tagId = `tag:${tag}`;
-    // Toggle: if the same tag is clicked, revert to 'all'
     setActiveFilter(activeFilter === tagId ? 'all' : tagId);
   };
 
@@ -26,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
     <aside className="hidden md:flex flex-col w-72 p-8 sticky top-0 h-screen overflow-y-auto border-r border-slate-100 bg-white/50">
       {/* Brand Section */}
       <div className="flex items-center gap-4 mb-14">
-        <div className="assistant-gradient assistant-glow w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105 duration-300">
+        <div className="assistant-gradient assistant-glow w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110 duration-500">
           <Icons.Logo />
         </div>
         <div>
@@ -34,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
             智能助理
           </h1>
           <p className="text-[9px] font-black text-sky-500 uppercase tracking-[0.2em] mt-0.5">
-            智能思考中心
+            AI 思考中心
           </p>
         </div>
       </div>
@@ -93,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
       <div className="mt-auto pt-8 border-t border-slate-100">
         <button className="flex items-center gap-3 px-4 py-3 w-full text-slate-500 hover:text-slate-900 transition-colors text-sm font-semibold">
            <div className="w-6 h-6 rounded-full assistant-gradient border border-white/50" />
-           个人设置
+           设置中心
         </button>
       </div>
     </aside>

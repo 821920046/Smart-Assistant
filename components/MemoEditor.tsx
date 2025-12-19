@@ -14,7 +14,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [dueDate, setDueDate] = useState<string>('');
+  const [reminderAt, setReminderAt] = useState<string>('');
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const reminderInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async () => {
     if (!content.trim()) return;
@@ -31,6 +33,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         todos,
         tags,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
+        reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
         type: todos.length > 0 ? 'todo' : 'memo',
         createdAt: Date.now(),
         isArchived: false,
@@ -39,6 +42,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
 
       setContent('');
       setDueDate('');
+      setReminderAt('');
     } finally {
       setIsProcessing(false);
     }
@@ -63,9 +67,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
     });
   };
 
-  const triggerDatePicker = () => {
-    dateInputRef.current?.showPicker();
-  };
+  const triggerDatePicker = () => dateInputRef.current?.showPicker();
+  const triggerReminderPicker = () => reminderInputRef.current?.showPicker();
 
   return (
     <div className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm transition-all focus-within:shadow-xl focus-within:border-slate-300 focus-within:-translate-y-1 duration-300">
@@ -102,6 +105,18 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
             </button>
           </div>
         )}
+        {reminderAt && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-sky-600 text-white rounded-full text-[10px] font-bold tracking-wider border border-sky-600 transition-all hover:bg-sky-700">
+            <Icons.Bell />
+            提醒: {new Date(reminderAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
+            <button 
+              onClick={() => setReminderAt('')}
+              className="ml-1 text-sky-200 hover:text-white transition-colors"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
@@ -133,6 +148,22 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
                 className="absolute opacity-0 pointer-events-none w-0 h-0"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+            <div className="relative">
+              <button 
+                onClick={triggerReminderPicker}
+                className={`p-2.5 transition-all rounded-xl hover:bg-slate-50 ${reminderAt ? 'text-sky-600 bg-sky-50' : 'text-slate-400 hover:text-slate-900'}`}
+                title="设置提醒闹钟"
+              >
+                <Icons.Clock />
+              </button>
+              <input 
+                ref={reminderInputRef}
+                type="datetime-local" 
+                className="absolute opacity-0 pointer-events-none w-0 h-0"
+                value={reminderAt}
+                onChange={(e) => setReminderAt(e.target.value)}
               />
             </div>
           </div>

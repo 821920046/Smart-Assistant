@@ -15,7 +15,8 @@ export interface Memo {
   todos?: TodoItem[];
   tags: string[];
   createdAt: number;
-  dueDate?: number; // Added dueDate property
+  dueDate?: number;
+  reminderAt?: number; // Added reminder timestamp
   isArchived: boolean;
   isFavorite: boolean;
 }

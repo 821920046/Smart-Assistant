@@ -14,9 +14,35 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
+  const [activeReminder, setActiveReminder] = useState<Memo | null>(null);
 
   useEffect(() => {
     setMemos(storage.getMemos());
+    
+    // Background reminder check
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const storedMemos = storage.getMemos();
+      const dueMemo = storedMemos.find(m => m.reminderAt && m.reminderAt <= now);
+      
+      if (dueMemo) {
+        setActiveReminder(dueMemo);
+        // Clear the reminder so it doesn't trigger again
+        const updatedMemos = storedMemos.map(m => 
+          m.id === dueMemo.id ? { ...m, reminderAt: undefined } : m
+        );
+        saveMemos(updatedMemos);
+        
+        // Browser notification attempt
+        if (Notification.permission === 'granted') {
+          new Notification('智能助理提醒', { body: dueMemo.content.slice(0, 50) + '...' });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const saveMemos = (newMemos: Memo[]) => {
@@ -32,6 +58,7 @@ const App: React.FC = () => {
       todos: memoData.todos || [],
       tags: memoData.tags || [],
       dueDate: memoData.dueDate,
+      reminderAt: memoData.reminderAt,
       createdAt: Date.now(),
       isArchived: false,
       isFavorite: false,
@@ -95,7 +122,7 @@ const App: React.FC = () => {
   };
 
   const filterLabelMap: Record<string, string> = {
-    all: '所有记录',
+    all: '时间轴',
     todo: '待办任务',
     favorites: '收藏夹',
     archived: '归档'
@@ -163,11 +190,9 @@ const App: React.FC = () => {
 
           {summary && (
             <div className="animate-in fade-in zoom-in-95 duration-500 glass border border-indigo-100 p-8 rounded-[32px] assistant-glow bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/50 relative overflow-hidden">
-              {/* Decorative Background Element */}
               <div className="absolute -right-8 -top-8 text-indigo-500/5 rotate-12 scale-[3]">
                 <Icons.Sparkles />
               </div>
-
               <div className="flex items-center justify-between mb-6 relative z-10">
                  <div className="flex items-center gap-3">
                    <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
@@ -189,7 +214,6 @@ const App: React.FC = () => {
               <div className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap font-medium relative z-10 pl-2 border-l-2 border-indigo-200/50">
                 {summary}
               </div>
-              
               <div className="mt-6 flex items-center gap-2 text-[10px] font-bold text-indigo-300 uppercase tracking-widest relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div>
                 内容基于当前筛选的 {filteredMemos.length} 条记录自动生成
@@ -225,6 +249,43 @@ const App: React.FC = () => {
           </div>
         </section>
       </main>
+
+      {/* Reminder Alert UI */}
+      {activeReminder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-[40px] p-10 max-w-md w-full shadow-2xl assistant-glow animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-2 assistant-gradient"></div>
+             <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-[28px] assistant-gradient text-white flex items-center justify-center mb-8 shadow-xl animate-bounce">
+                  <Icons.Bell />
+                </div>
+                <h3 className="text-[10px] font-black text-sky-500 uppercase tracking-[0.4em] mb-4">时间到了！</h3>
+                <p className="text-slate-900 text-xl font-bold leading-relaxed mb-10 line-clamp-4">
+                  {activeReminder.content}
+                </p>
+                <div className="flex gap-4 w-full">
+                  <button 
+                    onClick={() => setActiveReminder(null)}
+                    className="flex-1 py-4 px-6 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                  >
+                    我知道了
+                  </button>
+                  <button 
+                    onClick={() => {
+                      // Simple snooze logic: remind again in 5 mins
+                      const updated = { ...activeReminder, reminderAt: Date.now() + 5 * 60000 };
+                      updateMemo(updated);
+                      setActiveReminder(null);
+                    }}
+                    className="flex-1 py-4 px-6 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                  >
+                    稍后提醒 (5分)
+                  </button>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

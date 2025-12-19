@@ -1,7 +1,7 @@
 {
-  "name": "智能助理 - 极简思考空间",
+  "name": "智能助理",
   "short_name": "智能助理",
-  "description": "基于 Gemini 2.5/3 系列模型构建的智能笔记与任务管理系统，支持实时语音转写与 AI 摘要。",
+  "description": "基于 Gemini 2.5/3 系列模型构建的极简智能思考中心，集成语音转写与 AI 自动摘要。",
   "theme_color": "#0ea5e9",
   "background_color": "#fcfcfd",
   "display": "standalone",
