@@ -19,11 +19,17 @@ const COLOR_PALETTE = [
 const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
+  
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#0f172a');
   const [brushSize, setBrushSize] = useState(3);
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [tool, setTool] = useState<'pen' | 'eraser' | 'text'>('pen');
   const [recentColors, setRecentColors] = useState<string[]>([]);
+  
+  // Text Tool State
+  const [textInput, setTextInput] = useState<{ x: number, y: number, value: string, visible: boolean } | null>(null);
+
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
 
   // Undo/Redo States
@@ -63,7 +69,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
     const saved = localStorage.getItem('whiteboard_recent_colors');
     if (saved) setRecentColors(JSON.parse(saved));
 
-    // Keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
@@ -122,13 +127,20 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const { offsetX, offsetY } = getCoordinates(e);
+
+    if (tool === 'text') {
+      setTextInput({ x: offsetX, y: offsetY, value: '', visible: true });
+      setTimeout(() => textInputRef.current?.focus(), 10);
+      return;
+    }
+
     contextRef.current?.beginPath();
     contextRef.current?.moveTo(offsetX, offsetY);
     setIsDrawing(true);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return;
+    if (!isDrawing || tool === 'text') return;
     e.preventDefault();
     const { offsetX, offsetY } = getCoordinates(e);
     contextRef.current?.lineTo(offsetX, offsetY);
@@ -154,10 +166,26 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
       };
     } else {
       return {
-        offsetX: e.nativeEvent.offsetX,
-        offsetY: e.nativeEvent.offsetY,
+        offsetX: (e as React.MouseEvent).nativeEvent.offsetX,
+        offsetY: (e as React.MouseEvent).nativeEvent.offsetY,
       };
     }
+  };
+
+  const finalizeText = () => {
+    if (!textInput || !textInput.value.trim() || !contextRef.current) {
+      setTextInput(null);
+      return;
+    }
+
+    const ctx = contextRef.current;
+    const fontSize = Math.max(12, brushSize * 4);
+    ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(textInput.value, textInput.x, textInput.y + (fontSize/4));
+    
+    setTextInput(null);
+    saveToHistory();
   };
 
   const handleClear = () => {
@@ -169,6 +197,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   };
 
   const handleSave = () => {
+    if (textInput?.visible) finalizeText();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png', 0.8);
@@ -177,7 +206,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
   const selectColor = (newColor: string) => {
     setColor(newColor);
-    setTool('pen');
+    if (tool === 'eraser') setTool('pen');
     if (!COLOR_PALETTE.includes(newColor)) {
       setRecentColors(prev => {
         const filtered = prev.filter(c => c !== newColor);
@@ -247,6 +276,26 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
           onTouchEnd={stopDrawing}
           className="w-full h-full block"
         />
+
+        {textInput?.visible && (
+          <input
+            ref={textInputRef}
+            type="text"
+            value={textInput.value}
+            onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+            onBlur={finalizeText}
+            onKeyDown={(e) => e.key === 'Enter' && finalizeText()}
+            className="absolute p-2 bg-white/90 backdrop-blur border-2 border-indigo-500 rounded-xl shadow-2xl outline-none font-bold"
+            style={{
+              left: textInput.x,
+              top: textInput.y,
+              transform: 'translate(-50%, -50%)',
+              color: color,
+              fontSize: `${Math.max(14, brushSize * 3)}px`,
+              minWidth: '100px'
+            }}
+          />
+        )}
         
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 w-full px-4 max-w-4xl">
           <div className="glass px-6 py-5 rounded-[48px] shadow-2xl border border-white/60 w-full flex flex-col gap-6">
@@ -258,6 +307,13 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                   title="画笔"
                 >
                   <Icons.Pen />
+                </button>
+                <button 
+                  onClick={() => setTool('text')}
+                  className={`p-3.5 rounded-2xl transition-all ${tool === 'text' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+                  title="文字工具"
+                >
+                  <Icons.Type />
                 </button>
                 <button 
                   onClick={() => setTool('eraser')}
