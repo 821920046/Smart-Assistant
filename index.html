@@ -8,12 +8,8 @@
     <title>Smart Assistant | Second Brain</title>
     <meta name="theme-color" content="#6366f1">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="manifest" href="metadata.json">
+    <link rel="manifest" href="metadata.json?v=3">
     <script>
-        /**
-         * Robust process shim - must be the very first thing to run.
-         * Ensures @google/genai and other ESM modules don't crash on 'process' access.
-         */
         (function () {
             const shim = { env: { API_KEY: '' } };
             if (typeof window.process === 'undefined') {
@@ -23,28 +19,25 @@
             }
         })();
 
-        /**
-         * Service Worker registration.
-         * Simplified to use a relative path directly, avoiding the 'URL' constructor 
-         * which can fail in non-standard environments (like sandboxed previews).
-         */
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Only attempt registration in secure contexts (HTTPS or localhost)
-                const isSecureContext = window.isSecureContext ||
-                    window.location.protocol === 'https:' ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.hostname === '127.0.0.1';
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('✅ PWA: Service Worker registered!', reg.scope);
 
-                if (isSecureContext) {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('SW registered on scope:', reg.scope))
-                        .catch(err => {
-                            console.warn('Service Worker registration skipped or failed:', err.message);
-                        });
-                } else {
-                    console.log('Service Worker skipped: Not a secure context.');
-                }
+                        // Check if the PWA is already installed
+                        if (window.matchMedia('(display-mode: standalone)').matches) {
+                            console.log('✅ PWA: Already running in standalone mode');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('❌ PWA: Service Worker registration failed:', err);
+                    });
+            });
+
+            // Helpful for debugging install prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('🎯 PWA: beforeinstallprompt event fired');
             });
         }
     </script>
