@@ -29,3 +29,6 @@ export interface TranscriptionTurn {
   role: 'user' | 'model';
   text: string;
 }
+
+// Dummy export to ensure the file is not empty after TS compilation
+export const MODULE_LOADED = true;
