@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { TodoItem, Priority } from "../types";
+import { TodoItem, Priority } from "../types.js";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 

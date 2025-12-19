@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Memo, Priority } from '../types';
-import { Icons } from '../constants';
+import { Memo, Priority } from '../types.js';
+import { Icons } from '../constants.js';
 import { GoogleGenAI, Modality } from "@google/genai";
 
 interface MemoCardProps {

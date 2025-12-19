@@ -1,5 +1,5 @@
 
-import { Memo } from '../types';
+import { Memo } from '../types.js';
 
 const DB_NAME = 'MemoAI_DB';
 const STORE_NAME = 'memos';

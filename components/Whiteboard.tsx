@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Icons } from '../constants';
+import { Icons } from '../constants.js';
 
 interface WhiteboardProps {
   onSave: (dataUrl: string) => void;

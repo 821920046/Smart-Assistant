@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
-import { Icons } from '../constants';
+import { Icons } from '../constants.js';
 
 interface VoiceInterfaceProps {
   onTranscriptionComplete: (text: string) => void;

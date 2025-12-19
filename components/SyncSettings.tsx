@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { syncService, SyncConfig, SyncProvider } from '../services/sync';
+import { syncService, SyncConfig, SyncProvider } from '../services/sync.js';
 
 interface SyncSettingsProps {
   onClose: () => void;

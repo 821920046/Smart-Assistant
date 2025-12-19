@@ -1,6 +1,6 @@
 
-import { Memo } from '../types';
-import { storage } from './storage';
+import { Memo } from '../types.js';
+import { storage } from './storage.js';
 
 export type SyncProvider = 'none' | 'supabase' | 'webdav' | 'gist';
 

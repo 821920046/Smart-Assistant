@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { Icons } from '../constants';
-import VoiceInterface from './VoiceInterface';
-import Whiteboard from './Whiteboard';
-import { extractTasks, suggestTags, refineText } from '../services/gemini';
-import { Memo } from '../types';
+import { Icons } from '../constants.js';
+import VoiceInterface from './VoiceInterface.js';
+import Whiteboard from './Whiteboard.js';
+import { extractTasks, suggestTags, refineText } from '../services/gemini.js';
+import { Memo } from '../types.js';
 
 interface MemoEditorProps {
   onSave: (memo: Partial<Memo>) => void;

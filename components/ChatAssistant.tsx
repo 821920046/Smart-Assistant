@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Icons } from '../constants';
-import { askAssistant } from '../services/gemini';
+import { Icons } from '../constants.js';
+import { askAssistant } from '../services/gemini.js';
 
 interface ChatAssistantProps {
   contextMemos: string[];
