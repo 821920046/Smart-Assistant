@@ -148,18 +148,18 @@ const App: React.FC = () => {
           </div>
           <input
             type="text"
-            placeholder="搜索您的灵感与记录..."
+            placeholder="搜索记录或想法..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 border-none focus:ring-0 text-sm bg-transparent font-medium placeholder:text-slate-300"
           />
           <div className="flex items-center gap-3 pr-2">
             <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-slate-100 pr-3 mr-1">
-              {memos.length} 条记录
+              {memos.length} 条数据
             </div>
-            <button className="w-10 h-10 rounded-2xl assistant-gradient flex items-center justify-center text-white shadow-lg shadow-sky-200">
+            <div className="transition-transform hover:rotate-6 duration-300 drop-shadow-sm scale-90">
               <Icons.Logo />
-            </button>
+            </div>
           </div>
         </header>
 

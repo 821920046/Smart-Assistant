@@ -88,17 +88,22 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
 
   const handleTTSToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    
     if (ttsStatus === 'playing') {
       pauseAudio();
       return;
     }
 
-    if (ttsStatus === 'paused' || audioBuffer) {
+    if (ttsStatus === 'paused') {
       playAudio();
       return;
     }
 
-    // Initial Fetch
+    if (audioBuffer) {
+      playAudio();
+      return;
+    }
+
     setTtsStatus('loading');
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -144,8 +149,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
     
     source.onended = () => {
       if (sourceRef.current === source) {
-        setTtsStatus('idle');
-        pausedAtRef.current = 0;
+        if (ttsStatus !== 'paused') {
+          setTtsStatus('idle');
+          pausedAtRef.current = 0;
+        }
       }
     };
 
@@ -162,15 +169,17 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
 
   const pauseAudio = () => {
     if (sourceRef.current && audioContextRef.current) {
+      sourceRef.current.onended = null;
       sourceRef.current.stop();
-      sourceRef.current = null;
       pausedAtRef.current = (audioContextRef.current.currentTime - startTimeRef.current) * playbackRate;
+      sourceRef.current = null;
       setTtsStatus('paused');
     }
   };
 
   const stopAudio = () => {
     if (sourceRef.current) {
+      sourceRef.current.onended = null;
       sourceRef.current.stop();
       sourceRef.current = null;
     }
@@ -232,7 +241,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
         isExpanded ? 'p-7 border-slate-200' : 'p-4 border-slate-100 hover:border-slate-200'
       } ${isOverdue ? 'border-rose-200 bg-rose-50/10' : ''}`}
     >
-      {/* Progress Bar (Visible Always if todos exist) */}
+      {/* Progress Bar */}
       {memo.todos && memo.todos.length > 0 && (
         <div className="absolute top-0 left-0 w-full h-[3px] bg-slate-50">
           <div 
@@ -284,31 +293,40 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
         </div>
 
         <div className={`flex gap-1 items-center transition-opacity duration-200 ${!isExpanded ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-          {isExpanded && (
-            <div className="flex items-center bg-slate-50 rounded-xl px-1 mr-1">
-              {ttsStatus === 'loading' ? (
-                <div className="p-2 animate-spin text-sky-500">
-                  <div className="w-4 h-4 border-2 border-sky-500/20 border-t-sky-500 rounded-full"></div>
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <button onClick={handleTTSToggle} className={`p-2 rounded-xl transition-all duration-300 ${ttsStatus === 'playing' ? 'text-sky-600 bg-sky-50 scale-110' : 'text-slate-400 hover:text-sky-500 hover:bg-sky-50'}`}>
-                    {ttsStatus === 'playing' ? <Icons.Pause /> : <Icons.Play />}
-                  </button>
-                  {(ttsStatus === 'playing' || ttsStatus === 'paused') && (
-                    <>
-                      <button onClick={(e) => { e.stopPropagation(); stopAudio(); }} className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors">
-                        <Icons.Stop />
-                      </button>
-                      <button onClick={cycleSpeed} className="px-2 py-1 text-[9px] font-black text-sky-600 bg-sky-50 rounded-lg transition-colors border-l border-white ml-1 hover:bg-sky-100">
-                        {playbackRate}x
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <div className="flex items-center bg-slate-50 rounded-xl px-1 mr-1 border border-slate-100">
+            {ttsStatus === 'loading' ? (
+              <div className="p-2">
+                <div className="w-4 h-4 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <button 
+                  onClick={handleTTSToggle} 
+                  className={`p-2 rounded-xl transition-all duration-300 ${ttsStatus === 'playing' ? 'text-sky-600 bg-sky-100 shadow-inner' : 'text-slate-400 hover:text-sky-500 hover:bg-sky-50'}`}
+                  title={ttsStatus === 'playing' ? '暂停' : '播放'}
+                >
+                  {ttsStatus === 'playing' ? <Icons.Pause /> : <Icons.Play />}
+                </button>
+                {(ttsStatus === 'playing' || ttsStatus === 'paused') && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); stopAudio(); }} 
+                      className="p-2 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                      title="停止"
+                    >
+                      <Icons.Stop />
+                    </button>
+                    <button 
+                      onClick={cycleSpeed} 
+                      className="px-2 py-1 text-[9px] font-black text-sky-600 bg-sky-100/50 rounded-lg transition-colors border-l border-white ml-1 hover:bg-sky-100"
+                    >
+                      {playbackRate}x
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           
           <button onClick={toggleFavorite} className="p-2 rounded-xl hover:bg-slate-50 transition-colors">
             <Icons.Star filled={memo.isFavorite} />
@@ -334,7 +352,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
       >
         <div className={`text-slate-800 font-medium leading-relaxed whitespace-pre-wrap transition-all ${isExpanded ? 'text-lg mb-6' : 'text-sm line-clamp-1 opacity-80 group-hover/content:opacity-100'}`}>
           {isExpanded ? memo.content : firstLine}
-          {ttsStatus === 'playing' && isExpanded && (
+          {ttsStatus === 'playing' && (
             <span className="inline-flex gap-0.5 ml-2 h-3 items-end overflow-hidden">
               <span className="w-0.5 bg-sky-400 animate-[bounce_0.8s_infinite] h-full"></span>
               <span className="w-0.5 bg-sky-400 animate-[bounce_1.2s_infinite] h-2/3"></span>

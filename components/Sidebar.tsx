@@ -24,17 +24,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
   return (
     <aside className="hidden md:flex flex-col w-72 p-8 sticky top-0 h-screen overflow-y-auto border-r border-slate-100 bg-white/50">
       {/* Brand Section */}
-      <div className="flex items-center gap-4 mb-14">
-        <div className="assistant-gradient assistant-glow w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110 duration-500">
+      <div className="flex items-center gap-4 mb-14 px-2">
+        <div className="transition-transform hover:scale-110 duration-500 drop-shadow-sm">
           <Icons.Logo />
         </div>
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-900 leading-tight tracking-tight">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-extrabold text-slate-900 leading-none tracking-tight">
             智能助理
           </h1>
-          <p className="text-[9px] font-black text-sky-500 uppercase tracking-[0.2em] mt-0.5">
+          <span className="text-[10px] font-bold text-sky-500 uppercase tracking-[0.2em] mt-1.5 opacity-90">
             AI 思考中心
-          </p>
+          </span>
         </div>
       </div>
 
@@ -45,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
             onClick={() => setActiveFilter(item.id)}
             className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
               activeFilter === item.id 
-                ? 'bg-sky-600 text-white shadow-xl shadow-sky-200' 
+                ? 'bg-sky-600 text-white shadow-xl shadow-sky-200/50' 
                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
 
       <div className="space-y-6">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">标签</h3>
+          <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">标签库</h3>
           <button 
             onClick={() => setActiveFilter('all')}
             className="text-slate-300 hover:text-slate-500 transition-colors text-[9px] font-bold uppercase tracking-tighter"
@@ -90,9 +90,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
       </div>
 
       <div className="mt-auto pt-8 border-t border-slate-100">
-        <button className="flex items-center gap-3 px-4 py-3 w-full text-slate-500 hover:text-slate-900 transition-colors text-sm font-semibold">
-           <div className="w-6 h-6 rounded-full assistant-gradient border border-white/50" />
-           设置中心
+        <button className="flex items-center gap-3 px-4 py-3 w-full text-slate-500 hover:text-slate-900 transition-colors text-sm font-semibold group">
+           <div className="w-6 h-6 rounded-full assistant-gradient border border-white/50 group-hover:scale-110 transition-transform" />
+           偏好设置
         </button>
       </div>
     </aside>

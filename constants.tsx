@@ -3,26 +3,50 @@ import React from 'react';
 
 export const Icons = {
   Logo: () => (
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
       <defs>
-        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="premium-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#818cf8" />
+          <stop offset="50%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#4f46e5" />
         </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+        <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
+        <radialGradient id="inner-glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+          <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <circle cx="50" cy="50" r="46" stroke="white" strokeWidth="2" strokeOpacity="0.2" />
-      <circle cx="50" cy="50" r="40" fill="url(#logo-gradient)" fillOpacity="0.9" filter="url(#glow)" />
-      <path d="M50 30L55 45L70 50L55 55L50 70L45 55L30 50L45 45L50 30Z" fill="white">
-        <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
-        <animateTransform attributeName="transform" type="scale" values="0.9;1.1;0.9" dur="3s" repeatCount="indefinite" additive="sum" origin="50 50" />
+      {/* Main Squircle Container */}
+      <rect x="5" y="5" width="90" height="90" rx="28" fill="url(#premium-gradient)" className="shadow-lg" />
+      
+      {/* Inner Glow Circle */}
+      <circle cx="50" cy="50" r="25" fill="url(#inner-glow)" />
+      
+      {/* Central Sparkle Icon */}
+      <path 
+        d="M50 28C50 28 51.5 43.5 50 45C48.5 43.5 33 45 33 45C33 45 48.5 46.5 50 48C51.5 46.5 67 45 67 45C67 45 51.5 43.5 50 28Z" 
+        fill="white" 
+        transform="translate(0, 5)"
+      >
+        <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+        <animateTransform 
+          attributeName="transform" 
+          type="scale" 
+          values="0.95;1.05;0.95" 
+          dur="4s" 
+          repeatCount="indefinite" 
+          additive="sum" 
+          origin="50 50" 
+        />
       </path>
-      <circle cx="50" cy="50" r="12" stroke="white" strokeWidth="1.5" strokeDasharray="4 4">
-        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite" />
-      </circle>
+      <path 
+        d="M50 35L53 47L65 50L53 53L50 65L47 53L35 50L47 47L50 35Z" 
+        fill="white" 
+        filter="url(#soft-glow)"
+      />
     </svg>
   ),
   Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
