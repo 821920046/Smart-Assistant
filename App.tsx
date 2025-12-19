@@ -27,11 +27,15 @@ const App: React.FC = () => {
     try {
       let merged: Memo[] = currentMemos;
       if (config.provider === 'supabase') merged = await syncService.syncWithSupabase(config, currentMemos);
-      if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
-      if (config.provider === 'gist') merged = await syncService.syncWithGist(config, currentMemos);
+      else if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
+      else if (config.provider === 'gist') merged = await syncService.syncWithGist(config, currentMemos);
+      
       await storage.saveMemos(merged);
       setMemos(merged.filter(m => !m.isDeleted));
       return merged;
+    } catch (err) {
+      console.error("Sync failed:", err);
+      return currentMemos;
     } finally {
       setIsSyncing(false);
     }
@@ -50,10 +54,14 @@ const App: React.FC = () => {
           notifiedIds.current.add(memo.id);
           
           if (Notification.permission === "granted") {
-            new Notification("任务提醒", {
-              body: memo.content || "你有一个待办事项到期了",
-              icon: '/favicon.ico'
-            });
+            try {
+              new Notification("任务提醒", {
+                body: memo.content || "你有一个待办事项到期了",
+                icon: '/favicon.ico'
+              });
+            } catch (e) {
+              console.warn("Notification failed to display", e);
+            }
           } else {
             alert(`提醒: ${memo.content}`);
           }
@@ -73,11 +81,16 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      await storage.migrateFromLocalStorage();
-      const storedMemos = await storage.getMemos();
-      setMemos(storedMemos);
-      setIsLoading(false);
-      performSync(storedMemos);
+      try {
+        await storage.migrateFromLocalStorage();
+        const storedMemos = await storage.getMemos();
+        setMemos(storedMemos);
+        setIsLoading(false);
+        await performSync(storedMemos);
+      } catch (err) {
+        console.error("App initialization failed:", err);
+        setIsLoading(false);
+      }
     };
     initApp();
   }, [performSync]);
@@ -103,14 +116,16 @@ const App: React.FC = () => {
     const updatedLocal = [newMemo, ...memos];
     setMemos(updatedLocal);
     await storage.upsertMemo(newMemo);
-    performSync(await storage.getMemos(true));
+    const allMemos = await storage.getMemos(true);
+    await performSync(allMemos);
   };
 
   const updateMemo = async (updatedMemo: Memo) => {
     const upgraded = { ...updatedMemo, updatedAt: Date.now() };
     setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
     await storage.upsertMemo(upgraded);
-    performSync(await storage.getMemos(true));
+    const allMemos = await storage.getMemos(true);
+    await performSync(allMemos);
   };
 
   const deleteMemo = async (id: string) => {
@@ -119,15 +134,16 @@ const App: React.FC = () => {
       const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
       setMemos(prev => prev.filter(m => m.id !== id));
       await storage.upsertMemo(deletedMemo);
-      performSync(await storage.getMemos(true));
+      const allMemos = await storage.getMemos(true);
+      await performSync(allMemos);
     }
   };
 
   const filteredMemos = useMemo(() => {
     let result = memos;
     if (filter === 'important') result = result.filter(m => m.priority === 'important');
-    if (filter === 'favorites') result = result.filter(m => m.isFavorite);
-    if (filter === 'archived') result = result.filter(m => m.isArchived);
+    else if (filter === 'favorites') result = result.filter(m => m.isFavorite);
+    else if (filter === 'archived') result = result.filter(m => m.isArchived);
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();

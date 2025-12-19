@@ -2,7 +2,13 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { TodoItem, Priority } from "../types.js";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("Gemini API_KEY is not defined in process.env");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export async function extractTasks(content: string, forceTodo: boolean = false): Promise<TodoItem[]> {
   try {
@@ -30,7 +36,9 @@ export async function extractTasks(content: string, forceTodo: boolean = false):
         }
       }
     });
-    const data = JSON.parse(response.text || "[]");
+
+    const text = response.text || "[]";
+    const data = JSON.parse(text);
     return data.map((item: any) => ({
       id: Math.random().toString(36).substr(2, 9),
       text: item.text,
@@ -38,6 +46,7 @@ export async function extractTasks(content: string, forceTodo: boolean = false):
       priority: item.priority as Priority
     }));
   } catch (e) {
+    console.error("extractTasks failed:", e);
     return [];
   }
 }
@@ -53,9 +62,11 @@ export async function suggestTags(content: string): Promise<string[]> {
         responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
       }
     });
-    const tags = JSON.parse(response.text || "[]");
+    const text = response.text || "[]";
+    const tags = JSON.parse(text);
     return tags.map((tag: string) => tag.replace(/^#/, ''));
   } catch (e) {
+    console.error("suggestTags failed:", e);
     return [];
   }
 }
@@ -77,7 +88,8 @@ export async function askAssistant(query: string, contextMemos: string[]): Promi
     });
     return response.text || "我无法理解这个问题。";
   } catch (e) {
-    return "对话发生错误，请重试。";
+    console.error("askAssistant failed:", e);
+    return "对话发生错误，请确认网络连接或 API Key 是否正确。";
   }
 }
 
@@ -98,7 +110,7 @@ export async function generateSpeech(text: string): Promise<string | undefined> 
     });
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   } catch (e) {
-    console.error("TTS failed", e);
+    console.error("TTS generation failed:", e);
     return undefined;
   }
 }

@@ -7,17 +7,41 @@
     <title>Smart Assistant | Second Brain</title>
     <link rel="manifest" href="metadata.json">
     <script>
-        // 核心：在任何模块加载前定义全局 process 对象，防止 ReferenceError
-        if (typeof window.process === 'undefined') {
-            window.process = { env: { API_KEY: '' } };
-        }
+        /**
+         * Robust process shim - must be the very first thing to run.
+         * Ensures @google/genai and other ESM modules don't crash on 'process' access.
+         */
+        (function() {
+            const shim = { env: { API_KEY: '' } };
+            if (typeof window.process === 'undefined') {
+                window.process = shim;
+            } else {
+                window.process.env = window.process.env || shim.env;
+            }
+        })();
 
-        // 注册 Service Worker 实现 PWA 离线支持
+        /**
+         * Service Worker registration.
+         * Simplified to use a relative path directly, avoiding the 'URL' constructor 
+         * which can fail in non-standard environments (like sandboxed previews).
+         */
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
-                    console.log('Service Worker registration failed: ', err);
-                });
+                // Only attempt registration in secure contexts (HTTPS or localhost)
+                const isSecureContext = window.isSecureContext || 
+                                       window.location.protocol === 'https:' || 
+                                       window.location.hostname === 'localhost' || 
+                                       window.location.hostname === '127.0.0.1';
+                                       
+                if (isSecureContext) {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => console.log('SW registered on scope:', reg.scope))
+                        .catch(err => {
+                            console.warn('Service Worker registration skipped or failed:', err.message);
+                        });
+                } else {
+                    console.log('Service Worker skipped: Not a secure context.');
+                }
             });
         }
     </script>
@@ -91,10 +115,6 @@
         .active-scale:active {
             transform: scale(0.96);
         }
-
-        .pb-safe-nav {
-            padding-bottom: calc(5rem + env(safe-area-inset-bottom));
-        }
     </style>
     <script type="importmap">
 {
@@ -112,5 +132,6 @@
 </head>
 <body>
     <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
