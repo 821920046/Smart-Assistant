@@ -71,100 +71,65 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   const triggerReminderPicker = () => reminderInputRef.current?.showPicker();
 
   return (
-    <div className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm transition-all focus-within:shadow-xl focus-within:border-slate-300 focus-within:-translate-y-1 duration-300">
+    <div className="bg-white rounded-[28px] md:rounded-[32px] p-5 md:p-6 border border-slate-100 shadow-sm focus-within:shadow-xl focus-within:border-slate-200 transition-all duration-300">
       <div className="relative">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="今天有什么新灵感？"
-          className="w-full min-h-[160px] resize-none border-none focus:ring-0 text-slate-800 placeholder:text-slate-300 text-xl font-medium leading-relaxed bg-transparent"
+          placeholder="有什么新灵感？"
+          className="w-full min-h-[120px] md:min-h-[160px] resize-none border-none focus:ring-0 text-slate-800 placeholder:text-slate-300 text-lg md:text-xl font-medium leading-relaxed bg-transparent no-scrollbar"
         />
-        
-        {!content && (
-          <div className="absolute top-24 left-0 flex items-center gap-3 text-slate-200 pointer-events-none transition-opacity">
-             <div className="flex gap-1 items-end h-4">
-               <span className="w-1 bg-slate-100 rounded-full animate-pulse h-2"></span>
-               <span className="w-1 bg-slate-100 rounded-full animate-pulse h-4" style={{ animationDelay: '200ms' }}></span>
-               <span className="w-1 bg-slate-100 rounded-full animate-pulse h-3" style={{ animationDelay: '400ms' }}></span>
-             </div>
-             <span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">智能引擎已就绪</span>
-          </div>
-        )}
       </div>
       
       <div className="flex flex-wrap items-center gap-2 mt-2">
         {dueDate && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-full text-[10px] font-bold tracking-wider border border-slate-900 transition-all hover:bg-slate-800">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-full text-[9px] font-bold tracking-wider">
             <Icons.Calendar />
             截止: {new Date(dueDate).toLocaleDateString().toUpperCase()}
-            <button 
-              onClick={() => setDueDate('')}
-              className="ml-1 text-slate-400 hover:text-white transition-colors"
-            >
-              ×
-            </button>
+            <button onClick={() => setDueDate('')} className="ml-1 opacity-60">×</button>
           </div>
         )}
         {reminderAt && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-sky-600 text-white rounded-full text-[10px] font-bold tracking-wider border border-sky-600 transition-all hover:bg-sky-700">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-sky-600 text-white rounded-full text-[9px] font-bold tracking-wider">
             <Icons.Bell />
-            提醒: {new Date(reminderAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
-            <button 
-              onClick={() => setReminderAt('')}
-              className="ml-1 text-sky-200 hover:text-white transition-colors"
-            >
-              ×
-            </button>
+            提醒: {new Date(reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <button onClick={() => setReminderAt('')} className="ml-1 opacity-60">×</button>
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
+      <div className="flex items-center justify-between mt-4 md:mt-6 pt-4 md:pt-5 border-t border-slate-50">
         <div className="flex gap-1 items-center">
-          <VoiceInterface onTranscriptionComplete={handleVoiceTranscription} isCompact={false} />
+          <VoiceInterface onTranscriptionComplete={handleVoiceTranscription} isCompact={true} />
           
-          <div className="h-6 w-px bg-slate-200 mx-2"></div>
+          <div className="h-5 w-px bg-slate-100 mx-2"></div>
           
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <button 
               onClick={handleRefine}
               disabled={!content.trim() || isRefining}
-              className={`p-2.5 transition-all rounded-xl hover:bg-sky-50 ${isRefining ? 'animate-pulse text-sky-600' : 'text-slate-400 hover:text-sky-600'}`}
-              title="智能润色"
+              className={`p-2.5 transition-all rounded-xl hover:bg-sky-50 ${isRefining ? 'animate-pulse text-sky-600' : 'text-slate-400'}`}
+              title="AI 润色"
             >
               <Icons.Sparkles />
             </button>
             <div className="relative">
               <button 
                 onClick={triggerDatePicker}
-                className={`p-2.5 transition-all rounded-xl hover:bg-slate-50 ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-slate-900'}`}
-                title="设置截止日期"
+                className={`p-2.5 rounded-xl ${dueDate ? 'text-sky-600 bg-sky-50' : 'text-slate-400'}`}
               >
                 <Icons.Calendar />
               </button>
-              <input 
-                ref={dateInputRef}
-                type="date" 
-                className="absolute opacity-0 pointer-events-none w-0 h-0"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+              <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <div className="relative">
               <button 
                 onClick={triggerReminderPicker}
-                className={`p-2.5 transition-all rounded-xl hover:bg-slate-50 ${reminderAt ? 'text-sky-600 bg-sky-50' : 'text-slate-400 hover:text-slate-900'}`}
-                title="设置提醒闹钟"
+                className={`p-2.5 rounded-xl ${reminderAt ? 'text-sky-600 bg-sky-50' : 'text-slate-400'}`}
               >
                 <Icons.Clock />
               </button>
-              <input 
-                ref={reminderInputRef}
-                type="datetime-local" 
-                className="absolute opacity-0 pointer-events-none w-0 h-0"
-                value={reminderAt}
-                onChange={(e) => setReminderAt(e.target.value)}
-              />
+              <input ref={reminderInputRef} type="datetime-local" className="absolute opacity-0 w-0 h-0" value={reminderAt} onChange={(e) => setReminderAt(e.target.value)} />
             </div>
           </div>
         </div>
@@ -172,29 +137,15 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         <button
           onClick={handleSave}
           disabled={!content.trim() || isProcessing}
-          className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-bold transition-all duration-300 ${
+          className={`flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 rounded-2xl font-bold transition-all ${
             isProcessing || !content.trim() 
-              ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100' 
-              : 'bg-black text-white hover:bg-slate-800 shadow-xl shadow-slate-200 active:scale-[0.98]'
+              ? 'bg-slate-50 text-slate-300' 
+              : 'bg-black text-white hover:bg-slate-800'
           }`}
         >
-          {isProcessing ? (
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              <span className="text-sm">合成中...</span>
-            </div>
-          ) : (
-            <span className="text-sm">记录想法</span>
-          )}
+          {isProcessing ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <span className="text-sm">保存</span>}
         </button>
       </div>
-      
-      {isProcessing && (
-        <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100 animate-pulse">
-          <Icons.Sparkles />
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">智能助手正在提取任务、标签和优先级...</span>
-        </div>
-      )}
     </div>
   );
 };

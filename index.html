@@ -3,84 +3,66 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能助理 | 您的智能思考中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>智能助理 | 第二大脑</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #fcfcfd;
+            --bg-main: #fcfcfd;
+            --sidebar-bg: #f5f5f7;
+            --accent: #0ea5e9;
+            --safe-bottom: env(safe-area-inset-bottom);
         }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            outline: none !important;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(190,100%,40%,0.03) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(220,100%,40%,0.03) 0, transparent 50%);
-            letter-spacing: -0.011em;
-            color: #1a1a1a;
+            font-family: 'Inter', -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-main);
+            color: #1d1d1f;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
         }
+
         .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #cbd5e1;
-        }
-        .memo-card-shadow {
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 6px -1px rgba(0,0,0,0.02);
-        }
-        .memo-card-shadow:hover {
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
         }
 
-        /* Branding Styles - Smart Assistant Blue/Cyan */
+        .memo-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .memo-card:active {
+            transform: scale(0.98);
+        }
+
         .assistant-gradient {
-            background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
-        }
-        .assistant-glow {
-            box-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
+            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
         }
 
-        /* Todo Animations */
-        @keyframes springy-bounce {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.04); }
-            50% { transform: scale(0.98); }
-            100% { transform: scale(1); }
-        }
-        .animate-springy {
-            animation: springy-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        @keyframes strike-in {
-            from { width: 0; }
-            to { width: 100%; }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .strikethrough-animate {
-            position: relative;
+        .animate-slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .strikethrough-animate::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            height: 1.5px;
-            background: currentColor;
-            width: 0;
-            animation: strike-in 0.3s ease-out forwards;
+        
+        /* 移动端 Dock 样式 */
+        .mobile-dock {
+            box-shadow: 0 -10px 40px -10px rgba(0,0,0,0.05);
         }
     </style>
 <script type="importmap">
