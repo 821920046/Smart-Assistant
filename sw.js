@@ -4,6 +4,8 @@ const ASSETS = [
   './',
   './index.html',
   './metadata.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdn.tailwindcss.com'
 ];
 
