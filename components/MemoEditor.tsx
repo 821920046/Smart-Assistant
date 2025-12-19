@@ -80,6 +80,24 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
     }
   };
 
+  const priorityConfig = {
+    important: {
+      label: '重要',
+      active: 'bg-rose-500 text-white border-rose-500 shadow-rose-100',
+      inactive: 'bg-rose-50 text-rose-500 border-rose-100 hover:border-rose-200'
+    },
+    normal: {
+      label: '一般',
+      active: 'bg-indigo-500 text-white border-indigo-500 shadow-indigo-100',
+      inactive: 'bg-indigo-50 text-indigo-500 border-indigo-100 hover:border-indigo-200'
+    },
+    secondary: {
+      label: '次要',
+      active: 'bg-slate-500 text-white border-slate-500 shadow-slate-100',
+      inactive: 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300'
+    }
+  };
+
   return (
     <div className="bg-white rounded-[32px] md:rounded-[48px] p-6 md:p-14 border border-slate-50 shadow-sm focus-within:shadow-xl transition-all duration-500">
       <div className="flex flex-wrap items-center gap-3 mb-8">
@@ -88,13 +106,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
           <button
             key={p}
             onClick={() => setPriority(p)}
-            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-              priority === p 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-lg' 
-                : 'bg-slate-50 text-slate-400 border-slate-50 hover:border-slate-200'
+            className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+              priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
             }`}
           >
-            {p === 'important' ? '重要' : p === 'normal' ? '一般' : '次要'}
+            {priorityConfig[p].label}
           </button>
         ))}
       </div>
@@ -126,11 +142,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
           <VoiceInterface onTranscriptionComplete={(text) => setContent(prev => prev ? prev + '\n' + text : text)} isCompact={false} />
           <div className="h-10 w-[1px] bg-slate-100 hidden sm:block mx-1" />
           <div className="flex gap-2">
-            <button onClick={() => setShowWhiteboard(true)} className={`p-4 rounded-2xl transition-all active:scale ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:bg-slate-50'}`} title="添加手绘">
+            <button onClick={() => setShowWhiteboard(true)} className={`p-4 rounded-2xl transition-all active-scale ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:bg-slate-50'}`} title="添加手绘">
               <Icons.Pen />
             </button>
             <div className="relative">
-              <button onClick={() => dateInputRef.current?.showPicker()} className={`p-4 rounded-2xl transition-all active:scale ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}>
+              <button onClick={() => dateInputRef.current?.showPicker()} className={`p-4 rounded-2xl transition-all active-scale ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}>
                 <Icons.Calendar />
               </button>
               <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
@@ -138,7 +154,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
             <div className="relative">
               <button 
                 onClick={() => setShowReminderOptions(!showReminderOptions)} 
-                className={`p-4 rounded-2xl transition-all active:scale ${reminderAt ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}
+                className={`p-4 rounded-2xl transition-all active-scale ${reminderAt ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}
               >
                 <Icons.Clock />
               </button>
