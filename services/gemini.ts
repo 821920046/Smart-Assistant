@@ -4,12 +4,16 @@ import { TodoItem, Priority } from "../types.js";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export async function extractTasks(content: string): Promise<TodoItem[]> {
+export async function extractTasks(content: string, forceTodo: boolean = false): Promise<TodoItem[]> {
   try {
     const ai = getAI();
+    const systemPrompt = forceTodo 
+      ? "The user explicitly wants to create a checklist. Extract every meaningful line as a separate actionable todo item. Assign priorities based on urgency keywords if present, otherwise default to medium."
+      : "Extract actionable todo items from this note content. If the content seems to be a general note without clear actions, you can return an empty array. Assign a priority (low, medium, high).";
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Extract actionable todo items from this note content. Assign a priority (low, medium, high). Output in JSON.
+      contents: `${systemPrompt} Output in JSON.
       Content: "${content}"`,
       config: {
         responseMimeType: "application/json",

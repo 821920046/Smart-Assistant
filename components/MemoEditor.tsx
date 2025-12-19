@@ -4,7 +4,7 @@ import { Icons } from '../constants.js';
 import VoiceInterface from './VoiceInterface.js';
 import Whiteboard from './Whiteboard.js';
 import { extractTasks, suggestTags, refineText } from '../services/gemini.js';
-import { Memo } from '../types.js';
+import { Memo, TodoItem, Priority } from '../types.js';
 
 interface MemoEditorProps {
   onSave: (memo: Partial<Memo>) => void;
@@ -14,6 +14,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   const [content, setContent] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
+  const [isTodoMode, setIsTodoMode] = useState(false);
   const [dueDate, setDueDate] = useState<string>('');
   const [reminderAt, setReminderAt] = useState<string>('');
   const [sketchData, setSketchData] = useState<string | null>(null);
@@ -22,14 +23,59 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
   const reminderInputRef = useRef<HTMLInputElement>(null);
 
+  // 本地兜底解析：识别以 - 或 * 或 1. 开头的行
+  const localParseTasks = (text: string): TodoItem[] => {
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    const tasks: TodoItem[] = [];
+    
+    lines.forEach(line => {
+      const match = line.match(/^[-*]\s+(.*)$|^(\d+\.\s+)(.*)$/);
+      if (match) {
+        const taskText = match[1] || match[3];
+        tasks.push({
+          id: Math.random().toString(36).substr(2, 9),
+          text: taskText.trim(),
+          completed: false,
+          priority: 'medium' as Priority
+        });
+      }
+    });
+    
+    return tasks;
+  };
+
   const handleSave = async () => {
     if (!content.trim() && !sketchData) return;
     setIsProcessing(true);
     try {
-      const [todos, tags] = await Promise.all([
-        content.trim() ? extractTasks(content) : Promise.resolve([]),
-        content.trim() ? suggestTags(content) : Promise.resolve([])
-      ]);
+      let todos: TodoItem[] = [];
+      let tags: string[] = [];
+
+      if (content.trim()) {
+        const results = await Promise.all([
+          extractTasks(content, isTodoMode), // 传入模式提示 AI
+          suggestTags(content)
+        ]);
+        todos = results[0];
+        tags = results[1];
+
+        // 如果 AI 没提取出来但开启了待办模式，尝试本地正则解析
+        if (todos.length === 0 && isTodoMode) {
+          todos = localParseTasks(content);
+        }
+        
+        // 如果开启了待办模式但还是空的，把每一行都当成一个任务
+        if (todos.length === 0 && isTodoMode) {
+          todos = content.split('\n')
+            .filter(l => l.trim().length > 0)
+            .map(l => ({
+              id: Math.random().toString(36).substr(2, 9),
+              text: l.trim(),
+              completed: false,
+              priority: 'medium'
+            }));
+        }
+      }
       
       onSave({
         content: content || (sketchData ? '[手绘内容]' : ''),
@@ -48,6 +94,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
       setDueDate('');
       setReminderAt('');
       setSketchData(null);
+      setIsTodoMode(false);
     } finally {
       setIsProcessing(false);
     }
@@ -86,7 +133,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder={sketchData ? "写点关于这张画的..." : "此时此刻的想法..."}
+          placeholder={isTodoMode ? "输入清单项，每行一个..." : (sketchData ? "写点关于这张画的..." : "此时此刻的想法...")}
           className="w-full min-h-[120px] md:min-h-[180px] resize-none border-none focus:ring-0 text-slate-900 placeholder:text-slate-200 text-xl md:text-3xl font-black leading-tight bg-transparent no-scrollbar outline-none tracking-tight"
         />
       </div>
@@ -110,6 +157,13 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
           <VoiceInterface onTranscriptionComplete={handleVoiceTranscription} isCompact={false} />
           <div className="flex gap-1.5 md:gap-2">
+            <button 
+              onClick={() => setIsTodoMode(!isTodoMode)} 
+              className={`p-3 md:p-4 rounded-xl transition-all active-scale ${isTodoMode ? 'bg-amber-100 text-amber-600 shadow-inner' : 'text-slate-300'}`} 
+              title="切换清单模式"
+            >
+              <Icons.List />
+            </button>
             <button onClick={() => setShowWhiteboard(true)} className={`p-3 md:p-4 rounded-xl transition-all active-scale ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300'}`} title="白板">
               <Icons.Pen />
             </button>
