@@ -18,16 +18,14 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
   const handleSend = async () => {
     if (!query.trim() || isLoading) return;
-    
     const userQuery = query.trim();
     setQuery('');
     setMessages(prev => [...prev, { role: 'user', text: userQuery }]);
     setIsLoading(true);
-
     try {
       const response = await askAssistant(userQuery, contextMemos);
       setMessages(prev => [...prev, { role: 'ai', text: response }]);
@@ -38,41 +36,38 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
 
   return (
     <>
-      {/* Toggle Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-10 right-10 w-16 h-16 rounded-full assistant-gradient text-white shadow-2xl z-[150] flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white"
+        className="fixed bottom-24 md:bottom-10 right-4 md:right-10 w-14 h-14 md:w-16 md:h-16 rounded-full assistant-gradient text-white shadow-2xl z-[150] flex items-center justify-center active-scale transition-all border-4 border-white"
       >
-        {isOpen ? <span className="text-2xl">&times;</span> : <Icons.Sparkles />}
+        {isOpen ? <span className="text-xl">&times;</span> : <Icons.Sparkles />}
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-28 right-6 md:right-10 w-[calc(100vw-48px)] md:w-[400px] h-[500px] glass rounded-[40px] shadow-2xl z-[150] flex flex-col overflow-hidden border border-white/60 animate-card">
-          <header className="p-6 border-b border-slate-100 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl assistant-gradient flex items-center justify-center text-white">
-              <Icons.Sparkles />
+        <div className="fixed inset-0 md:inset-auto md:bottom-28 md:right-10 w-full md:w-[400px] h-full md:h-[600px] bg-white md:bg-white/80 md:backdrop-blur-xl md:rounded-[40px] shadow-2xl z-[160] flex flex-col overflow-hidden animate-card border-none md:border md:border-white/50">
+          <header className="px-6 py-5 md:py-6 border-b border-slate-50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl assistant-gradient flex items-center justify-center text-white"><Icons.Sparkles /></div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 leading-none">AI 助理</h3>
+                <p className="text-[9px] text-indigo-500 font-bold uppercase tracking-widest mt-1">Intelligence Active</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-900">AI 笔记助手</h3>
-              <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Semantic Context Active</p>
-            </div>
+            <button onClick={() => setIsOpen(false)} className="text-slate-300 md:hidden text-2xl font-light">&times;</button>
           </header>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-slate-50/20">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 md:p-6 space-y-4 no-scrollbar bg-slate-50/20">
             {messages.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-slate-400 text-xs font-medium px-10 leading-relaxed">
-                  我是你的私人笔记管家。你可以问我关于你笔记里的任何事情。
+              <div className="text-center py-20 px-10">
+                <p className="text-slate-400 text-xs leading-relaxed font-medium">
+                  我是你的专属第二大脑，你可以询问任何关于笔记的问题，或让我帮你总结。
                 </p>
               </div>
             )}
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-[24px] text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                  ? 'bg-slate-900 text-white rounded-tr-none' 
-                  : 'bg-white border border-slate-100 text-slate-800 shadow-sm rounded-tl-none'
+                <div className={`max-w-[90%] p-4 rounded-[20px] text-sm md:text-[15px] leading-relaxed shadow-sm ${
+                  msg.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
                 }`}>
                   {msg.text}
                 </div>
@@ -80,31 +75,31 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-slate-100 p-4 rounded-[24px] rounded-tl-none shadow-sm flex gap-1">
-                  <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                  <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                <div className="bg-white border border-slate-100 p-4 rounded-[20px] rounded-tl-none flex gap-1.5 items-center">
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" />
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]" />
                 </div>
               </div>
             )}
           </div>
 
-          <footer className="p-4 bg-white border-t border-slate-100">
+          <footer className="p-4 md:p-6 bg-white border-t border-slate-50 pb-safe-area">
             <div className="relative">
               <input 
                 type="text" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="询问你的笔记..."
-                className="w-full bg-slate-50 border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                placeholder="你想知道什么？"
+                className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-5 pr-14 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
               />
               <button 
                 onClick={handleSend}
                 disabled={!query.trim() || isLoading}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-500 hover:text-indigo-600 disabled:text-slate-300 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-indigo-500 disabled:text-slate-200 transition-all active-scale"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
               </button>
             </div>
           </footer>
