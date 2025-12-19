@@ -49,7 +49,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl assistant-gradient flex items-center justify-center text-white"><Icons.Sparkles /></div>
               <div>
-                <h3 className="text-sm font-black text-slate-900 leading-none">AI 助理</h3>
+                <h3 className="text-sm font-black text-slate-900 leading-none">AI Assistant</h3>
                 <p className="text-[9px] text-indigo-500 font-bold uppercase tracking-widest mt-1">Intelligence Active</p>
               </div>
             </div>
@@ -60,7 +60,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
             {messages.length === 0 && (
               <div className="text-center py-20 px-10">
                 <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                  我是你的专属第二大脑，你可以询问任何关于笔记的问题，或让我帮你总结。
+                  I am your exclusive Second Brain. You can ask anything about your notes, or let me summarize them for you.
                 </p>
               </div>
             )}
@@ -91,7 +91,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ contextMemos }) => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="你想知道什么？"
+                placeholder="Ask me anything..."
                 className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-5 pr-14 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
               />
               <button 

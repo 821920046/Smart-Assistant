@@ -1,7 +1,7 @@
 {
-  "name": "智能助理",
-  "short_name": "智能助理",
-  "description": "基于 Gemini 2.5/3 系列模型构建的极简智能思考中心，集成语音转写与 AI 自动摘要。",
+  "name": "Smart Assistant",
+  "short_name": "Smart Assistant",
+  "description": "A minimalist intelligent thinking center built on Gemini 2.5/3 series models, integrating voice transcription and AI auto-summarization.",
   "theme_color": "#0ea5e9",
   "background_color": "#fcfcfd",
   "display": "standalone",
