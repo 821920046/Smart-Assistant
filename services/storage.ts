@@ -20,43 +20,59 @@ export const storage = {
     });
   },
 
-  getMemos: async (): Promise<Memo[]> => {
+  getMemos: async (includeDeleted = false): Promise<Memo[]> => {
     const db = await storage.initDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result.sort((a, b) => b.createdAt - a.createdAt));
+      request.onsuccess = () => {
+        let results = request.result;
+        if (!includeDeleted) {
+          results = results.filter(m => !m.isDeleted);
+        }
+        resolve(results.sort((a, b) => b.updatedAt - a.updatedAt));
+      };
       request.onerror = () => reject(request.error);
     });
   },
 
+  // 增量保存单个记录
+  upsertMemo: async (memo: Memo) => {
+    const db = await storage.initDB();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(memo);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  // 批量保存
   saveMemos: async (memos: Memo[]) => {
     const db = await storage.initDB();
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      
-      // Clear and rewrite for simplicity in this version
-      // In a real high-perf app, we would use individual put/delete
-      const clearRequest = store.clear();
-      clearRequest.onsuccess = () => {
-        memos.forEach(memo => store.add(memo));
-        transaction.oncomplete = () => resolve();
-      };
+      memos.forEach(memo => store.put(memo));
+      transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
   },
 
-  // Legacy support for migration
   migrateFromLocalStorage: async () => {
     const legacyData = localStorage.getItem('memoai_memos');
     if (legacyData) {
       try {
         const memos = JSON.parse(legacyData);
-        await storage.saveMemos(memos);
+        // 为旧数据补充 updatedAt
+        const upgradedMemos = memos.map((m: any) => ({
+          ...m,
+          updatedAt: m.updatedAt || m.createdAt || Date.now()
+        }));
+        await storage.saveMemos(upgradedMemos);
         localStorage.removeItem('memoai_memos');
-        console.log('Successfully migrated data to IndexedDB');
       } catch (e) {
         console.error('Migration failed', e);
       }

@@ -20,9 +20,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      // Step 1: Migrate data if exists in localStorage
       await storage.migrateFromLocalStorage();
-      // Step 2: Load memos from IndexedDB
       const storedMemos = await storage.getMemos();
       setMemos(storedMemos);
       setIsLoading(false);
@@ -35,10 +33,10 @@ const App: React.FC = () => {
       const currentMemos = await storage.getMemos();
       const dueMemo = currentMemos.find(m => m.reminderAt && m.reminderAt <= now);
       if (dueMemo) {
-        const updatedMemos = currentMemos.map(m => 
-          m.id === dueMemo.id ? { ...m, reminderAt: undefined } : m
-        );
-        saveMemos(updatedMemos);
+        const updatedMemo = { ...dueMemo, reminderAt: undefined, updatedAt: now };
+        await storage.upsertMemo(updatedMemo);
+        setMemos(prev => prev.map(m => m.id === dueMemo.id ? updatedMemo : m));
+        
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("记录提醒", { body: dueMemo.content.substring(0, 50) });
         }
@@ -47,12 +45,8 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const saveMemos = async (newMemos: Memo[]) => {
-    setMemos(newMemos);
-    await storage.saveMemos(newMemos);
-  };
-
-  const addMemo = (memoData: Partial<Memo>) => {
+  const addMemo = async (memoData: Partial<Memo>) => {
+    const now = Date.now();
     const newMemo: Memo = {
       id: Math.random().toString(36).substr(2, 6),
       content: memoData.content || '',
@@ -62,21 +56,32 @@ const App: React.FC = () => {
       dueDate: memoData.dueDate,
       reminderAt: memoData.reminderAt,
       sketchData: memoData.sketchData,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now, // 核心：同步基准
       isArchived: false,
       isFavorite: false,
     };
-    saveMemos([newMemo, ...memos]);
+    const updatedMemos = [newMemo, ...memos];
+    setMemos(updatedMemos);
+    await storage.upsertMemo(newMemo);
     setIsEditorOpen(false);
   };
 
-  const updateMemo = (updatedMemo: Memo) => {
-    saveMemos(memos.map(m => m.id === updatedMemo.id ? updatedMemo : m));
+  const updateMemo = async (updatedMemo: Memo) => {
+    const upgraded = { ...updatedMemo, updatedAt: Date.now() };
+    setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
+    await storage.upsertMemo(upgraded);
   };
 
-  const deleteMemo = (id: string) => {
+  const deleteMemo = async (id: string) => {
     if (confirm('确定要删除这条记录吗？')) {
-      saveMemos(memos.filter(m => m.id !== id));
+      const memoToDelete = memos.find(m => m.id === id);
+      if (memoToDelete) {
+        // 软删除逻辑，为同步做准备
+        const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
+        setMemos(prev => prev.filter(m => m.id !== id));
+        await storage.upsertMemo(deletedMemo);
+      }
     }
   };
 
@@ -96,11 +101,21 @@ const App: React.FC = () => {
         const importedMemos = JSON.parse(event.target?.result as string) as Memo[];
         if (Array.isArray(importedMemos)) {
           if (confirm(`准备恢复 ${importedMemos.length} 条记录。确定吗？`)) {
-            const currentIds = new Set(memos.map(m => m.id));
-            const uniqueImports = importedMemos.filter(m => !currentIds.has(m.id));
-            const merged = [...memos, ...uniqueImports].sort((a, b) => b.createdAt - a.createdAt);
-            await saveMemos(merged);
-            alert('数据恢复成功！');
+            // 合并逻辑：基于 id 和 updatedAt
+            const existingMemos = await storage.getMemos(true);
+            const memoMap = new Map(existingMemos.map(m => [m.id, m]));
+            
+            importedMemos.forEach(imported => {
+              const existing = memoMap.get(imported.id);
+              if (!existing || imported.updatedAt > existing.updatedAt) {
+                memoMap.set(imported.id, imported);
+              }
+            });
+
+            const merged = Array.from(memoMap.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+            setMemos(merged.filter(m => !m.isDeleted));
+            await storage.saveMemos(merged);
+            alert('数据恢复/同步成功！');
           }
         }
       } catch (e) {
@@ -165,7 +180,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-6">
           <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" />
-          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">正在准备你的思维空间...</p>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">正在同步空间...</p>
         </div>
       </div>
     );
@@ -186,8 +201,8 @@ const App: React.FC = () => {
           <div className="flex items-end justify-between">
             <div className="space-y-3">
               <div className="flex items-center gap-2.5 text-indigo-500 font-bold text-[11px] uppercase tracking-[0.2em]">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                Intelligent Space
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-sm" />
+                Intelligent Hub
               </div>
               <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">{activeLabel}</h1>
             </div>
@@ -201,13 +216,13 @@ const App: React.FC = () => {
             </button>
           </div>
           <div className="relative group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500"><Icons.Search /></div>
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors"><Icons.Search /></div>
             <input
               type="text"
-              placeholder="搜索任何内容..."
+              placeholder="搜索任何记录..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-16 bg-white border border-slate-200 rounded-[28px] pl-16 pr-8 text-base font-medium outline-none focus:border-indigo-400"
+              className="w-full h-16 bg-white border border-slate-200 rounded-[28px] pl-16 pr-8 text-base font-medium outline-none focus:border-indigo-400 shadow-sm transition-all"
             />
           </div>
         </header>
@@ -217,10 +232,10 @@ const App: React.FC = () => {
             <div className="ai-summary-card p-10 rounded-[48px] relative overflow-hidden">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center text-purple-500"><Icons.Sparkles /></div>
-                  <div><h3 className="font-black text-slate-900 text-base">AI 智能简报</h3></div>
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center text-purple-500 shadow-sm"><Icons.Sparkles /></div>
+                  <div><h3 className="font-black text-slate-900 text-base">AI 智能分析</h3></div>
                 </div>
-                <button onClick={() => setSummary(null)} className="w-10 h-10 rounded-full hover:bg-white/60 flex items-center justify-center text-slate-300">&times;</button>
+                <button onClick={() => setSummary(null)} className="w-10 h-10 rounded-full hover:bg-white/60 flex items-center justify-center text-slate-300 transition-colors">&times;</button>
               </div>
               <div className="text-slate-800 leading-relaxed text-base md:text-lg whitespace-pre-wrap font-medium">{summary}</div>
             </div>
@@ -239,7 +254,7 @@ const App: React.FC = () => {
           ) : (
             <div className="py-48 flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-200 mb-8"><Icons.Archive /></div>
-              <h3 className="text-slate-900 font-black text-2xl mb-3">暂无内容</h3>
+              <h3 className="text-slate-900 font-black text-2xl mb-3 tracking-tight">暂无记录</h3>
             </div>
           )}
         </div>
@@ -247,17 +262,17 @@ const App: React.FC = () => {
 
       <ChatAssistant contextMemos={filteredMemos.map(m => m.content)} />
 
-      {/* Mobile nav and editor modal preserved from existing version */}
       <nav className="md:hidden fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] glass rounded-[36px] p-2.5 flex items-center justify-between z-50 shadow-2xl border border-white/50">
-        <button onClick={() => setFilter('all')} className={`p-4 rounded-3xl ${filter === 'all' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}><Icons.Plus /></button>
-        <button onClick={() => setIsEditorOpen(true)} className="w-16 h-16 assistant-gradient text-white rounded-full flex items-center justify-center -translate-y-8 border-4 border-white shadow-xl"><Icons.Plus /></button>
-        <button onClick={() => setFilter('favorites')} className={`p-4 rounded-3xl ${filter === 'favorites' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}><Icons.Star /></button>
+        <button onClick={() => setFilter('all')} className={`p-4 rounded-3xl ${filter === 'all' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}><Icons.Plus /></button>
+        <button onClick={() => setIsEditorOpen(true)} className="w-16 h-16 assistant-gradient text-white rounded-full flex items-center justify-center -translate-y-8 border-4 border-white shadow-xl active:scale-95 transition-all"><Icons.Plus /></button>
+        <button onClick={() => setFilter('favorites')} className={`p-4 rounded-3xl ${filter === 'favorites' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}><Icons.Star /></button>
       </nav>
 
       {isEditorOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:hidden">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditorOpen(false)} />
-          <div className="w-full bg-white rounded-t-[48px] p-8 animate-card relative z-10">
+          <div className="w-full bg-white rounded-t-[48px] p-8 animate-card relative z-10 border-t border-slate-100">
+             <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-8" />
              <MemoEditor onSave={addMemo} />
              <div className="h-10" />
           </div>
