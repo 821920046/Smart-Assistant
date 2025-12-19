@@ -122,34 +122,34 @@ const App: React.FC = () => {
         tags={allTags} 
       />
       
-      <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto px-4 md:px-8 pt-8 md:pt-20 pb-40">
+      <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto px-4 md:px-12 pt-8 md:pt-24 pb-40">
         {/* Page Header */}
-        <header className="flex flex-col gap-8 mb-12">
+        <header className="flex flex-col gap-10 mb-16">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sky-600 font-bold text-[10px] uppercase tracking-[0.2em]">
-                <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-                智能工作空间
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-[0.3em]">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                Workspace
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">{activeLabel}</h1>
+              <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-tight">{activeLabel}</h1>
             </div>
             
             <button 
               onClick={handleGenerateSummary}
               disabled={isSummarizing || filteredMemos.length === 0}
-              className={`p-3 rounded-2xl border transition-all flex items-center gap-2 shadow-sm active:scale-95 ${
+              className={`p-4 rounded-[20px] border transition-all flex items-center gap-3 shadow-sm active:scale-95 ${
                 isSummarizing 
-                ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' 
-                : 'bg-white text-slate-700 border-slate-200 hover:border-sky-200 hover:text-sky-600'
+                ? 'bg-zinc-50 text-zinc-400 border-zinc-100 cursor-not-allowed' 
+                : 'bg-white text-slate-800 border-zinc-200 hover:border-indigo-300 hover:text-indigo-600'
               }`}
             >
-              {isSummarizing ? <div className="w-4 h-4 border-2 border-slate-200 border-t-sky-500 rounded-full animate-spin" /> : <Icons.Sparkles />}
-              <span className="text-xs font-bold hidden sm:inline">AI 摘要</span>
+              {isSummarizing ? <div className="w-4 h-4 border-2 border-zinc-200 border-t-indigo-500 rounded-full animate-spin" /> : <Icons.Sparkles />}
+              <span className="text-xs font-black uppercase tracking-widest hidden sm:inline">AI Summary</span>
             </button>
           </div>
 
           <div className="relative group">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
               <Icons.Search />
             </div>
             <input
@@ -157,47 +157,47 @@ const App: React.FC = () => {
               placeholder="搜索任何内容、任务或标签..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 bg-white/50 backdrop-blur-sm border border-slate-200 rounded-[20px] pl-14 pr-6 text-sm font-medium focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all outline-none"
+              className="w-full h-16 bg-white border border-zinc-200 rounded-[24px] pl-16 pr-8 text-base font-medium focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none shadow-sm"
             />
           </div>
         </header>
 
-        {/* Desktop Editor */}
-        <section className="hidden md:block mb-16 animate-slide-up">
-          <MemoEditor onSave={addMemo} />
-        </section>
-
         {/* AI Summary View */}
         {summary && (
-          <section className="mb-12 animate-slide-up">
-            <div className="bg-gradient-to-br from-indigo-50/80 to-sky-50/50 border border-indigo-100 p-8 rounded-[32px] relative overflow-hidden shadow-sm">
-              <div className="absolute right-0 top-0 p-8 opacity-5">
+          <section className="mb-16 animate-slide-up">
+            <div className="ai-summary-gradient p-10 rounded-[40px] relative overflow-hidden">
+              <div className="absolute right-[-20px] top-[-20px] p-12 opacity-[0.03] rotate-12">
                 <Icons.Sparkles />
               </div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
                     <Icons.Sparkles />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 leading-tight text-sm">AI 智能洞察</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Generated Summaries</p>
+                    <h3 className="font-black text-slate-900 text-base">AI 智绘简报</h3>
+                    <p className="text-[10px] text-purple-500 font-black uppercase tracking-[0.2em]">Contextual Intelligence</p>
                   </div>
                 </div>
-                <button onClick={() => setSummary(null)} className="w-8 h-8 rounded-full hover:bg-white/50 flex items-center justify-center text-slate-400 transition-colors">&times;</button>
+                <button onClick={() => setSummary(null)} className="w-10 h-10 rounded-full hover:bg-white/60 flex items-center justify-center text-zinc-400 transition-colors">&times;</button>
               </div>
-              <div className="text-slate-700 leading-relaxed text-sm md:text-base whitespace-pre-wrap font-medium">
+              <div className="text-slate-800 leading-relaxed text-base md:text-lg whitespace-pre-wrap font-medium">
                 {summary}
               </div>
             </div>
           </section>
         )}
 
+        {/* Desktop Editor */}
+        <section className="hidden md:block mb-20 animate-slide-up">
+          <MemoEditor onSave={addMemo} />
+        </section>
+
         {/* List Content */}
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-8">
           {filteredMemos.length > 0 ? (
             filteredMemos.map((memo, idx) => (
-              <div key={memo.id} className="animate-slide-up" style={{ animationDelay: `${idx * 40}ms` }}>
+              <div key={memo.id} className="animate-slide-up" style={{ animationDelay: `${idx * 50}ms` }}>
                 <MemoCard 
                   memo={memo} 
                   onUpdate={updateMemo} 
@@ -207,13 +207,13 @@ const App: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="py-32 flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
+            <div className="py-40 flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-200 mb-8">
                 <Icons.Archive />
               </div>
-              <h3 className="text-slate-900 font-bold text-lg mb-2">暂无记录</h3>
-              <p className="text-slate-400 text-sm max-w-[240px]">
-                这里还没有内容。开启一段新的思考，或者切换筛选条件。
+              <h3 className="text-slate-900 font-black text-xl mb-3">空空如也</h3>
+              <p className="text-zinc-400 text-sm max-w-[280px] font-medium leading-relaxed">
+                这里还没有内容。开启一段新的思考，记录每一个闪光瞬间。
               </p>
             </div>
           )}
@@ -221,7 +221,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Mobile Floating Bar */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] glass rounded-[28px] p-2 flex items-center justify-between z-50 mobile-dock border border-white/50">
+      <nav className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] glass rounded-[32px] p-2 flex items-center justify-between z-50 shadow-2xl border border-white/50">
         <div className="flex flex-1 justify-around">
           {[
             { id: 'all', icon: Icons.Plus, label: '首页' },
@@ -230,8 +230,8 @@ const App: React.FC = () => {
             <button
               key={item.id}
               onClick={() => { setFilter(item.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className={`flex flex-col items-center p-3 rounded-2xl transition-all ${
-                filter === item.id ? 'bg-sky-50 text-sky-600' : 'text-slate-400'
+              className={`flex flex-col items-center p-4 rounded-2xl transition-all ${
+                filter === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-zinc-400'
               }`}
             >
               <item.icon />
@@ -241,7 +241,7 @@ const App: React.FC = () => {
 
         <button 
           onClick={() => setIsEditorOpen(true)}
-          className="w-14 h-14 assistant-gradient text-white rounded-full flex items-center justify-center shadow-lg shadow-sky-500/30 active:scale-90 transition-all -translate-y-4 border-4 border-[#f8fafc]"
+          className="w-16 h-16 assistant-gradient text-white rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 active:scale-90 transition-all -translate-y-6 border-4 border-white"
         >
           <Icons.Plus />
         </button>
@@ -254,8 +254,8 @@ const App: React.FC = () => {
             <button
               key={item.id}
               onClick={() => { setFilter(item.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className={`flex flex-col items-center p-3 rounded-2xl transition-all ${
-                filter === item.id ? 'bg-sky-50 text-sky-600' : 'text-slate-400'
+              className={`flex flex-col items-center p-4 rounded-2xl transition-all ${
+                filter === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-zinc-400'
               }`}
             >
               <item.icon />
@@ -267,34 +267,15 @@ const App: React.FC = () => {
       {/* Mobile Modal Editor */}
       {isEditorOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:hidden">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditorOpen(false)} />
-          <div className="w-full bg-white rounded-t-[40px] p-6 shadow-2xl animate-slide-up relative z-10 border-t border-slate-100">
-             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
-             <div className="flex justify-between items-center mb-6">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-400">捕捉灵感</span>
-                <button onClick={() => setIsEditorOpen(false)} className="text-slate-400 font-bold p-2">关闭</button>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsEditorOpen(false)} />
+          <div className="w-full bg-white rounded-t-[48px] p-8 shadow-2xl animate-slide-up relative z-10 border-t border-zinc-100">
+             <div className="w-14 h-1.5 bg-zinc-200 rounded-full mx-auto mb-8" />
+             <div className="flex justify-between items-center mb-8">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Capture Idea</span>
+                <button onClick={() => setIsEditorOpen(false)} className="text-zinc-900 font-black text-sm uppercase p-2">Close</button>
              </div>
              <MemoEditor onSave={addMemo} />
-             <div className="h-[var(--safe-bottom)]" />
-          </div>
-        </div>
-      )}
-
-      {/* Reminder Global Alert */}
-      {activeReminder && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl">
-          <div className="bg-white rounded-[40px] p-10 max-w-sm w-full shadow-2xl text-center animate-slide-up border border-slate-100">
-             <div className="w-24 h-24 rounded-[32px] assistant-gradient text-white flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-sky-500/20">
-               <div className="scale-150"><Icons.Bell /></div>
-             </div>
-             <h2 className="text-2xl font-black text-slate-900 mb-2">任务提醒</h2>
-             <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed px-4">{activeReminder.content}</p>
-             <button 
-               onClick={() => setActiveReminder(null)}
-               className="w-full py-5 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] active:scale-95 shadow-xl shadow-slate-900/20"
-             >
-               我知道了
-             </button>
+             <div className="h-10" />
           </div>
         </div>
       )}
