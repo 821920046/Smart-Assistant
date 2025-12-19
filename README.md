@@ -1,56 +1,62 @@
-# 🤖 智能助理 (Smart Assistant)
+# 🤖 智能助理 (Smart Assistant) v2.5
 
-基于 Google Gemini 大模型驱动的极简思考空间与智能任务管理中心。本项目旨在通过 AI 技术简化信息的记录、整理与回顾过程。
+基于 Google Gemini 3 系列大模型驱动的极简思考空间与智能任务管理中心。本项目通过先进的 AI 技术，将语音、手绘、文字与任务清单深度整合，打造一个真正可跨端同步的“第二大脑”。
 
-## ✨ 核心功能
+## ✨ 核心特性
 
-- **🎙️ 实时语音记事**：集成 Gemini 2.5 Flash Native Audio 模型，支持高精度的实时语音转文字。
-- **🎨 创意绘图白板**：**[新功能]** 内置全功能手绘白板，支持多色画笔、笔触粗细调节与橡皮擦。手绘作品可以作为独立记录或图文混排保存，并在时间轴中以精致的画框形式呈现。
-- **📝 智能任务提取**：输入一段文字，AI 自动识别并提取待办事项（Todo），并根据语境分配优先级（高/中/低）。
-- **✨ 智能润色 (Refine)**：一键优化草稿，修复语法错误，提升表达的专业性。
-- **📊 进度可视化**：Memo 卡片顶部配有动态进度条，实时反馈任务完成情况。
-- **🔊 强力语音朗读 (TTS)**：**[优化]** 支持将记录内容转换为流畅的自然语言播放。优化了模型指令调用，增强了对短文本及特殊占位符的鲁棒性。
-- **📅 智能简报**：根据当前筛选的记录，一键生成结构化的每日总结与重点回顾。
-- **🔍 语义化管理**：支持标签分类、全文搜索、截止日期提醒以及卡片归档。
+- **🚀 Gemini 3 驱动**：核心推理与创作采用最新的 `gemini-3-flash-preview` 与 `gemini-3-pro-preview` 模型，逻辑更强，响应更快。
+- **🎙️ 实时语音听写**：集成 `gemini-2.5-flash-native-audio` 模型，支持极低延迟的语音转文字，精准捕捉瞬时灵感。
+- **📋 智能清单模式**：
+  - **专属模式切换**：编辑器新增“清单”按钮，开启后 AI 将强制提取每一项任务。
+  - **双重解析机制**：内置本地正则解析（识别 `-`、`*`、`1.` 等符号）作为 AI 提取的实时兜底。
+  - **优先级智能分配**：自动根据内容语境判定任务优先级（High/Medium/Low）。
+- **🎨 创意绘图白板**：内置高清 Canvas 白板，支持撤销/重做、多色画笔及橡皮擦，手绘作品可在时间轴中完美呈现。
+- **🔄 全能同步方案**：内置 `Supabase`、`WebDAV`（如坚果云）、`GitHub Gist` 三大同步驱动，通过 `updatedAt` 时间戳实现多端自动冲突合并。
+- **💾 高性能存储**：底层存储由 LocalStorage 升级为 **IndexedDB**，支持海量数据存储，读写更流畅。
+- **🔊 自然语音朗读 (TTS)**：支持将记录内容一键转语音播放，采用优质预设音色，优化了对各种符号的处理。
+- **📊 智能时空管理**：支持标签分类、全文语义搜索、截止日期设置与实时提醒通知。
 
-## 🛠️ 技术栈
+## 🛠️ 技术架构
 
-- **Frontend**: React 19 + Tailwind CSS
-- **AI Engine**: [Google Generative AI SDK (@google/genai)](https://ai.google.dev/)
-- **Module System**: Native ES6 Modules (via esm.sh)
-- **Deployment**: Cloudflare Pages / Static Hosting
+- **UI 框架**: React 19 (Strict Mode)
+- **样式引擎**: Tailwind CSS 3
+- **AI 引擎**: Google Generative AI SDK (@google/genai)
+- **数据持久化**: IndexedDB (Local-First 策略)
+- **同步层**: Fetch API + Custom Sync Engines (WebDAV/Supabase/Gist)
+- **构建机制**: 原生 ESM 模块化加载 (无需打包工具)
 
-## 🚀 快速部署到 Cloudflare Pages
+## 🚀 快速开始
 
-由于本项目采用了无构建步骤的 ESM 架构，部署极其简单：
+### 1. 获取 API Key
+访问 [Google AI Studio](https://aistudio.google.com/) 生成你的 API Key。
 
-### 第一步：获取 API Key
-1. 前往 [Google AI Studio](https://aistudio.google.com/)。
-2. 创建并复制你的 **API Key**。
+### 2. 环境变量配置
+在部署环境（如 Cloudflare Pages 或本地环境）中设置：
+- `API_KEY`: 你的 Google Gemini API Key。
 
-### 第二步：配置环境变量
-1. 部署完成后，进入项目的 **Settings** -> **Environment variables**。
-2. **Variable name**: `API_KEY`
-3. **Value**: 填入你在第一步中获取的 Google API Key。
-4. **重要**：在 "Production" 和 "Preview" 环境下都建议填入并重新部署。
+### 3. 配置多端同步 (可选)
+点击应用侧边栏的 **[同步配置]**，根据 [SYNC_GUIDE.md](./SYNC_GUIDE.md) 的指引配置你的云端存储方案。
 
-## 📂 项目结构
+## 📂 目录结构
 
-- `index.html`: 入口文件，包含 Import Map 配置与全局样式。
-- `App.tsx`: 核心逻辑、路由管理与页面布局。
-- `components/`: 
-  - `Whiteboard.tsx`: **[新增]** Canvas 绘图组件，支持高 DPR 渲染。
-  - `VoiceInterface.tsx`: 语音转写组件。
-  - `MemoEditor.tsx`: 集成文本、语音与绘图的综合编辑器。
-  - `MemoCard.tsx`: 交互式记录卡片，支持多媒体渲染。
+- `index.html`: 入口文件，包含全局环境变量垫片与 Import Map。
+- `App.tsx`: 应用主控逻辑与跨端状态管理。
+- `components/`:
+  - `MemoEditor.tsx`: 综合编辑器（包含清单模式、语音入口、手绘入口）。
+  - `MemoCard.tsx`: 智能渲染卡片（支持进度条、TTS、手绘展示）。
+  - `VoiceInterface.tsx`: 实时流式语音处理组件。
+  - `Whiteboard.tsx`: 响应式绘图系统。
+  - `SyncSettings.tsx`: 同步驱动配置中心。
 - `services/`:
-  - `gemini.ts`: 封装所有 AI 服务接口（提取任务、建议标签、智能润色、生成总结）。
-  - `storage.ts`: 基于 LocalStorage 的离线持久化存储。
+  - `storage.ts`: 基于 IndexedDB 的持久化层。
+  - `sync.ts`: 跨端同步逻辑实现。
+  - `gemini.ts`: AI 能力封装。
 
-## 🔐 隐私与安全说明
-- **本地优先**：记录内容默认存储在浏览器的 `localStorage` 中，所有手绘 Base64 数据均保存在本地，不会上传至第三方服务器（除 AI 分析外）。
-- **按需调用**：语音数据和文本仅在调用 Gemini API 进行实时转写或内容处理时进行加密传输。
-- **环境安全**：API Key 通过注入的环境变量管理，确保在代码库中不留任何敏感信息。
+## 🔐 隐私说明
+
+- **本地优先**：所有数据首先存储在您的本地浏览器中。
+- **加密传输**：同步过程采用标准加密协议，API 调用直接发往 Google 基础设施。
+- **无追踪**：本项目不收集任何个人数据。
 
 ---
-*Inspired by usememos/memos. Enhanced with Creative Intelligence & Human-AI Collaboration.*
+*Inspired by usememos/memos. Re-imagined for the AI Era.*
