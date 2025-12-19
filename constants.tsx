@@ -3,49 +3,46 @@ import React from 'react';
 
 export const Icons = {
   Logo: () => (
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 drop-shadow-sm">
       <defs>
-        <linearGradient id="premium-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="50%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#4f46e5" />
+        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0ea5e9" />
+          <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
-        <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="3" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
-        <radialGradient id="inner-glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-          <stop offset="0%" stopColor="white" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
-        </radialGradient>
       </defs>
-      {/* Main Squircle Container */}
-      <rect x="5" y="5" width="90" height="90" rx="28" fill="url(#premium-gradient)" className="shadow-lg" />
+      {/* Background Squircle */}
+      <rect x="10" y="10" width="80" height="80" rx="24" fill="url(#logo-gradient)" />
       
-      {/* Inner Glow Circle */}
-      <circle cx="50" cy="50" r="25" fill="url(#inner-glow)" />
+      {/* Abstract 'A' / Intelligence Wave */}
+      <path 
+        d="M35 70L50 30L65 70" 
+        stroke="white" 
+        strokeWidth="8" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        opacity="0.9"
+      />
+      <path 
+        d="M42 55H58" 
+        stroke="white" 
+        strokeWidth="6" 
+        strokeLinecap="round" 
+        opacity="0.9"
+      />
       
-      {/* Central Sparkle Icon */}
+      {/* AI Sparkle Node */}
+      <circle cx="72" cy="28" r="8" fill="white" filter="url(#glow)">
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
+      </circle>
       <path 
-        d="M50 28C50 28 51.5 43.5 50 45C48.5 43.5 33 45 33 45C33 45 48.5 46.5 50 48C51.5 46.5 67 45 67 45C67 45 51.5 43.5 50 28Z" 
-        fill="white" 
-        transform="translate(0, 5)"
-      >
-        <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
-        <animateTransform 
-          attributeName="transform" 
-          type="scale" 
-          values="0.95;1.05;0.95" 
-          dur="4s" 
-          repeatCount="indefinite" 
-          additive="sum" 
-          origin="50 50" 
-        />
-      </path>
-      <path 
-        d="M50 35L53 47L65 50L53 53L50 65L47 53L35 50L47 47L50 35Z" 
-        fill="white" 
-        filter="url(#soft-glow)"
+        d="M72 18V22M72 34V38M62 28H66M78 28H82" 
+        stroke="white" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
       />
     </svg>
   ),
