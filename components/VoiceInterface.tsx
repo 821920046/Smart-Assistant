@@ -41,7 +41,7 @@ function createAudioBlob(data: Float32Array) {
 const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete, isCompact = true }) => {
   const [isListening, setIsListening] = useState(false);
   const [currentTranscription, setCurrentTranscription] = useState('');
-  
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const transcriptionBufferRef = useRef('');
@@ -50,7 +50,17 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
 
   const stopListening = useCallback(() => {
     setIsListening(false);
-    
+
+    // Cleanup native recognition
+    if ((window as any)._activeRecognition) {
+      const recognition = (window as any)._activeRecognition;
+      recognition.onend = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      try { recognition.stop(); } catch (e) { }
+      delete (window as any)._activeRecognition;
+    }
+
     // Cleanup script processor first
     if (scriptProcessorRef.current) {
       scriptProcessorRef.current.onaudioprocess = null;
@@ -61,7 +71,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
     // Close session
     if (sessionPromiseRef.current) {
       sessionPromiseRef.current.then(session => {
-        try { session.close(); } catch (e) {}
+        try { session.close(); } catch (e) { }
       });
       sessionPromiseRef.current = null;
     }
@@ -70,10 +80,10 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
     if (transcriptionBufferRef.current.trim()) {
       onTranscriptionComplete(transcriptionBufferRef.current.trim());
     }
-    
+
     transcriptionBufferRef.current = '';
     setCurrentTranscription('');
-    
+
     // Stop tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -93,95 +103,118 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
       setCurrentTranscription('正在启动...');
       transcriptionBufferRef.current = '';
 
-      // Initialize AI Client
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      // Request Microphone access
+      // 1. Try Native Browser Speech Recognition first as a reliable fallback/primary
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        console.log("Using Native Speech Recognition");
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'zh-CN';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              transcriptionBufferRef.current += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          setCurrentTranscription(transcriptionBufferRef.current + interimTranscript);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error("Speech Recognition Error:", event.error);
+          if (event.error === 'not-allowed') {
+            setCurrentTranscription('麦克风权限被拒绝');
+          } else {
+            setCurrentTranscription('语音识别出错: ' + event.error);
+          }
+        };
+
+        recognition.onend = () => {
+          if (isListening) recognition.start(); // Keep listening if not manually stopped
+        };
+
+        // Store recognition object on the window or a ref to stop it later
+        (window as any)._activeRecognition = recognition;
+        recognition.start();
+        setCurrentTranscription('正在倾听...');
+        return; // Success with native
+      }
+
+      // 2. If Native fails, try AI Client (Experimental Gemini Live)
+      console.log("Native SpeechRecognition not found, trying AI Live API...");
+      const apiKey = process.env.API_KEY || (window as any).process?.env?.API_KEY;
+      if (!apiKey) throw new Error("API Key missing");
+
+      const ai = new GoogleGenAI({ apiKey });
+
+      // Check if .live exists (it might not in all SDK versions)
+      if (!(ai as any).live) {
+        throw new Error("AI Live API not supported in this bundle");
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Setup Audio Context
-      const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ 
-        sampleRate: 16000 
+      const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 16000
       });
       audioContextRef.current = inputAudioContext;
-      
-      // Mandatory: AudioContext must be resumed after a user gesture
+
       if (inputAudioContext.state === 'suspended') {
         await inputAudioContext.resume();
       }
 
-      // Connect to Gemini Live API
-      const sessionPromise = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+      const sessionPromise = (ai as any).live.connect({
+        model: 'gemini-2.0-flash-exp', // Fallback to a real experimental model
         callbacks: {
           onopen: () => {
-            setCurrentTranscription('正在倾听...');
-            
-            // Start streaming audio
+            setCurrentTranscription('正在倾听 (AI)...');
             const source = inputAudioContext.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = scriptProcessor;
-            
+
             scriptProcessor.onaudioprocess = (event) => {
               const inputData = event.inputBuffer.getChannelData(0);
               const pcmBlob = createAudioBlob(inputData);
-              
-              // Only send if session is ready
               sessionPromise.then(session => {
                 session.sendRealtimeInput({ media: pcmBlob });
-              }).catch(err => {
-                console.error("Failed to send audio chunk", err);
-              });
+              }).catch(() => { });
             };
 
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputAudioContext.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            // Handle transcriptions of user's audio
             if (message.serverContent?.inputTranscription) {
               const text = message.serverContent.inputTranscription.text;
               transcriptionBufferRef.current += text;
-              setCurrentTranscription(prev => 
-                (prev === '正在倾听...' || prev === '正在启动...' || prev === 'Connecting...') ? text : prev + text
-              );
-            }
-            
-            // Turn complete is a good place to do partial commits if needed, 
-            // but we'll wait for manual stop as per this app's design.
-            if (message.serverContent?.turnComplete) {
-              console.log("Turn finalized");
+              setCurrentTranscription(transcriptionBufferRef.current);
             }
           },
           onerror: (e) => {
             console.error('Live session error:', e);
             stopListening();
           },
-          onclose: (e) => {
-            console.log('Live session closed');
-            setIsListening(false);
-          },
+          onclose: () => setIsListening(false),
         },
         config: {
           responseModalities: [Modality.AUDIO],
-          inputAudioTranscription: {}, // Required for speech-to-text
-          systemInstruction: '你是一个高效的备忘录转写助手。请将用户的每一句话准确转写为文字。不需要回复用户，也不需要总结，只需要输出听到的原话。',
+          inputAudioTranscription: {},
+          systemInstruction: 'Transcribe everything the user says into text accurately.',
         },
       });
 
       sessionPromiseRef.current = sessionPromise;
 
-      sessionPromise.catch(err => {
-        console.error("Could not establish AI connection", err);
-        setCurrentTranscription('连接失败，请重试');
-        setTimeout(stopListening, 2000);
-      });
-
     } catch (err) {
-      console.error('Failed to initialize microphone or AI session', err);
+      console.error('Voice start failed:', err);
       setIsListening(false);
-      setCurrentTranscription('启动失败，请检查麦克风权限');
+      alert('无法启动语音输入: 请确保已开启麦克风权限且浏览器支持语音识别。');
     }
   };
 
@@ -189,17 +222,16 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
     <div className="flex items-center">
       <button
         onClick={isListening ? stopListening : startListening}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold active:scale-95 ${
-          isListening 
-            ? 'bg-rose-500 text-white animate-pulse shadow-xl shadow-rose-200' 
-            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-        }`}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold active:scale-95 ${isListening
+          ? 'bg-rose-500 text-white animate-pulse shadow-xl shadow-rose-200'
+          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+          }`}
         title={isListening ? "停止录音" : "语音输入"}
       >
         <Icons.Mic />
         {!isCompact && <span>{isListening ? '停止' : '语音输入'}</span>}
       </button>
-      
+
       {isListening && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-end justify-center pb-24 px-4 z-[210] pointer-events-none">
           <div className="w-full max-w-xl bg-white p-8 rounded-[40px] shadow-2xl border border-indigo-50 pointer-events-auto animate-card">
@@ -211,7 +243,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
                 </span>
                 智能听写中
               </div>
-              <button 
+              <button
                 onClick={stopListening}
                 className="text-[10px] bg-slate-900 text-white px-6 py-2 rounded-full font-black uppercase tracking-widest active:scale-90 transition-all shadow-lg"
               >
@@ -225,14 +257,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
             </div>
             <div className="mt-8 flex justify-center items-end gap-1.5 h-12">
               {[...Array(12)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-1.5 bg-indigo-400 rounded-full animate-pulse transition-all" 
-                  style={{ 
+                <div
+                  key={i}
+                  className="w-1.5 bg-indigo-400 rounded-full animate-pulse transition-all"
+                  style={{
                     height: `${Math.random() * 80 + 20}%`,
                     animationDelay: `${i * 0.08}s`,
                     opacity: 0.3 + (Math.random() * 0.7)
-                  }} 
+                  }}
                 />
               ))}
             </div>
