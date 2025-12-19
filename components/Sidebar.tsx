@@ -17,26 +17,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 lg:w-80 p-8 sticky top-0 h-screen overflow-y-auto bg-[#f4f4f5] border-r border-zinc-200 no-scrollbar">
-      <div className="flex items-center gap-4 mb-16">
+    <aside className="hidden md:flex flex-col w-72 lg:w-80 p-8 sticky top-0 h-screen overflow-y-auto bg-white border-r border-slate-100 no-scrollbar z-10">
+      <div className="flex items-center gap-4 mb-20 px-2">
         <Icons.Logo />
         <div className="flex flex-col">
           <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-none">智能助理</h1>
-          <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-2">SmartBrain AI</span>
+          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-2">v2.5 Intelligence</span>
         </div>
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-16">
         <nav className="space-y-2">
-          <p className="px-4 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4">导航</p>
+          <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-6">导航</p>
           {menuItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveFilter(item.id)}
-              className={`flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-[13.5px] font-bold transition-all relative ${
+              className={`flex items-center gap-4 w-full px-5 py-4 rounded-3xl text-[14px] font-bold transition-all relative group ${
                 activeFilter === item.id 
-                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/10 translate-x-1 active-nav-glow' 
-                  : 'text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-900'
+                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-200 translate-x-2' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <item.icon />
@@ -48,48 +48,48 @@ const Sidebar: React.FC<SidebarProps> = ({ activeFilter, setActiveFilter, tags }
           ))}
         </nav>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="px-4 flex items-center justify-between">
-            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">智能标签</p>
-            <div className="w-8 h-[1px] bg-zinc-200" />
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.25em]">主题标签</p>
+            <div className="w-8 h-[1px] bg-slate-100" />
           </div>
           <div className="px-1 space-y-1 max-h-[40vh] overflow-y-auto no-scrollbar">
             {tags.length > 0 ? tags.map(tag => (
               <button
                 key={tag}
                 onClick={() => setActiveFilter(`tag:${tag}`)}
-                className={`flex items-center gap-4 w-full px-5 py-3 text-[13px] font-bold rounded-xl transition-all group ${
+                className={`flex items-center gap-4 w-full px-5 py-3 text-[13.5px] font-bold rounded-2xl transition-all group ${
                   activeFilter === `tag:${tag}` 
-                  ? 'bg-white text-indigo-600 shadow-sm border border-zinc-200' 
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50'
+                  ? 'bg-indigo-50 text-indigo-600 border border-indigo-100/50' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  activeFilter === `tag:${tag}` ? 'bg-indigo-500 scale-125' : 'bg-zinc-300 group-hover:bg-zinc-400'
+                  activeFilter === `tag:${tag}` ? 'bg-indigo-500 scale-125' : 'bg-slate-300 group-hover:bg-slate-400'
                 }`} />
                 <span className="truncate">#{tag}</span>
               </button>
             )) : (
-              <span className="px-5 text-xs text-zinc-400 font-medium italic">暂无可用标签</span>
+              <span className="px-5 text-xs text-slate-300 font-medium italic">暂无可用标签</span>
             )}
           </div>
         </div>
       </div>
 
-      <div className="mt-auto pt-12">
-        <div className="p-6 bg-white rounded-[24px] border border-zinc-200 space-y-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl assistant-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+      <div className="mt-auto pt-16">
+        <div className="p-7 bg-slate-50 rounded-[32px] border border-slate-100/50 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl assistant-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-100">
               <Icons.Sparkles />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-900 uppercase">Pro 账户</p>
-              <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">无限 AI 云空间</p>
+              <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Pro Workspace</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Unlimited Syncing</p>
             </div>
           </div>
         </div>
-        <div className="mt-6 flex items-center gap-4 px-2 opacity-30">
-           <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">© 2025 v2.1</span>
+        <div className="mt-8 flex items-center gap-4 px-3 opacity-20">
+           <span className="text-[9px] font-black tracking-[0.2em] uppercase text-slate-400">© 2025 SmartAssistant AI</span>
         </div>
       </div>
     </aside>

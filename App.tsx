@@ -111,45 +111,45 @@ const App: React.FC = () => {
     if (filter === 'favorites') return '收藏夹';
     if (filter === 'archived') return '已归档内容';
     if (filter.startsWith('tag:')) return `# ${filter.split(':')[1]}`;
-    return '备忘录';
+    return '记录';
   }, [filter]);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row font-sans text-slate-900">
       <Sidebar 
         activeFilter={filter} 
         setActiveFilter={(f) => { setFilter(f); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
         tags={allTags} 
       />
       
-      <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto px-4 md:px-12 pt-8 md:pt-24 pb-40">
-        {/* Page Header */}
-        <header className="flex flex-col gap-10 mb-16">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-[0.3em]">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-                Workspace
+      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 md:px-16 pt-12 md:pt-32 pb-40">
+        {/* Header Section */}
+        <header className="flex flex-col gap-12 mb-16">
+          <div className="flex items-end justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2.5 text-indigo-500 font-bold text-[11px] uppercase tracking-[0.2em]">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)]" />
+                Intelligent Space
               </div>
-              <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-tight">{activeLabel}</h1>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">{activeLabel}</h1>
             </div>
             
             <button 
               onClick={handleGenerateSummary}
               disabled={isSummarizing || filteredMemos.length === 0}
-              className={`p-4 rounded-[20px] border transition-all flex items-center gap-3 shadow-sm active:scale-95 ${
+              className={`p-4 rounded-3xl border transition-all flex items-center gap-3 shadow-sm active:scale-95 ${
                 isSummarizing 
-                ? 'bg-zinc-50 text-zinc-400 border-zinc-100 cursor-not-allowed' 
-                : 'bg-white text-slate-800 border-zinc-200 hover:border-indigo-300 hover:text-indigo-600'
+                ? 'bg-slate-50 text-slate-300 border-slate-100' 
+                : 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
               }`}
             >
-              {isSummarizing ? <div className="w-4 h-4 border-2 border-zinc-200 border-t-indigo-500 rounded-full animate-spin" /> : <Icons.Sparkles />}
+              {isSummarizing ? <div className="w-4 h-4 border-2 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" /> : <Icons.Sparkles />}
               <span className="text-xs font-black uppercase tracking-widest hidden sm:inline">AI Summary</span>
             </button>
           </div>
 
           <div className="relative group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors">
               <Icons.Search />
             </div>
             <input
@@ -157,29 +157,29 @@ const App: React.FC = () => {
               placeholder="搜索任何内容、任务或标签..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-16 bg-white border border-zinc-200 rounded-[24px] pl-16 pr-8 text-base font-medium focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none shadow-sm"
+              className="w-full h-16 bg-white border border-slate-200 rounded-[28px] pl-16 pr-8 text-base font-medium focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all outline-none shadow-[0_2px_4px_rgba(0,0,0,0.01)]"
             />
           </div>
         </header>
 
-        {/* AI Summary View */}
+        {/* AI Insight Card */}
         {summary && (
-          <section className="mb-16 animate-slide-up">
-            <div className="ai-summary-gradient p-10 rounded-[40px] relative overflow-hidden">
-              <div className="absolute right-[-20px] top-[-20px] p-12 opacity-[0.03] rotate-12">
+          <section className="mb-20 animate-card">
+            <div className="ai-summary-card p-10 rounded-[48px] relative overflow-hidden">
+              <div className="absolute right-[-40px] top-[-40px] p-20 opacity-[0.03] rotate-12 scale-150">
                 <Icons.Sparkles />
               </div>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center text-purple-500 shadow-sm">
                     <Icons.Sparkles />
                   </div>
                   <div>
-                    <h3 className="font-black text-slate-900 text-base">AI 智绘简报</h3>
-                    <p className="text-[10px] text-purple-500 font-black uppercase tracking-[0.2em]">Contextual Intelligence</p>
+                    <h3 className="font-black text-slate-900 text-base">AI 智能洞察</h3>
+                    <p className="text-[10px] text-purple-400 font-black uppercase tracking-[0.25em]">Personal Assistant</p>
                   </div>
                 </div>
-                <button onClick={() => setSummary(null)} className="w-10 h-10 rounded-full hover:bg-white/60 flex items-center justify-center text-zinc-400 transition-colors">&times;</button>
+                <button onClick={() => setSummary(null)} className="w-10 h-10 rounded-full hover:bg-white/60 flex items-center justify-center text-slate-300 transition-colors">&times;</button>
               </div>
               <div className="text-slate-800 leading-relaxed text-base md:text-lg whitespace-pre-wrap font-medium">
                 {summary}
@@ -188,16 +188,16 @@ const App: React.FC = () => {
           </section>
         )}
 
-        {/* Desktop Editor */}
-        <section className="hidden md:block mb-20 animate-slide-up">
+        {/* Desktop Editor Area */}
+        <section className="hidden md:block mb-24 animate-card">
           <MemoEditor onSave={addMemo} />
         </section>
 
-        {/* List Content */}
-        <div className="grid grid-cols-1 gap-8">
+        {/* Memos Feed */}
+        <div className="grid grid-cols-1 gap-10">
           {filteredMemos.length > 0 ? (
             filteredMemos.map((memo, idx) => (
-              <div key={memo.id} className="animate-slide-up" style={{ animationDelay: `${idx * 50}ms` }}>
+              <div key={memo.id} className="animate-card" style={{ animationDelay: `${idx * 40}ms` }}>
                 <MemoCard 
                   memo={memo} 
                   onUpdate={updateMemo} 
@@ -207,31 +207,31 @@ const App: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="py-40 flex flex-col items-center text-center">
-              <div className="w-24 h-24 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-200 mb-8">
+            <div className="py-48 flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-200 mb-8">
                 <Icons.Archive />
               </div>
-              <h3 className="text-slate-900 font-black text-xl mb-3">空空如也</h3>
-              <p className="text-zinc-400 text-sm max-w-[280px] font-medium leading-relaxed">
-                这里还没有内容。开启一段新的思考，记录每一个闪光瞬间。
+              <h3 className="text-slate-900 font-black text-2xl mb-3 tracking-tight">暂无内容</h3>
+              <p className="text-slate-400 text-sm max-w-[280px] font-medium leading-relaxed">
+                记录你的每一个闪光时刻，或者尝试调整筛选条件。
               </p>
             </div>
           )}
         </div>
       </main>
 
-      {/* Mobile Floating Bar */}
-      <nav className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] glass rounded-[32px] p-2 flex items-center justify-between z-50 shadow-2xl border border-white/50">
+      {/* Mobile Floating Tab Bar */}
+      <nav className="md:hidden fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] glass rounded-[36px] p-2.5 flex items-center justify-between z-50 shadow-2xl border border-white/50">
         <div className="flex flex-1 justify-around">
           {[
             { id: 'all', icon: Icons.Plus, label: '首页' },
-            { id: 'todo', icon: Icons.CheckCircle, label: '待办' },
+            { id: 'todo', icon: Icons.CheckCircle, label: '任务' },
           ].map(item => (
             <button
               key={item.id}
               onClick={() => { setFilter(item.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className={`flex flex-col items-center p-4 rounded-2xl transition-all ${
-                filter === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-zinc-400'
+              className={`flex flex-col items-center p-4 rounded-3xl transition-all ${
+                filter === item.id ? 'bg-slate-900 text-white active-nav-glow shadow-xl' : 'text-slate-400'
               }`}
             >
               <item.icon />
@@ -241,7 +241,7 @@ const App: React.FC = () => {
 
         <button 
           onClick={() => setIsEditorOpen(true)}
-          className="w-16 h-16 assistant-gradient text-white rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 active:scale-90 transition-all -translate-y-6 border-4 border-white"
+          className="w-16 h-16 assistant-gradient text-white rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/30 active:scale-90 transition-all -translate-y-8 border-4 border-white"
         >
           <Icons.Plus />
         </button>
@@ -254,8 +254,8 @@ const App: React.FC = () => {
             <button
               key={item.id}
               onClick={() => { setFilter(item.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className={`flex flex-col items-center p-4 rounded-2xl transition-all ${
-                filter === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-zinc-400'
+              className={`flex flex-col items-center p-4 rounded-3xl transition-all ${
+                filter === item.id ? 'bg-slate-900 text-white active-nav-glow shadow-xl' : 'text-slate-400'
               }`}
             >
               <item.icon />
@@ -264,15 +264,15 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Modal Editor */}
+      {/* Mobile Editor Overlay */}
       {isEditorOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsEditorOpen(false)} />
-          <div className="w-full bg-white rounded-t-[48px] p-8 shadow-2xl animate-slide-up relative z-10 border-t border-zinc-100">
-             <div className="w-14 h-1.5 bg-zinc-200 rounded-full mx-auto mb-8" />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditorOpen(false)} />
+          <div className="w-full bg-white rounded-t-[48px] p-8 shadow-2xl animate-card relative z-10 border-t border-slate-100">
+             <div className="w-14 h-1.5 bg-slate-200 rounded-full mx-auto mb-10" />
              <div className="flex justify-between items-center mb-8">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Capture Idea</span>
-                <button onClick={() => setIsEditorOpen(false)} className="text-zinc-900 font-black text-sm uppercase p-2">Close</button>
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Capture Thought</span>
+                <button onClick={() => setIsEditorOpen(false)} className="text-slate-900 font-black text-sm p-2">Close</button>
              </div>
              <MemoEditor onSave={addMemo} />
              <div className="h-10" />

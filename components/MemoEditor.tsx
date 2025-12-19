@@ -68,56 +68,56 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   const triggerReminderPicker = () => reminderInputRef.current?.showPicker();
 
   return (
-    <div className="bg-white rounded-[40px] p-6 md:p-10 border border-slate-200/60 shadow-xl shadow-slate-200/20 focus-within:shadow-2xl focus-within:border-sky-500/20 transition-all duration-500">
+    <div className="bg-white rounded-[48px] p-8 md:p-14 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] focus-within:shadow-[0_24px_50px_rgba(99,102,241,0.05)] focus-within:border-indigo-100 transition-all duration-700">
       <div className="relative">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="今天有什么值得记录的？"
-          className="w-full min-h-[160px] md:min-h-[220px] resize-none border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 text-xl md:text-2xl font-black leading-[1.4] bg-transparent no-scrollbar outline-none"
+          placeholder="分享你的记录或灵感..."
+          className="w-full min-h-[180px] md:min-h-[260px] resize-none border-none focus:ring-0 text-slate-900 placeholder:text-slate-200 text-2xl md:text-4xl font-black leading-[1.35] bg-transparent no-scrollbar outline-none tracking-tight"
         />
       </div>
       
-      <div className="flex flex-wrap items-center gap-3 mt-6">
+      <div className="flex flex-wrap items-center gap-4 mt-10">
         {dueDate && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase animate-slide-up">
+          <div className="flex items-center gap-2.5 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase animate-card shadow-lg shadow-slate-200">
             <Icons.Calendar />
             <span>{new Date(dueDate).toLocaleDateString()}</span>
-            <button onClick={() => setDueDate('')} className="ml-2 hover:text-rose-400">×</button>
+            <button onClick={() => setDueDate('')} className="ml-3 opacity-50 hover:opacity-100 transition-opacity">×</button>
           </div>
         )}
         {reminderAt && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase animate-slide-up">
+          <div className="flex items-center gap-2.5 px-5 py-2.5 bg-indigo-500 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase animate-card shadow-lg shadow-indigo-100">
             <Icons.Bell />
             <span>{new Date(reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <button onClick={() => setReminderAt('')} className="ml-2 hover:text-sky-900">×</button>
+            <button onClick={() => setReminderAt('')} className="ml-3 opacity-50 hover:opacity-100 transition-opacity">×</button>
           </div>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-10 gap-6 pt-8 border-t border-slate-50">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-12 gap-8 pt-12 border-t border-slate-50">
+        <div className="flex items-center gap-4">
           <VoiceInterface onTranscriptionComplete={handleVoiceTranscription} isCompact={false} />
           
-          <div className="h-6 w-[1.5px] bg-slate-100 mx-3 hidden sm:block"></div>
+          <div className="h-8 w-[1px] bg-slate-100 mx-4 hidden sm:block"></div>
           
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             <button 
               onClick={handleRefine}
               disabled={!content.trim() || isRefining}
-              className={`p-3.5 transition-all rounded-2xl hover:scale-110 active:scale-90 ${isRefining ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-sky-600 hover:bg-sky-50'}`}
+              className={`p-4 transition-all rounded-2xl hover:scale-110 active:scale-90 ${isRefining ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:text-indigo-500 hover:bg-indigo-50'}`}
               title="智能润色"
             >
               <Icons.Sparkles />
             </button>
             <div className="relative">
-              <button onClick={triggerDatePicker} className={`p-3.5 rounded-2xl transition-all hover:scale-110 active:scale-90 ${dueDate ? 'text-sky-600 bg-sky-50' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}>
+              <button onClick={triggerDatePicker} className={`p-4 rounded-2xl transition-all hover:scale-110 active:scale-90 ${dueDate ? 'text-indigo-600 bg-indigo-50 shadow-sm' : 'text-slate-300 hover:text-slate-900 hover:bg-slate-50'}`}>
                 <Icons.Calendar />
               </button>
               <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <div className="relative">
-              <button onClick={triggerReminderPicker} className={`p-3.5 rounded-2xl transition-all hover:scale-110 active:scale-90 ${reminderAt ? 'text-sky-600 bg-sky-50' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}>
+              <button onClick={triggerReminderPicker} className={`p-4 rounded-2xl transition-all hover:scale-110 active:scale-90 ${reminderAt ? 'text-indigo-600 bg-indigo-50 shadow-sm' : 'text-slate-300 hover:text-slate-900 hover:bg-slate-50'}`}>
                 <Icons.Clock />
               </button>
               <input ref={reminderInputRef} type="datetime-local" className="absolute opacity-0 w-0 h-0" value={reminderAt} onChange={(e) => setReminderAt(e.target.value)} />
@@ -128,9 +128,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         <button
           onClick={handleSave}
           disabled={!content.trim() || isProcessing}
-          className={`group flex items-center justify-center gap-3 px-10 py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${
+          className={`group flex items-center justify-center gap-4 px-12 py-5 rounded-[30px] font-black text-xs uppercase tracking-[0.25em] transition-all shadow-2xl active:scale-95 ${
             isProcessing || !content.trim() 
-              ? 'bg-slate-50 text-slate-300 shadow-none' 
+              ? 'bg-slate-50 text-slate-300 shadow-none cursor-not-allowed' 
               : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'
           }`}
         >
@@ -138,8 +138,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
             <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
           ) : (
             <>
-              保存
-              <span className="opacity-40 group-hover:translate-x-1 transition-transform">→</span>
+              确认保存
+              <span className="opacity-40 group-hover:translate-x-1.5 transition-transform duration-300">→</span>
             </>
           )}
         </button>
