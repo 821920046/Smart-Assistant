@@ -419,18 +419,23 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, onTagClic
         )}
 
         {isExpanded && (
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50 animate-in fade-in duration-500">
-            {memo.tags.map(tag => (
-              <button 
-                key={tag} 
-                onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
-                className="text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all border border-slate-100"
-              >
-                #{tag.toUpperCase()}
-              </button>
-            ))}
-            <div className="ml-auto flex items-center text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">
-              #{memo.id.toUpperCase()}
+          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100 animate-in fade-in duration-500">
+            <div className="flex flex-wrap gap-2 flex-1">
+              {memo.tags.map(tag => (
+                <button 
+                  key={tag} 
+                  onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
+                  className="text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all border border-slate-100"
+                >
+                  #{tag.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50/50 rounded-full border border-slate-100/50 group/id transition-all hover:bg-slate-100">
+               <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover/id:text-slate-400">UUID</span>
+               <span className="text-[9px] font-bold text-slate-400 tracking-wider font-mono group-hover/id:text-slate-600 transition-colors">
+                {memo.id.toUpperCase()}
+               </span>
             </div>
           </div>
         )}
