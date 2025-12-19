@@ -1,5 +1,6 @@
 
-export type Priority = 'low' | 'medium' | 'high';
+export type Priority = 'important' | 'normal' | 'secondary';
+export type RepeatInterval = 'none' | 'daily' | 'weekly';
 
 export interface TodoItem {
   id: string;
@@ -18,11 +19,13 @@ export interface Memo {
   updatedAt: number;
   dueDate?: number;
   reminderAt?: number;
+  reminderRepeat?: RepeatInterval; // Added periodic reminder support
   sketchData?: string; 
   isArchived: boolean;
   isFavorite: boolean;
   isDeleted?: boolean;
   remoteId?: string;
+  priority: Priority;
 }
 
 export interface TranscriptionTurn {
@@ -30,4 +33,4 @@ export interface TranscriptionTurn {
   text: string;
 }
 
-export const APP_VERSION = '2.5.1';
+export const APP_VERSION = '2.7.0';

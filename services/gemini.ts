@@ -8,12 +8,12 @@ export async function extractTasks(content: string, forceTodo: boolean = false):
   try {
     const ai = getAI();
     const systemPrompt = forceTodo 
-      ? "The user explicitly wants to create a checklist. Extract every meaningful line as a separate actionable todo item. Assign priorities based on urgency keywords if present, otherwise default to medium."
-      : "Extract actionable todo items from this note content. If the content seems to be a general note without clear actions, you can return an empty array. Assign a priority (low, medium, high).";
+      ? "The user wants to create a checklist. Extract every meaningful line as a separate actionable todo item."
+      : "Extract actionable todo items from this note content. Assign priorities based on the content's urgency.";
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `${systemPrompt} Output in JSON.
+      contents: `${systemPrompt} Use these priority labels: 'important', 'normal', 'secondary'. Output in JSON.
       Content: "${content}"`,
       config: {
         responseMimeType: "application/json",
@@ -23,7 +23,7 @@ export async function extractTasks(content: string, forceTodo: boolean = false):
             type: Type.OBJECT,
             properties: {
               text: { type: Type.STRING },
-              priority: { type: Type.STRING, enum: ['low', 'medium', 'high'] }
+              priority: { type: Type.STRING, enum: ['important', 'normal', 'secondary'] }
             },
             required: ["text", "priority"]
           }
@@ -74,27 +74,12 @@ export async function refineText(content: string): Promise<string> {
   }
 }
 
-export async function generateSummary(memos: string[]): Promise<string> {
-  if (memos.length === 0) return "目前没有足够的记录生成总结。";
-  try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Summarize these notes into a concise brief with bullet points. 
-      Notes: ${memos.join('\n---\n')}`,
-    });
-    return response.text || "无法生成总结。";
-  } catch (e) {
-    return "生成总结时发生错误。";
-  }
-}
-
 export async function askAssistant(query: string, contextMemos: string[]): Promise<string> {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes. If the answer isn't in the notes, say you don't know but offer general advice.
+      contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes.
       
       USER NOTES:
       ${contextMemos.join('\n---\n')}

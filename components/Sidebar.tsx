@@ -16,10 +16,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing 
 }) => {
   const menuItems = [
-    { id: 'all', icon: Icons.Plus, label: 'Timeline' },
-    { id: 'todo', icon: Icons.CheckCircle, label: 'Tasks' },
+    { id: 'all', icon: Icons.List, label: 'Task Center' }, // Changed from Timeline
+    { id: 'important', icon: Icons.Sparkles, label: 'Important' },
     { id: 'favorites', icon: Icons.Star, label: 'Favorites' },
-    { id: 'archived', icon: Icons.Archive, label: 'Archived' },
+    { id: 'archived', icon: Icons.Archive, label: 'History' },
   ];
 
   return (
@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Icons.Logo />
         <div className="flex flex-col">
           <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-none">Smart Assistant</h1>
-          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-2">v2.5 Sync</span>
+          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-2">v2.6 Task Focus</span>
         </div>
       </div>
 
@@ -38,12 +38,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cloud Sync</span>
             <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
           </div>
-          <p className="text-[11px] font-bold text-slate-600 leading-tight">Sync your thoughts across mobile and desktop devices.</p>
+          <p className="text-[11px] font-bold text-slate-600 leading-tight">Your tasks are synchronized across devices instantly.</p>
           <button 
             onClick={onOpenSyncSettings}
             className="w-full py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-indigo-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
           >
-            {isSyncing ? 'Syncing...' : 'Sync Settings'}
+            {isSyncing ? 'Syncing...' : 'Connectivity'}
           </button>
         </div>
 
