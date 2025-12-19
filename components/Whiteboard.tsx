@@ -112,7 +112,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
       {/* Header Toolbar */}
       <header className="h-20 border-b border-slate-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md">
         <div className="flex items-center gap-6">
-          <button onClick={onCancel} className="text-slate-400 hover:text-slate-900 transition-colors">取消</button>
+          <button onClick={onCancel} className="text-slate-400 hover:text-slate-900 transition-colors font-bold text-sm">取消</button>
           <div className="h-4 w-[1px] bg-slate-100" />
           <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-900">绘图板</span>
         </div>
@@ -151,17 +151,20 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         />
         
         {/* Floating Tool Palette */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass px-8 py-4 rounded-[32px] flex items-center gap-8 shadow-2xl border border-white/50">
-          <div className="flex items-center gap-3">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass px-8 py-5 rounded-[40px] flex items-center gap-6 md:gap-8 shadow-2xl border border-white/50 max-w-[90vw]">
+          {/* Tool Selector */}
+          <div className="flex items-center gap-2 md:gap-3">
             <button 
               onClick={() => setTool('pen')}
-              className={`p-3 rounded-2xl transition-all ${tool === 'pen' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`p-3 rounded-2xl transition-all ${tool === 'pen' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+              title="画笔"
             >
               <Icons.Pen />
             </button>
             <button 
               onClick={() => setTool('eraser')}
-              className={`p-3 rounded-2xl transition-all ${tool === 'eraser' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`p-3 rounded-2xl transition-all ${tool === 'eraser' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+              title="橡皮擦"
             >
               <Icons.Eraser />
             </button>
@@ -169,12 +172,13 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
           <div className="h-8 w-[1px] bg-slate-200" />
 
-          <div className="flex items-center gap-4">
+          {/* Color Palette (Disabled if Eraser is active) */}
+          <div className={`flex items-center gap-3 md:gap-4 ${tool === 'eraser' ? 'opacity-20 pointer-events-none' : ''}`}>
             {['#0f172a', '#6366f1', '#a855f7', '#f43f5e', '#10b981'].map(c => (
               <button
                 key={c}
                 onClick={() => { setColor(c); setTool('pen'); }}
-                className={`w-7 h-7 rounded-full transition-all border-2 ${color === c && tool === 'pen' ? 'border-indigo-400 scale-125' : 'border-transparent'}`}
+                className={`w-6 h-6 md:w-7 md:h-7 rounded-full transition-all border-2 ${color === c ? 'border-indigo-400 scale-125' : 'border-transparent'}`}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -182,16 +186,36 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
 
           <div className="h-8 w-[1px] bg-slate-200" />
 
-          <div className="flex items-center gap-4">
-            {[2, 4, 8].map(s => (
-              <button
-                key={s}
-                onClick={() => setBrushSize(s)}
-                className={`flex items-center justify-center transition-all ${brushSize === s ? 'text-slate-900' : 'text-slate-300'}`}
-              >
-                <div className="rounded-full bg-current" style={{ width: s * 1.5 + 4, height: s * 1.5 + 4 }} />
-              </button>
-            ))}
+          {/* Brush Size Controls */}
+          <div className="flex items-center gap-4 md:gap-6 min-w-[120px] md:min-w-[160px]">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">大小</span>
+                <span className="text-[10px] font-black text-slate-900">{brushSize}px</span>
+              </div>
+              <input 
+                type="range" 
+                min="1" 
+                max="24" 
+                step="1"
+                value={brushSize} 
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500"
+              />
+            </div>
+            
+            {/* Quick Presets */}
+            <div className="flex items-center gap-2">
+              {[2, 6, 12].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setBrushSize(s)}
+                  className={`flex items-center justify-center transition-all ${brushSize === s ? 'text-slate-900' : 'text-slate-300 hover:text-slate-500'}`}
+                >
+                  <div className="rounded-full bg-current" style={{ width: Math.max(6, s + 2), height: Math.max(6, s + 2) }} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
