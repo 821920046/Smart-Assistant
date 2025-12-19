@@ -2,7 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TodoItem, Priority } from "../types";
 
-// Helper to get fresh AI instance
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export async function extractTasks(content: string): Promise<TodoItem[]> {
@@ -10,8 +9,7 @@ export async function extractTasks(content: string): Promise<TodoItem[]> {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Extract actionable todo items from this note content. Assign a priority (low, medium, high) based on the tone or keywords. Output in JSON format.
-      
+      contents: `Extract actionable todo items from this note content. Assign a priority (low, medium, high). Output in JSON.
       Content: "${content}"`,
       config: {
         responseMimeType: "application/json",
@@ -21,17 +19,13 @@ export async function extractTasks(content: string): Promise<TodoItem[]> {
             type: Type.OBJECT,
             properties: {
               text: { type: Type.STRING },
-              priority: { 
-                type: Type.STRING,
-                enum: ['low', 'medium', 'high']
-              }
+              priority: { type: Type.STRING, enum: ['low', 'medium', 'high'] }
             },
             required: ["text", "priority"]
           }
         }
       }
     });
-
     const data = JSON.parse(response.text || "[]");
     return data.map((item: any) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -40,7 +34,6 @@ export async function extractTasks(content: string): Promise<TodoItem[]> {
       priority: item.priority as Priority
     }));
   } catch (e) {
-    console.error("Failed to extract tasks", e);
     return [];
   }
 }
@@ -50,20 +43,15 @@ export async function suggestTags(content: string): Promise<string[]> {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Suggest 1-3 short hashtags for this note. Output as a simple JSON array of strings. Content: "${content}"`,
+      contents: `Suggest 1-3 tags for this note. Output JSON array. Content: "${content}"`,
       config: {
         responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING }
-        }
+        responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
       }
     });
-
     const tags = JSON.parse(response.text || "[]");
-    return Array.isArray(tags) ? tags.map((tag: string) => tag.replace(/^#/, '')) : [];
+    return tags.map((tag: string) => tag.replace(/^#/, ''));
   } catch (e) {
-    console.error("Failed to suggest tags", e);
     return [];
   }
 }
@@ -73,13 +61,11 @@ export async function refineText(content: string): Promise<string> {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `You are a professional writing assistant. Improve the following note for clarity, better grammar, and professional formatting. Keep the core meaning identical. 
-      
+      contents: `Improve this note for clarity and professional formatting. Keep original meaning.
       Note: "${content}"`,
     });
     return response.text || content;
   } catch (e) {
-    console.error("Failed to refine text", e);
     return content;
   }
 }
@@ -90,14 +76,29 @@ export async function generateSummary(memos: string[]): Promise<string> {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Summarize the following notes into a concise, structured brief. Use bullet points for key themes and highlight any important deadlines or urgent tasks.
-      
-      Notes:
-      ${memos.join('\n---\n')}`,
+      contents: `Summarize these notes into a concise brief with bullet points. 
+      Notes: ${memos.join('\n---\n')}`,
     });
     return response.text || "无法生成总结。";
   } catch (e) {
-    console.error("Failed to generate summary", e);
-    return "生成总结时发生错误，请稍后重试。";
+    return "生成总结时发生错误。";
+  }
+}
+
+export async function askAssistant(query: string, contextMemos: string[]): Promise<string> {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-pro-preview",
+      contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes. If the answer isn't in the notes, say you don't know but offer general advice.
+      
+      USER NOTES:
+      ${contextMemos.join('\n---\n')}
+      
+      QUESTION: "${query}"`,
+    });
+    return response.text || "我无法理解这个问题。";
+  } catch (e) {
+    return "对话发生错误，请重试。";
   }
 }
