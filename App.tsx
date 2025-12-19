@@ -151,6 +151,7 @@ const App: React.FC = () => {
         activeFilter={filter} setActiveFilter={setFilter} 
         tags={[]} onExport={() => {}} onImport={() => {}}
         onOpenSyncSettings={() => setIsSyncSettingsOpen(true)} isSyncing={isSyncing}
+        memos={memos}
       />
       
       <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto px-4 md:px-12 pt-16 pb-32">
