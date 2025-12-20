@@ -78,7 +78,7 @@ export const syncService = {
 
       const merged = syncService.mergeMemos(localMemos, remoteMemos);
 
-      await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos`, {
+      const upsertRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?on_conflict=id`, {
         method: 'POST',
         headers: {
           'apikey': supabaseKey,
@@ -88,6 +88,12 @@ export const syncService = {
         },
         body: JSON.stringify(merged)
       });
+
+      if (!upsertRes.ok) {
+        const errorText = await upsertRes.text();
+        console.error('Supabase UPSERT failed:', errorText);
+        throw new Error(`Supabase 保存错误: ${upsertRes.status}`);
+      }
 
       return merged;
     } catch (e) {

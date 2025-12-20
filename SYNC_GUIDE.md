@@ -14,23 +14,26 @@
 2. **初始化数据库表**：
    - 在左侧菜单进入 `SQL Editor`。
    - 点击 `New query`，复制并运行以下 SQL 语句：
-     ```sql
-     create table memos (
-       id text primary key,
-       content text not null,
-       type text default 'memo',
-       tags text[] default '{}',
-       "createdAt" int8 not null,
-       "updatedAt" int8 not null,
-       "isDeleted" boolean default false,
-       "isFavorite" boolean default false,
-       "isArchived" boolean default false,
-       "sketchData" text,
-       "dueDate" int8,
-       "reminderAt" int8,
-       "todos" jsonb default '[]'
-     );
-     ```
+      ```sql
+      create table memos (
+        id text primary key,
+        content text not null,
+        type text default 'memo',
+        priority text default 'normal',
+        tags text[] default '{}',
+        "createdAt" int8 not null,
+        "updatedAt" int8 not null,
+        "isDeleted" boolean default false,
+        "isFavorite" boolean default false,
+        "isArchived" boolean default false,
+        "sketchData" text,
+        "dueDate" int8,
+        "reminderAt" int8,
+        "reminderRepeat" text default 'none',
+        "completedAt" int8,
+        "todos" jsonb default '[]'
+      );
+      ```
 3. **获取 API 凭证**：
    - 进入 `Project Settings` -> `API`。
    - 找到 `Project URL` (以 `https://...` 开头)。
