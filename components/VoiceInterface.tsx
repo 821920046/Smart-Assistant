@@ -130,8 +130,25 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
 
         recognition.onerror = (event: any) => {
           console.error("Speech Recognition Error:", event.error);
+
+          // 可恢复的错误，自动重试
+          if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'audio-capture') {
+            if (isListeningRef.current) {
+              setCurrentTranscription('未检测到声音，请说话...');
+              setTimeout(() => {
+                if (isListeningRef.current) {
+                  try { recognition.start(); } catch (e) { }
+                }
+              }, 100);
+            }
+            return;
+          }
+
+          // 不可恢复的错误
           if (event.error === 'not-allowed') {
-            setCurrentTranscription('麦克风权限被拒绝');
+            setCurrentTranscription('麦克风权限被拒绝，请在浏览器设置中允许');
+          } else if (event.error === 'network') {
+            setCurrentTranscription('网络错误，语音识别需要联网');
           } else {
             setCurrentTranscription('语音识别出错: ' + event.error);
           }
