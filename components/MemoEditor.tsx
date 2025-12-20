@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { Icons } from '../constants.js';
-import VoiceInterface from './VoiceInterface.js';
 import Whiteboard from './Whiteboard.js';
 import { extractTasks, suggestTags } from '../services/gemini.js';
 import { Memo, TodoItem, Priority, RepeatInterval } from '../types.js';
@@ -99,14 +98,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-2xl rounded-[40px] md:rounded-[56px] p-8 md:p-14 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.03)] focus-within:shadow-[0_20px_80px_rgba(99,102,241,0.12)] transition-all duration-700">
-      <div className="flex flex-wrap items-center gap-4 mb-10">
-        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mr-2 opacity-60">Priority:</span>
+    <div className="bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-[40px] p-5 md:p-10 border border-slate-100 shadow-sm focus-within:shadow-lg transition-all duration-300">
+      <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-6 md:mb-10">
+        <span className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 md:mr-2">优先级:</span>
         {(['important', 'normal', 'secondary'] as Priority[]).map(p => (
           <button
             key={p}
             onClick={() => setPriority(p)}
-            className={`px-7 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all border-2 ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
+            className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[10px] md:text-[11px] font-bold transition-all border ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
               }`}
           >
             {priorityConfig[p].label}
@@ -119,7 +118,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="输入新的待办任务..."
-          className="w-full min-h-[160px] resize-none border-none focus:ring-0 text-slate-900 placeholder:text-slate-200 text-2xl md:text-4xl font-extrabold leading-[1.1] bg-transparent outline-none tracking-tight no-scrollbar"
+          className="w-full min-h-[100px] md:min-h-[140px] resize-none border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 text-lg md:text-2xl font-bold leading-[1.3] bg-transparent outline-none tracking-tight"
         />
       </div>
 
@@ -155,58 +154,54 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-12 gap-6 pt-10 border-t border-slate-50">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <VoiceInterface onTranscriptionComplete={(text) => setContent(prev => prev ? prev + '\n' + text : text)} isCompact={false} />
-          <div className="h-10 w-[1px] bg-slate-100 hidden sm:block mx-1" />
-          <div className="flex gap-2">
-            <button onClick={() => setShowWhiteboard(true)} className={`p-4 rounded-2xl transition-all active-scale ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:bg-slate-50'}`} title="添加手绘">
-              <Icons.Pen />
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4 pt-8 border-t border-slate-100">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button onClick={() => setShowWhiteboard(true)} className={`p-3 rounded-xl transition-all ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`} title="添加手绘">
+            <Icons.Pen />
+          </button>
+          <div className="relative">
+            <button onClick={() => dateInputRef.current?.showPicker()} className={`p-4 rounded-2xl transition-all active-scale ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}>
+              <Icons.Calendar />
             </button>
-            <div className="relative">
-              <button onClick={() => dateInputRef.current?.showPicker()} className={`p-4 rounded-2xl transition-all active-scale ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}>
-                <Icons.Calendar />
-              </button>
-              <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-            </div>
-            <div className="relative">
-              <button
-                onClick={() => setShowReminderOptions(!showReminderOptions)}
-                className={`p-4 rounded-2xl transition-all active-scale ${reminderAt ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}
-              >
-                <Icons.Clock />
-              </button>
-              {showReminderOptions && (
-                <div className="absolute bottom-full mb-4 left-0 bg-white shadow-2xl rounded-3xl p-4 border border-slate-50 z-20 min-w-[200px] animate-card">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-2">提醒设置</p>
-                  <input type="datetime-local" className="w-full p-3 bg-slate-50 rounded-xl text-sm mb-3 border-none outline-none" value={reminderAt} onChange={(e) => setReminderAt(e.target.value)} />
-                  <div className="flex flex-col gap-1">
-                    {(['none', 'daily', 'weekly'] as RepeatInterval[]).map(r => (
-                      <button
-                        key={r}
-                        onClick={() => { setReminderRepeat(r); if (!reminderAt) reminderInputRef.current?.showPicker(); }}
-                        className={`text-left px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all ${reminderRepeat === r ? 'bg-indigo-500 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                      >
-                        {r === 'none' ? '不重复' : r === 'daily' ? '每天重复' : '每周重复'}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => setShowReminderOptions(false)} className="w-full mt-3 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest">确认</button>
+            <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowReminderOptions(!showReminderOptions)}
+              className={`p-4 rounded-2xl transition-all active-scale ${reminderAt ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}
+            >
+              <Icons.Clock />
+            </button>
+            {showReminderOptions && (
+              <div className="absolute bottom-full mb-4 left-0 bg-white shadow-2xl rounded-3xl p-4 border border-slate-50 z-20 min-w-[200px] animate-card">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-2">提醒设置</p>
+                <input type="datetime-local" className="w-full p-3 bg-slate-50 rounded-xl text-sm mb-3 border-none outline-none" value={reminderAt} onChange={(e) => setReminderAt(e.target.value)} />
+                <div className="flex flex-col gap-1">
+                  {(['none', 'daily', 'weekly'] as RepeatInterval[]).map(r => (
+                    <button
+                      key={r}
+                      onClick={() => { setReminderRepeat(r); if (!reminderAt) reminderInputRef.current?.showPicker(); }}
+                      className={`text-left px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all ${reminderRepeat === r ? 'bg-indigo-500 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      {r === 'none' ? '不重复' : r === 'daily' ? '每天重复' : '每周重复'}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+                <button onClick={() => setShowReminderOptions(false)} className="w-full mt-3 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest">确认</button>
+              </div>
+            )}
           </div>
         </div>
-
-        <button
-          onClick={handleSave}
-          disabled={(!content.trim() && !sketchData) || isProcessing}
-          className={`w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-5 rounded-[30px] font-black text-xs uppercase tracking-widest transition-all active-scale ${isProcessing || (!content.trim() && !sketchData) ? 'bg-slate-50 text-slate-200' : 'bg-slate-900 text-white shadow-xl shadow-slate-200'
-            }`}
-        >
-          {isProcessing ? "处理中..." : "创建任务"}
-        </button>
       </div>
+
+      <button
+        onClick={handleSave}
+        disabled={(!content.trim() && !sketchData) || isProcessing}
+        className={`w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-bold text-sm transition-all ${isProcessing || (!content.trim() && !sketchData) ? 'bg-slate-100 text-slate-300' : 'bg-slate-900 text-white shadow-lg hover:bg-slate-800'
+          }`}
+      >
+        {isProcessing ? "处理中..." : "创建任务"}
+      </button>
 
       {showWhiteboard && (
         <Whiteboard

@@ -199,26 +199,26 @@ const App: React.FC = () => {
         onClearHistory={clearHistory}
       />
 
-      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 md:px-16 pt-20 pb-40">
-        <header className="mb-20">
-          <div className="flex items-center gap-3 text-indigo-500 font-black text-[11px] uppercase tracking-[0.4em] mb-6">
-            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-pulse" />
-            Active Tasks Only
+      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 md:px-16 pt-8 md:pt-20 pb-24 md:pb-40">
+        <header className="mb-8 md:mb-20">
+          <div className="flex items-center gap-2 text-indigo-500 font-bold text-[10px] md:text-[11px] uppercase tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6">
+            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.5)] animate-pulse" />
+            {filter === 'archived' ? '已完成任务' : '待办任务'}
           </div>
-          <h1 className="text-5xl md:text-8xl font-black tracking-[-0.04em] mb-12 leading-[0.9] text-slate-900">
-            {filter === 'all' ? 'Task Center' : filter === 'important' ? 'Priority High' : 'Archive'}
+          <h1 className="text-3xl md:text-8xl font-black tracking-[-0.03em] md:tracking-[-0.04em] mb-6 md:mb-12 leading-[1] md:leading-[0.9] text-slate-900">
+            {filter === 'all' ? '任务中心' : filter === 'important' ? '重要任务' : '历史记录'}
           </h1>
           <div className="relative group">
-            <div className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-all duration-300 scale-110"><Icons.Search /></div>
+            <div className="absolute left-5 md:left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-all duration-300"><Icons.Search /></div>
             <input
-              type="text" placeholder="搜索待办任务..." value={searchQuery}
+              type="text" placeholder="搜索任务..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-24 bg-white/70 backdrop-blur-xl border border-white/50 rounded-[40px] pl-20 pr-10 text-2xl outline-none focus:border-indigo-200/50 focus:bg-white focus:shadow-[0_20px_60px_-15px_rgba(99,102,241,0.1)] transition-all duration-500 shadow-sm font-semibold text-slate-800 placeholder:text-slate-300"
+              className="w-full h-14 md:h-24 bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-2xl md:rounded-[40px] pl-14 md:pl-20 pr-6 md:pr-10 text-base md:text-2xl outline-none focus:border-indigo-300 focus:bg-white focus:shadow-lg transition-all duration-300 font-medium text-slate-800 placeholder:text-slate-300"
             />
           </div>
         </header>
 
-        <section className="mb-20"><MemoEditor onSave={addMemo} /></section>
+        <section className="mb-8 md:mb-20"><MemoEditor onSave={addMemo} /></section>
 
         <div className="space-y-10">
           {filteredMemos.length > 0 ? (
