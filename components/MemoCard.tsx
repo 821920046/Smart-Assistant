@@ -90,65 +90,64 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className={`memo-card group relative rounded-[42px] overflow-hidden transition-all duration-500 p-8 md:p-12 border-l-[8px] ${isDeleting ? 'opacity-0 scale-95 translate-x-10' : 'opacity-100 scale-100'
+    <div className={`memo-card group relative rounded-[32px] md:rounded-[42px] overflow-hidden transition-all duration-500 p-6 md:p-12 border-l-[6px] md:border-l-[8px] ${isDeleting ? 'opacity-0 scale-95 translate-x-10' : 'opacity-100 scale-100'
       } ${memo.priority === 'important' ? 'border-l-rose-500' : memo.priority === 'normal' ? 'border-l-indigo-500' : 'border-l-slate-200'
       }`}>
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <PriorityTag priority={memo.priority || 'normal'} />
           {memo.reminderAt && (
-            <div className="flex items-center gap-2 text-indigo-500 text-[10px] font-black uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100">
-              <Icons.Bell />
-              <span>{getRepeatLabel()} 提醒</span>
+            <div className="flex items-center gap-1.5 text-indigo-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/50">
+              <Icons.Clock />
+              <span>{getRepeatLabel()}</span>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <button
             onClick={handlePlayTTS}
             disabled={isPlaying}
-            className={`p-3 rounded-full transition-all ${isPlaying ? 'bg-indigo-500 text-white animate-pulse' : 'text-slate-300 hover:text-indigo-500 hover:bg-indigo-50'}`}
+            className={`p-2 md:p-3 rounded-full transition-all ${isPlaying ? 'bg-indigo-500 text-white animate-pulse' : 'text-slate-300 hover:text-indigo-500 hover:bg-indigo-50'}`}
             title="播放朗读"
           >
             <Icons.Volume />
           </button>
-          <button onClick={() => onDelete(memo.id)} className="p-3 text-slate-300 hover:text-rose-500 transition-colors active:scale-90" title="删除">
+          <button onClick={() => onDelete(memo.id)} className="p-2 md:p-3 text-slate-300 hover:text-rose-500 transition-colors active:scale-90" title="删除">
             <Icons.Trash />
           </button>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <p className="text-slate-800 font-black text-xl md:text-3xl leading-tight whitespace-pre-wrap tracking-tight">
+      <div className="space-y-4 md:space-y-6">
+        <p className="text-slate-800 font-bold text-lg md:text-3xl leading-snug md:leading-tight whitespace-pre-wrap tracking-tight">
           {memo.content}
         </p>
 
         {memo.sketchData && (
-          <div className="mt-6 rounded-3xl overflow-hidden border border-slate-100 bg-white">
+          <div className="mt-4 md:mt-6 rounded-2xl md:rounded-3xl overflow-hidden border border-slate-100 bg-white">
             <img
               src={memo.sketchData}
               alt="手绘草图"
-              className="w-full h-auto max-h-[300px] object-contain"
+              className="w-full h-auto max-h-[250px] md:max-h-[400px] object-contain"
             />
           </div>
         )}
 
         {memo.todos && memo.todos.length > 0 && (
-          <div className="space-y-4 pt-4">
+          <div className="space-y-3 md:space-y-4 pt-2 md:pt-4">
             {memo.todos.map(todo => (
               <div
                 key={todo.id}
-                className="flex items-center gap-5 p-6 rounded-[28px] border bg-slate-50/30 border-slate-50 transition-all group/todo"
+                className="flex items-center gap-3 md:gap-5 p-4 md:p-6 rounded-2xl md:rounded-[28px] border bg-slate-50/30 border-slate-50 transition-all group/todo"
               >
                 <div
                   onClick={() => handleToggleTodo(todo.id)}
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center border-3 transition-all cursor-pointer ${todo.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl flex items-center justify-center border-2 md:border-3 transition-all cursor-pointer ${todo.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 hover:border-indigo-400'
                     }`}
-                  title={todo.completed ? '标记为未完成' : '标记为已完成'}
                 >
                   {todo.completed && <Icons.CheckCircle />}
                 </div>
-                <span className={`flex-1 text-base md:text-lg font-bold transition-all ${todo.completed ? 'line-through text-slate-300' : 'text-slate-700'
+                <span className={`flex-1 text-sm md:text-lg font-bold transition-all ${todo.completed ? 'line-through text-slate-300' : 'text-slate-700'
                   }`}>
                   {todo.text}
                 </span>

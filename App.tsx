@@ -237,6 +237,42 @@ const App: React.FC = () => {
 
       <ChatAssistant contextMemos={memos.map(m => m.content)} />
       {isSyncSettingsOpen && <SyncSettings onClose={() => setIsSyncSettingsOpen(false)} onSyncComplete={() => performSync(memos)} />}
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-6 left-6 right-6 h-16 bg-white/90 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-2xl flex items-center justify-around px-2 z-50">
+        <button
+          onClick={() => setFilter('all')}
+          className={`flex flex-col items-center gap-1 transition-all ${filter === 'all' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
+        >
+          <Icons.List className="w-5 h-5" />
+          <span className="text-[10px] font-bold">中心</span>
+        </button>
+        <button
+          onClick={() => setFilter('important')}
+          className={`flex flex-col items-center gap-1 transition-all ${filter === 'important' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
+        >
+          <Icons.Sparkles className="w-5 h-5" />
+          <span className="text-[10px] font-bold">重要</span>
+        </button>
+        <button
+          onClick={() => setFilter('archived')}
+          className={`flex flex-col items-center gap-1 transition-all ${filter === 'archived' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
+        >
+          <Icons.Archive className="w-5 h-5" />
+          <span className="text-[10px] font-bold">历史</span>
+        </button>
+        <div className="w-[1px] h-6 bg-slate-100 mx-1" />
+        <button
+          onClick={() => setIsSyncSettingsOpen(true)}
+          className="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-600 transition-all"
+        >
+          <div className={`relative ${isSyncing ? 'animate-pulse' : ''}`}>
+            <Icons.Cloud className="w-5 h-5" />
+            <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${isSyncing ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+          </div>
+          <span className="text-[10px] font-bold">同步</span>
+        </button>
+      </nav>
     </div>
   );
 };

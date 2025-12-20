@@ -155,20 +155,35 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4 pt-8 border-t border-slate-100">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <button onClick={() => setShowWhiteboard(true)} className={`p-3 rounded-xl transition-all ${sketchData ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`} title="添加手绘">
+        <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+          <button
+            onClick={() => setShowWhiteboard(true)}
+            className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl transition-all active:scale-95 ${sketchData ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-transparent'}`}
+            title="添加手绘"
+          >
             <Icons.Pen />
           </button>
-          <div className="relative">
-            <button onClick={() => dateInputRef.current?.showPicker()} className={`p-4 rounded-2xl transition-all active-scale ${dueDate ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}>
+          <div className="relative group">
+            <button
+              onClick={() => dateInputRef.current?.click()}
+              className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl transition-all active:scale-95 ${dueDate ? 'text-indigo-600 bg-indigo-50 border border-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-transparent'}`}
+              title="截止日期"
+            >
               <Icons.Calendar />
             </button>
-            <input ref={dateInputRef} type="date" className="absolute opacity-0 w-0 h-0" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <input
+              ref={dateInputRef}
+              type="date"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
           </div>
-          <div className="relative">
+          <div className="relative group">
             <button
               onClick={() => setShowReminderOptions(!showReminderOptions)}
-              className={`p-4 rounded-2xl transition-all active-scale ${reminderAt ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:bg-slate-50'}`}
+              className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl transition-all active:scale-95 ${reminderAt ? 'text-indigo-600 bg-indigo-50 border border-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-transparent'}`}
+              title="设置提醒"
             >
               <Icons.Clock />
             </button>
