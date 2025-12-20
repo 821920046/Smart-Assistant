@@ -22,7 +22,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'all', icon: Icons.List, label: 'Task Center' },
     { id: 'important', icon: Icons.Sparkles, label: 'Important' },
-    { id: 'favorites', icon: Icons.Star, label: 'Favorites' },
     { id: 'archived', icon: Icons.Archive, label: 'History' },
   ];
 
