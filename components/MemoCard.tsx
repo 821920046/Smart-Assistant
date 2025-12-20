@@ -118,6 +118,16 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
           {memo.content}
         </p>
 
+        {memo.sketchData && (
+          <div className="mt-6 rounded-3xl overflow-hidden border border-slate-100 bg-white">
+            <img 
+              src={memo.sketchData} 
+              alt="手绘草图" 
+              className="w-full h-auto max-h-[300px] object-contain"
+            />
+          </div>
+        )}
+
         {memo.todos && memo.todos.length > 0 && (
           <div className="space-y-4 pt-4">
             {memo.todos.map(todo => (
