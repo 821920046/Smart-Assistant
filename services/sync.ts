@@ -19,6 +19,21 @@ export interface SyncConfig {
 
 export const syncService = {
   getConfig: (): SyncConfig => {
+    // 优先读取环境变量配置（从 Cloudflare Pages 设置）
+    const envSupabaseUrl = (window as any).process?.env?.SUPABASE_URL || process.env.SUPABASE_URL;
+    const envSupabaseKey = (window as any).process?.env?.SUPABASE_KEY || process.env.SUPABASE_KEY;
+
+    if (envSupabaseUrl && envSupabaseKey) {
+      return {
+        provider: 'supabase',
+        settings: {
+          supabaseUrl: envSupabaseUrl,
+          supabaseKey: envSupabaseKey
+        }
+      };
+    }
+
+    // 回退到 localStorage 配置
     try {
       const saved = localStorage.getItem('memo_sync_config');
       return saved ? JSON.parse(saved) : { provider: 'none', settings: {} };
@@ -36,7 +51,7 @@ export const syncService = {
     const memoMap = new Map<string, Memo>();
     // 本地数据作为基础
     local.forEach(m => memoMap.set(m.id, m));
-    
+
     // 远程数据进行合并（以 updatedAt 为准）
     if (Array.isArray(remote)) {
       remote.forEach(r => {
@@ -46,7 +61,7 @@ export const syncService = {
         }
       });
     }
-    
+
     return Array.from(memoMap.values()).sort((a, b) => b.updatedAt - a.updatedAt);
   },
 
@@ -65,11 +80,11 @@ export const syncService = {
 
       await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos`, {
         method: 'POST',
-        headers: { 
-          'apikey': supabaseKey, 
+        headers: {
+          'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates' 
+          'Prefer': 'resolution=merge-duplicates'
         },
         body: JSON.stringify(merged)
       });
@@ -84,7 +99,7 @@ export const syncService = {
   syncWithWebDAV: async (config: SyncConfig, localMemos: Memo[]) => {
     const { webdavUrl, webdavUser, webdavPass } = config.settings;
     if (!webdavUrl) throw new Error('WebDAV URL 未配置');
-    
+
     const auth = btoa(`${webdavUser}:${webdavPass}`);
     const fileName = 'memo_ai_sync.json';
     const fullUrl = `${webdavUrl.replace(/\/$/, '')}/${fileName}`;
@@ -104,7 +119,7 @@ export const syncService = {
     try {
       const putRes = await fetch(fullUrl, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Authorization': `Basic ${auth}`,
           'Content-Type': 'application/json'
         },
@@ -123,12 +138,12 @@ export const syncService = {
     const { gistToken, gistId } = config.settings;
     if (!gistToken) throw new Error('GitHub Token 未配置');
 
-    const headers = { 
-      'Authorization': `token ${gistToken}`, 
+    const headers = {
+      'Authorization': `token ${gistToken}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json'
     };
-    
+
     let remoteMemos: Memo[] = [];
     try {
       if (gistId) {
@@ -145,7 +160,7 @@ export const syncService = {
     }
 
     const merged = syncService.mergeMemos(localMemos, remoteMemos);
-    
+
     const body = {
       description: 'Memo AI Sync Data',
       files: { 'memos.json': { content: JSON.stringify(merged) } }
@@ -154,7 +169,7 @@ export const syncService = {
     try {
       const method = gistId ? 'PATCH' : 'POST';
       const url = gistId ? `https://api.github.com/gists/${gistId}` : `https://api.github.com/gists`;
-      
+
       const saveRes = await fetch(url, { method, headers, body: JSON.stringify(body) });
       if (!saveRes.ok) throw new Error(`Gist API failed: ${saveRes.status}`);
 
