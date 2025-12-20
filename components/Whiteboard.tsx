@@ -33,6 +33,19 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const [history, setHistory] = useState<ImageData[]>([]);
   const [redoStack, setRedoStack] = useState<ImageData[]>([]);
 
+  // 可拖动文字对象
+  interface TextObject {
+    id: string;
+    x: number;
+    y: number;
+    text: string;
+    color: string;
+    fontSize: number;
+  }
+  const [textObjects, setTextObjects] = useState<TextObject[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -206,19 +219,23 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   };
 
   const finalizeText = () => {
-    if (!textInput || !textInput.value.trim() || !contextRef.current) {
+    if (!textInput || !textInput.value.trim()) {
       setTextInput(null);
       return;
     }
 
-    const ctx = contextRef.current;
+    // 创建可拖动文字对象而不是直接绘制
     const fontSize = Math.max(12, brushSize * 4);
-    ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(textInput.value, textInput.x, textInput.y + (fontSize / 4));
-
+    const newTextObj: TextObject = {
+      id: Math.random().toString(36).substr(2, 9),
+      x: textInput.x,
+      y: textInput.y,
+      text: textInput.value,
+      color: color,
+      fontSize: fontSize
+    };
+    setTextObjects(prev => [...prev, newTextObj]);
     setTextInput(null);
-    saveToHistory();
   };
 
   const handleClear = () => {
@@ -232,7 +249,16 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
   const handleSave = () => {
     if (textInput?.visible) finalizeText();
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const ctx = contextRef.current;
+    if (!canvas || !ctx) return;
+
+    // 先将所有文字对象绘制到画布上
+    textObjects.forEach(obj => {
+      ctx.font = `bold ${obj.fontSize}px 'Outfit', 'Inter', sans-serif`;
+      ctx.fillStyle = obj.color;
+      ctx.fillText(obj.text, obj.x, obj.y + (obj.fontSize / 4));
+    });
+
     const dataUrl = canvas.toDataURL('image/png', 0.8);
     onSave(dataUrl);
   };
@@ -297,10 +323,37 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         </div>
       </header>
 
-      <div className="flex-1 relative bg-[#f8fafc] overflow-hidden cursor-crosshair" style={{
-        backgroundImage: 'radial-gradient(#cbd5e1 0.8px, transparent 0.8px)',
-        backgroundSize: '24px 24px'
-      }}>
+      <div
+        className="flex-1 relative bg-[#f8fafc] overflow-hidden cursor-crosshair"
+        style={{
+          backgroundImage: 'radial-gradient(#cbd5e1 0.8px, transparent 0.8px)',
+          backgroundSize: '24px 24px'
+        }}
+        onMouseMove={(e) => {
+          if (draggingId) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const newX = e.clientX - rect.left;
+            const newY = e.clientY - rect.top;
+            setTextObjects(prev => prev.map(obj =>
+              obj.id === draggingId ? { ...obj, x: newX, y: newY } : obj
+            ));
+          }
+        }}
+        onMouseUp={() => setDraggingId(null)}
+        onMouseLeave={() => setDraggingId(null)}
+        onTouchMove={(e) => {
+          if (draggingId && e.touches.length > 0) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const touch = e.touches[0];
+            const newX = touch.clientX - rect.left;
+            const newY = touch.clientY - rect.top;
+            setTextObjects(prev => prev.map(obj =>
+              obj.id === draggingId ? { ...obj, x: newX, y: newY } : obj
+            ));
+          }
+        }}
+        onTouchEnd={() => setDraggingId(null)}
+      >
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -332,6 +385,46 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
             }}
           />
         )}
+
+        {/* 可拖动文字对象 */}
+        {textObjects.map(obj => (
+          <div
+            key={obj.id}
+            className="absolute cursor-move select-none group"
+            style={{
+              left: obj.x,
+              top: obj.y,
+              transform: 'translate(-50%, -50%)',
+              color: obj.color,
+              fontSize: `${obj.fontSize}px`,
+              fontWeight: 'bold',
+              fontFamily: "'Outfit', 'Inter', sans-serif",
+              textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setDraggingId(obj.id);
+              dragOffset.current = { x: e.clientX - obj.x, y: e.clientY - obj.y };
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setDraggingId(obj.id);
+              const touch = e.touches[0];
+              dragOffset.current = { x: touch.clientX - obj.x, y: touch.clientY - obj.y };
+            }}
+          >
+            {obj.text}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setTextObjects(prev => prev.filter(t => t.id !== obj.id));
+              }}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            >
+              ×
+            </button>
+          </div>
+        ))}
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 w-full px-6 max-w-5xl">
           <div className="glass px-8 py-6 rounded-[48px] shadow-2xl border border-white/80 w-full flex flex-col gap-8">

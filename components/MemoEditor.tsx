@@ -123,6 +123,25 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave }) => {
         />
       </div>
 
+      {sketchData && (
+        <div className="relative mt-6 rounded-3xl overflow-hidden border border-slate-100 bg-white group">
+          <img
+            src={sketchData}
+            alt="草图预览"
+            className="w-full max-h-48 object-contain cursor-pointer"
+            onClick={() => setShowWhiteboard(true)}
+            title="点击编辑"
+          />
+          <button
+            onClick={() => setSketchData(null)}
+            className="absolute top-3 right-3 p-2 bg-rose-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+            title="删除草图"
+          >
+            <Icons.Trash />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 mt-8">
         {dueDate && (
           <button onClick={() => setDueDate('')} className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-wider active:scale-95">

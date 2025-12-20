@@ -41,6 +41,7 @@ function createAudioBlob(data: Float32Array) {
 const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete, isCompact = true }) => {
   const [isListening, setIsListening] = useState(false);
   const [currentTranscription, setCurrentTranscription] = useState('');
+  const isListeningRef = useRef(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -50,6 +51,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
 
   const stopListening = useCallback(() => {
     setIsListening(false);
+    isListeningRef.current = false;
 
     // Cleanup native recognition
     if ((window as any)._activeRecognition) {
@@ -100,6 +102,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
   const startListening = async () => {
     try {
       setIsListening(true);
+      isListeningRef.current = true;
       setCurrentTranscription('正在启动...');
       transcriptionBufferRef.current = '';
 
@@ -135,7 +138,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
         };
 
         recognition.onend = () => {
-          if (isListening) recognition.start(); // Keep listening if not manually stopped
+          if (isListeningRef.current) recognition.start(); // 使用 ref 避免闭包陷阱
         };
 
         // Store recognition object on the window or a ref to stop it later
