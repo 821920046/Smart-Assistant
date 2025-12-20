@@ -83,7 +83,23 @@ const App: React.FC = () => {
     const initApp = async () => {
       try {
         await storage.migrateFromLocalStorage();
-        const storedMemos = await storage.getMemos();
+        let storedMemos = await storage.getMemos();
+
+        // 自动清理 2 天前完成的任务
+        const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
+        const memosToDelete = storedMemos.filter(m =>
+          m.isArchived && m.completedAt && m.completedAt < twoDaysAgo
+        );
+
+        if (memosToDelete.length > 0) {
+          for (const memo of memosToDelete) {
+            await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
+          }
+          storedMemos = storedMemos.filter(m =>
+            !(m.isArchived && m.completedAt && m.completedAt < twoDaysAgo)
+          );
+        }
+
         setMemos(storedMemos);
         setIsLoading(false);
         await performSync(storedMemos);
@@ -139,6 +155,18 @@ const App: React.FC = () => {
     }
   };
 
+  const clearHistory = async () => {
+    const archivedMemos = memos.filter(m => m.isArchived);
+    if (archivedMemos.length === 0) return;
+
+    for (const memo of archivedMemos) {
+      await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
+    }
+    setMemos(prev => prev.filter(m => !m.isArchived));
+    const allMemos = await storage.getMemos(true);
+    await performSync(allMemos);
+  };
+
   const filteredMemos = useMemo(() => {
     let result = memos;
     if (filter === 'important') result = result.filter(m => m.priority === 'important');
@@ -168,6 +196,7 @@ const App: React.FC = () => {
         tags={[]} onExport={() => { }} onImport={() => { }}
         onOpenSyncSettings={() => setIsSyncSettingsOpen(true)} isSyncing={isSyncing}
         memos={memos}
+        onClearHistory={clearHistory}
       />
 
       <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 md:px-16 pt-20 pb-40">

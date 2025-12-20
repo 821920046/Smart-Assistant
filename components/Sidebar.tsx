@@ -13,10 +13,11 @@ interface SidebarProps {
   onOpenSyncSettings: () => void;
   isSyncing: boolean;
   memos: Memo[];
+  onClearHistory?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos
+  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos, onClearHistory
 }) => {
   const menuItems = [
     { id: 'all', icon: Icons.List, label: 'Task Center' },
@@ -38,14 +39,24 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-12">
         <nav className="space-y-2">
           {menuItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveFilter(item.id)}
-              className={`sidebar-item flex items-center gap-4 w-full px-6 py-5 text-[15px] font-bold transition-all ${activeFilter === item.id ? 'active-sidebar-item' : 'text-slate-500'
-                }`}
-            >
-              <span className={activeFilter === item.id ? 'text-white' : 'text-slate-400'}><item.icon /></span> {item.label}
-            </button>
+            <div key={item.id} className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveFilter(item.id)}
+                className={`sidebar-item flex items-center gap-4 flex-1 px-6 py-5 text-[15px] font-bold transition-all ${activeFilter === item.id ? 'active-sidebar-item' : 'text-slate-500'
+                  }`}
+              >
+                <span className={activeFilter === item.id ? 'text-white' : 'text-slate-400'}><item.icon /></span> {item.label}
+              </button>
+              {item.id === 'archived' && activeFilter === 'archived' && onClearHistory && (
+                <button
+                  onClick={onClearHistory}
+                  className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all text-xs"
+                  title="清除全部历史"
+                >
+                  <Icons.Trash />
+                </button>
+              )}
+            </div>
           ))}
         </nav>
 

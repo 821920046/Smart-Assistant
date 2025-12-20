@@ -20,12 +20,13 @@ export interface Memo {
   dueDate?: number;
   reminderAt?: number;
   reminderRepeat?: RepeatInterval; // Added periodic reminder support
-  sketchData?: string; 
+  sketchData?: string;
   isArchived: boolean;
   isFavorite: boolean;
   isDeleted?: boolean;
   remoteId?: string;
   priority: Priority;
+  completedAt?: number; // 任务完成时间，用于自动清理
 }
 
 export interface TranscriptionTurn {

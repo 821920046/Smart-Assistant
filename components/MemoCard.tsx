@@ -31,7 +31,21 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
 
   const handleToggleTodo = (todoId: string) => {
     const updatedTodos = memo.todos?.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
-    onUpdate({ ...memo, todos: updatedTodos });
+
+    // 检查是否所有任务都已完成
+    const allCompleted = updatedTodos?.every(t => t.completed);
+
+    if (allCompleted && updatedTodos && updatedTodos.length > 0) {
+      // 所有任务完成，移入历史记录
+      onUpdate({
+        ...memo,
+        todos: updatedTodos,
+        isArchived: true,
+        completedAt: Date.now()
+      });
+    } else {
+      onUpdate({ ...memo, todos: updatedTodos });
+    }
   };
 
   const handlePlayTTS = async () => {
