@@ -233,16 +233,26 @@ const App: React.FC = () => {
         onClearHistory={clearHistory}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-200">
-              <Icons.Logo className="w-5 h-5" />
+        <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-800 rounded-lg transition-colors"
+            >
+              <Icons.Menu />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-200">
+                <Icons.Logo className="w-5 h-5" />
+              </div>
+              <h1 className="text-lg font-bold text-slate-800 dark:text-white">Smart Assistant</h1>
             </div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-white">Smart Assistant</h1>
           </div>
           <div className="flex gap-2">
             <button 
@@ -261,7 +271,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">
+        <div className="sticky top-20 md:top-0 z-30 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-2 md:py-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none transition-all">
           <div className="relative group">
             <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <input

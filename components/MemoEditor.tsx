@@ -150,7 +150,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
   };
 
   return (
-    <div className="memo-card p-6 mb-8 relative z-20">
+    <div className="memo-card p-4 md:p-6 mb-8 relative z-20">
       {/* Input Area */}
       <div className="relative">
         <textarea
