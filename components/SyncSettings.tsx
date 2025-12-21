@@ -53,8 +53,8 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                   onClick={() => setConfig({ ...config, provider: p })}
                   className={`py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${
                     config.provider === p 
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg' 
-                    : 'bg-white text-slate-400 border-slate-100 hover:border-indigo-200'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
+                    : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
                   }`}
                 >
                   {p === 'none' ? '仅本地' : p}
@@ -69,13 +69,13 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 type="text" placeholder="Supabase Project URL" 
                 value={config.settings.supabaseUrl || ''} 
                 onChange={e => updateSetting('supabaseUrl', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <input 
                 type="password" placeholder="Anon Key" 
                 value={config.settings.supabaseKey || ''} 
                 onChange={e => updateSetting('supabaseKey', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <p className="text-[10px] text-slate-400 leading-relaxed px-1">
                 * 请在 Supabase 创建 memos 表，包含 id(text), content(text), updatedAt(int8) 等字段。
@@ -89,20 +89,20 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 type="text" placeholder="WebDAV URL (如坚果云 dav.jianguoyun.com/dav/)" 
                 value={config.settings.webdavUrl || ''} 
                 onChange={e => updateSetting('webdavUrl', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <div className="grid grid-cols-2 gap-3">
                 <input 
                   type="text" placeholder="用户名" 
                   value={config.settings.webdavUser || ''} 
                   onChange={e => updateSetting('webdavUser', e.target.value)}
-                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
                 <input 
                   type="password" placeholder="应用密码" 
                   value={config.settings.webdavPass || ''} 
                   onChange={e => updateSetting('webdavPass', e.target.value)}
-                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
             </div>
@@ -114,13 +114,13 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 type="password" placeholder="GitHub Personal Access Token" 
                 value={config.settings.gistToken || ''} 
                 onChange={e => updateSetting('gistToken', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <input 
                 type="text" placeholder="Gist ID (留空自动创建)" 
                 value={config.settings.gistId || ''} 
                 onChange={e => updateSetting('gistId', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           )}
@@ -136,7 +136,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           <button 
             onClick={saveAndSync}
             disabled={isTesting}
-            className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95 transition-all"
+            className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all"
           >
             {isTesting ? '正在验证...' : '保存并开始同步'}
           </button>

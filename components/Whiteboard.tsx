@@ -284,7 +284,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
           <div className="h-4 w-[1px] bg-slate-100" />
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 leading-none mb-1">Creative Canvas</span>
-            <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">Pixel Perfect Design</span>
+            <span className="text-[8px] font-bold text-blue-500 uppercase tracking-widest">Pixel Perfect Design</span>
           </div>
 
           <div className="flex items-center gap-1 ml-4 bg-slate-50 p-1 rounded-2xl">
@@ -316,7 +316,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
           </button>
           <button
             onClick={handleSave}
-            className="px-10 py-3.5 bg-slate-900 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
+            className="px-10 py-3.5 bg-blue-600 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95"
           >
             完成并保存
           </button>
@@ -374,7 +374,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
             onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
             onBlur={finalizeText}
             onKeyDown={(e) => e.key === 'Enter' && finalizeText()}
-            className="absolute p-3 bg-white/90 backdrop-blur border-2 border-indigo-500 rounded-2xl shadow-2xl outline-none font-black tracking-tight"
+            className="absolute p-3 bg-white/90 backdrop-blur border-2 border-blue-500 rounded-2xl shadow-2xl outline-none font-black tracking-tight"
             style={{
               left: textInput.x,
               top: textInput.y,
@@ -433,7 +433,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
               {/* Tool Selector */}
               <div className="flex items-center bg-slate-100/50 p-1.5 rounded-[28px] relative overflow-hidden">
                 <div
-                  className="absolute bg-slate-900 rounded-[22px] transition-all duration-300 ease-out z-0"
+                  className="absolute bg-blue-600 rounded-[22px] transition-all duration-300 ease-out z-0"
                   style={{
                     width: 'calc(33.33% - 4px)',
                     height: 'calc(100% - 12px)',
@@ -468,7 +468,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
               <div className="flex flex-col gap-3 flex-1 max-w-[200px] w-full">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">画笔粗细</span>
-                  <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{brushSize}px</span>
+                  <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">{brushSize}px</span>
                 </div>
                 <div className="relative flex items-center h-4">
                   <input
@@ -478,7 +478,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                     step="1"
                     value={brushSize}
                     onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-slate-900"
+                    className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
                   />
                 </div>
               </div>
@@ -489,7 +489,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
               <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-2 px-1">
                 <button
                   onClick={() => colorInputRef.current?.click()}
-                  className="w-11 h-11 rounded-[20px] bg-white border-2 border-dashed border-slate-300 flex items-center justify-center transition-all hover:border-indigo-400 hover:bg-indigo-50 shrink-0 active:scale-90"
+                  className="w-11 h-11 rounded-[20px] bg-white border-2 border-dashed border-slate-300 flex items-center justify-center transition-all hover:border-blue-400 hover:bg-blue-50 shrink-0 active:scale-90"
                   title="自定义颜色"
                 >
                   <div className="w-6 h-6 rounded-lg shadow-sm" style={{ background: 'conic-gradient(from 0deg, #ff4d4d, #f9cb28, #32cd32, #00ced1, #1e90ff, #ff00ff, #ff4d4d)' }} />
@@ -509,7 +509,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                       <button
                         key={`recent-${c}`}
                         onClick={() => selectColor(c)}
-                        className={`w-11 h-11 rounded-[20px] transition-all border-[3px] shrink-0 shadow-md ${color === c ? 'border-slate-900 scale-110' : 'border-white hover:border-slate-100'}`}
+                        className={`w-11 h-11 rounded-[20px] transition-all border-[3px] shrink-0 shadow-md ${color === c ? 'border-blue-600 scale-110' : 'border-white hover:border-slate-100'}`}
                         style={{ backgroundColor: c }}
                       />
                     ))}
@@ -522,7 +522,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
                   <button
                     key={c}
                     onClick={() => selectColor(c)}
-                    className={`w-11 h-11 rounded-[20px] transition-all border-[3px] shrink-0 shadow-md ${color === c ? 'border-slate-900 scale-110' : 'border-white hover:border-slate-100'}`}
+                    className={`w-11 h-11 rounded-[20px] transition-all border-[3px] shrink-0 shadow-md ${color === c ? 'border-blue-600 scale-110' : 'border-white hover:border-slate-100'}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}

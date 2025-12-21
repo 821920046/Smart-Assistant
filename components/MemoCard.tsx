@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Memo, Priority } from '../types.js';
 import { Icons } from '../constants.js';
@@ -13,13 +12,14 @@ interface MemoCardProps {
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
   const styles = {
-    important: 'bg-rose-50 text-rose-600 border-rose-100',
-    normal: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    secondary: 'bg-slate-100 text-slate-400 border-slate-200'
+    important: 'bg-rose-100 text-rose-700',
+    normal: 'bg-blue-100 text-blue-700',
+    secondary: 'bg-slate-100 text-slate-500'
   };
-  const labels = { important: '重要', normal: '一般', secondary: '次要' };
+  const labels = { important: 'Important', normal: 'Normal', secondary: 'Low' };
+  
   return (
-    <span className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-wider ${styles[priority]}`}>
+    <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${styles[priority]}`}>
       {labels[priority]}
     </span>
   );
@@ -31,12 +31,12 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
 
   const handleToggleTodo = (todoId: string) => {
     const updatedTodos = memo.todos?.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
-
-    // 检查是否所有任务都已完成
+    
+    // Check if all tasks are completed
     const allCompleted = updatedTodos?.every(t => t.completed);
 
     if (allCompleted && updatedTodos && updatedTodos.length > 0) {
-      // 所有任务完成，移入历史记录
+      // All tasks completed, move to history
       onUpdate({
         ...memo,
         todos: updatedTodos,
@@ -84,90 +84,97 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
   };
 
   const getRepeatLabel = () => {
-    if (!memo.reminderRepeat || memo.reminderRepeat === 'none') return '单次';
-    if (memo.reminderRepeat === 'daily') return '每天';
-    return '每周';
+    if (!memo.reminderRepeat || memo.reminderRepeat === 'none') return 'Once';
+    if (memo.reminderRepeat === 'daily') return 'Daily';
+    return 'Weekly';
   };
 
   return (
-    <div className={`memo-card group relative rounded-[32px] md:rounded-[42px] overflow-hidden transition-all duration-500 p-6 md:p-12 border-l-[6px] md:border-l-[8px] ${isDeleting ? 'opacity-0 scale-95 translate-x-10' : 'opacity-100 scale-100'
-      } ${memo.priority === 'important' ? 'border-l-rose-500' : memo.priority === 'normal' ? 'border-l-indigo-500' : 'border-l-slate-200'
-      }`}>
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+    <div className={`memo-card group relative p-6 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+      
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
           <PriorityTag priority={memo.priority || 'normal'} />
           {memo.reminderAt && (
-            <div className="flex items-center gap-1.5 text-indigo-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/50">
-              <Icons.Clock />
-              <span>{getRepeatLabel()}</span>
+            <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium bg-slate-50 px-2 py-1 rounded-lg">
+              <Icons.Clock className="w-3 h-3" />
+              <span>{new Date(memo.reminderAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+              {memo.reminderRepeat && memo.reminderRepeat !== 'none' && (
+                <span className="text-[9px] px-1 bg-slate-200 rounded text-slate-600">{getRepeatLabel()}</span>
+              )}
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1 md:gap-2">
-          <button
-            onClick={handlePlayTTS}
+        
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={handlePlayTTS} 
             disabled={isPlaying}
-            className={`p-2 md:p-3 rounded-full transition-all ${isPlaying ? 'bg-indigo-500 text-white animate-pulse' : 'text-slate-300 hover:text-indigo-500 hover:bg-indigo-50'}`}
-            title="播放朗读"
+            className={`p-2 rounded-full hover:bg-slate-100 transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`}
+            title="Read Aloud"
           >
             <Icons.Volume />
           </button>
-          <button onClick={() => onDelete(memo.id)} className="p-2 md:p-3 text-slate-300 hover:text-rose-500 transition-colors active:scale-90" title="删除">
+          <button 
+            onClick={() => {
+              setIsDeleting(true);
+              setTimeout(() => onDelete(memo.id), 300);
+            }}
+            className="p-2 rounded-full hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"
+            title="Delete"
+          >
             <Icons.Trash />
           </button>
         </div>
       </div>
 
-      <div className="space-y-4 md:space-y-6">
-        <p className="text-slate-800 font-bold text-lg md:text-3xl leading-snug md:leading-tight whitespace-pre-wrap tracking-tight">
-          {memo.content}
-        </p>
-
-        {memo.sketchData && (
-          <div className="mt-4 md:mt-6 rounded-2xl md:rounded-3xl overflow-hidden border border-slate-100 bg-white">
-            <img
-              src={memo.sketchData}
-              alt="手绘草图"
-              className="w-full h-auto max-h-[250px] md:max-h-[400px] object-contain"
-            />
-          </div>
-        )}
-
-        {memo.todos && memo.todos.length > 0 && (
-          <div className="space-y-3 md:space-y-4 pt-2 md:pt-4">
+      {/* Content */}
+      <div className="mb-4">
+        {memo.todos && memo.todos.length > 0 ? (
+          <ul className="space-y-2">
             {memo.todos.map(todo => (
-              <div
-                key={todo.id}
-                className="flex items-center gap-3 md:gap-5 p-4 md:p-6 rounded-2xl md:rounded-[28px] border bg-slate-50/30 border-slate-50 transition-all group/todo"
+              <li 
+                key={todo.id} 
+                className="flex items-start gap-3 group/item cursor-pointer"
+                onClick={() => handleToggleTodo(todo.id)}
               >
-                <div
-                  onClick={() => handleToggleTodo(todo.id)}
-                  className={`w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl flex items-center justify-center border-2 md:border-3 transition-all cursor-pointer ${todo.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 hover:border-indigo-400'
-                    }`}
-                >
-                  {todo.completed && <Icons.CheckCircle />}
+                <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                  todo.completed 
+                    ? 'bg-blue-500 border-blue-500' 
+                    : 'bg-white border-slate-300 group-hover/item:border-blue-400'
+                }`}>
+                  {todo.completed && <Icons.Check className="w-3.5 h-3.5 text-white" />}
                 </div>
-                <span className={`flex-1 text-sm md:text-lg font-bold transition-all ${todo.completed ? 'line-through text-slate-300' : 'text-slate-700'
-                  }`}>
+                <span className={`text-sm leading-relaxed transition-all ${
+                  todo.completed ? 'text-slate-400 line-through' : 'text-slate-700'
+                }`}>
                   {todo.text}
                 </span>
-              </div>
+              </li>
             ))}
+          </ul>
+        ) : (
+          <div className="prose prose-sm max-w-none">
+            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{memo.content}</p>
+          </div>
+        )}
+        
+        {memo.sketchData && (
+          <div className="mt-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+             <img src={memo.sketchData} alt="Sketch" className="w-full h-auto" />
           </div>
         )}
       </div>
 
-      {memo.dueDate && (
-        <div className="mt-8 pt-6 border-t border-slate-50 flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          <Icons.Calendar />
-          截止日期: {new Date(memo.dueDate).toLocaleDateString()}
-        </div>
-      )}
-
-      {memo.reminderAt && (
-        <div className="mt-4 flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          <Icons.Clock />
-          下次提醒: {new Date(memo.reminderAt).toLocaleString()}
+      {/* Footer Tags */}
+      {memo.tags && memo.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50">
+          {memo.tags.map(tag => (
+            <span key={tag} className="text-xs text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
+              #{tag}
+            </span>
+          ))}
         </div>
       )}
     </div>

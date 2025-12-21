@@ -244,7 +244,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
         onClick={isListening ? stopListening : startListening}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold active:scale-95 ${isListening
           ? 'bg-rose-500 text-white animate-pulse shadow-xl shadow-rose-200'
-          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+          : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
           }`}
         title={isListening ? "停止录音" : "语音输入"}
       >
@@ -254,9 +254,9 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
 
       {isListening && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-end justify-center pb-24 px-4 z-[210] pointer-events-none">
-          <div className="w-full max-w-xl bg-white p-8 rounded-[40px] shadow-2xl border border-indigo-50 pointer-events-auto animate-card">
+          <div className="w-full max-w-xl bg-white p-8 rounded-[40px] shadow-2xl border border-blue-50 pointer-events-auto animate-card">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3 text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">
+              <div className="flex items-center gap-3 text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">
                 <span className="flex h-3 w-3 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
@@ -265,7 +265,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
               </div>
               <button
                 onClick={stopListening}
-                className="text-[10px] bg-slate-900 text-white px-6 py-2 rounded-full font-black uppercase tracking-widest active:scale-90 transition-all shadow-lg"
+                className="text-[10px] bg-blue-600 text-white px-6 py-2 rounded-full font-black uppercase tracking-widest active:scale-90 transition-all shadow-lg"
               >
                 结束并保存
               </button>
@@ -279,7 +279,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onTranscriptionComplete
               {[...Array(12)].map((_, i) => (
                 <div
                   key={i}
-                  className="w-1.5 bg-indigo-400 rounded-full animate-pulse transition-all"
+                  className="w-1.5 bg-blue-400 rounded-full animate-pulse transition-all"
                   style={{
                     height: `${Math.random() * 80 + 20}%`,
                     animationDelay: `${i * 0.08}s`,

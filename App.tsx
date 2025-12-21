@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Memo } from './types.js';
 import { storage } from './services/storage.js';
@@ -187,10 +186,10 @@ const App: React.FC = () => {
     });
   }, [memos, filter, searchQuery]);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-t-indigo-500 border-4 border-slate-100 rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 rounded-full animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-transparent">
+    <div className="min-h-screen flex flex-col md:flex-row">
       <Sidebar
         activeFilter={filter} setActiveFilter={setFilter}
         tags={[]} onExport={() => { }} onImport={() => { }}
@@ -199,80 +198,74 @@ const App: React.FC = () => {
         onClearHistory={clearHistory}
       />
 
-      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 md:px-16 pt-8 md:pt-20 pb-24 md:pb-40">
-        <header className="mb-8 md:mb-20">
-          <div className="flex items-center gap-2 text-indigo-500 font-bold text-[10px] md:text-[11px] uppercase tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6">
-            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.5)] animate-pulse" />
-            {filter === 'archived' ? '已完成任务' : '待办任务'}
+      <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-200">
+              <Icons.Logo className="w-5 h-5" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800">Smart Assistant</h1>
           </div>
-          <h1 className="text-3xl md:text-8xl font-black tracking-[-0.03em] md:tracking-[-0.04em] mb-6 md:mb-12 leading-[1] md:leading-[0.9] text-slate-900">
-            {filter === 'all' ? '任务中心' : filter === 'important' ? '重要任务' : '历史记录'}
-          </h1>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsSyncSettingsOpen(true)}
+              className="p-2 bg-white rounded-full shadow-sm text-slate-600"
+            >
+              <Icons.Settings className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">
           <div className="relative group">
-            <div className="absolute left-5 md:left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-all duration-300"><Icons.Search /></div>
+            <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <input
-              type="text" placeholder="搜索任务..." value={searchQuery}
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 md:h-24 bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-2xl md:rounded-[40px] pl-14 md:pl-20 pr-6 md:pr-10 text-base md:text-2xl outline-none focus:border-indigo-300 focus:bg-white focus:shadow-lg transition-all duration-300 font-medium text-slate-800 placeholder:text-slate-300"
+              className="w-full pl-11 pr-4 py-3.5 bg-white border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 text-slate-700 placeholder-slate-400 transition-all"
             />
           </div>
-        </header>
+        </div>
 
-        <section className="mb-8 md:mb-20"><MemoEditor onSave={addMemo} /></section>
+        {/* Editor */}
+        {filter !== 'archived' && (
+          <MemoEditor onSave={addMemo} />
+        )}
 
-        <div className="space-y-10">
-          {filteredMemos.length > 0 ? (
-            filteredMemos.map((memo) => (
-              <MemoCard key={memo.id} memo={memo} onUpdate={updateMemo} onDelete={deleteMemo} />
-            ))
-          ) : (
-            <div className="py-40 flex flex-col items-center text-center">
-              <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-100 mb-8 border-4 border-dashed border-slate-100"><Icons.CheckCircle /></div>
-              <h3 className="text-slate-400 font-black text-2xl tracking-tight">暂无任务</h3>
-              <p className="text-slate-300 font-bold mt-2">快去创建一个重要任务吧！</p>
+        {/* Tasks List */}
+        <div className="grid grid-cols-1 gap-4 pb-24">
+          {filteredMemos.length === 0 ? (
+            <div className="text-center py-20 opacity-50">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                <Icons.List className="w-8 h-8" />
+              </div>
+              <p className="text-slate-500 font-medium">No tasks found</p>
             </div>
+          ) : (
+            filteredMemos.map(memo => (
+              <MemoCard
+                key={memo.id}
+                memo={memo}
+                onUpdate={updateMemo}
+                onDelete={deleteMemo}
+              />
+            ))
           )}
         </div>
       </main>
 
       <ChatAssistant contextMemos={memos.map(m => m.content)} />
-      {isSyncSettingsOpen && <SyncSettings onClose={() => setIsSyncSettingsOpen(false)} onSyncComplete={() => performSync(memos)} />}
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-6 left-6 right-6 h-16 bg-white/90 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-2xl flex items-center justify-around px-2 z-50">
-        <button
-          onClick={() => setFilter('all')}
-          className={`flex flex-col items-center gap-1 transition-all ${filter === 'all' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
-        >
-          <Icons.List className="w-5 h-5" />
-          <span className="text-[10px] font-bold">中心</span>
-        </button>
-        <button
-          onClick={() => setFilter('important')}
-          className={`flex flex-col items-center gap-1 transition-all ${filter === 'important' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
-        >
-          <Icons.Sparkles className="w-5 h-5" />
-          <span className="text-[10px] font-bold">重要</span>
-        </button>
-        <button
-          onClick={() => setFilter('archived')}
-          className={`flex flex-col items-center gap-1 transition-all ${filter === 'archived' ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}
-        >
-          <Icons.Archive className="w-5 h-5" />
-          <span className="text-[10px] font-bold">历史</span>
-        </button>
-        <div className="w-[1px] h-6 bg-slate-100 mx-1" />
-        <button
-          onClick={() => setIsSyncSettingsOpen(true)}
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-600 transition-all"
-        >
-          <div className={`relative ${isSyncing ? 'animate-pulse' : ''}`}>
-            <Icons.Cloud className="w-5 h-5" />
-            <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${isSyncing ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-          </div>
-          <span className="text-[10px] font-bold">同步</span>
-        </button>
-      </nav>
+      {isSyncSettingsOpen && (
+        <SyncSettings 
+          isOpen={isSyncSettingsOpen} 
+          onClose={() => setIsSyncSettingsOpen(false)} 
+        />
+      )}
     </div>
   );
 };
