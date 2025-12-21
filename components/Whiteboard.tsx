@@ -287,12 +287,12 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ onSave, onCancel, initialData }
         <div className="flex items-center gap-4">
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-900 transition-colors font-bold text-sm px-2">取消</button>
           <div className="h-4 w-[1px] bg-slate-100" />
-          <div className="flex flex-col">
+          <div className="flex flex-col hidden md:flex">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 leading-none mb-1">Creative Canvas</span>
             <span className="text-[8px] font-bold text-blue-500 uppercase tracking-widest">Pixel Perfect Design</span>
           </div>
 
-          <div className="flex items-center gap-1 ml-4 bg-slate-50 p-1 rounded-xl hidden md:flex">
+          <div className="flex items-center gap-1 ml-2 md:ml-4 bg-slate-50 p-1 rounded-xl">
             <button
               onClick={undo}
               disabled={history.length <= 1}

@@ -225,7 +225,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
 
           {/* Editor Toolbar */}
-          <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => insertMarkdown('h1')}
               className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"

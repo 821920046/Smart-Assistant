@@ -217,6 +217,15 @@
         .active-scale:active {
             transform: scale(0.95);
         }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .toast-enter {
+            animation: slideIn 0.3s ease-out forwards;
+        }
     </style>
     <script type="importmap">
 {

@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Memo } from './types.js';
 import { storage } from './services/storage.js';
-import { syncService } from './services/sync.js';
 import Sidebar from './components/Sidebar.js';
 import MemoEditor from './components/MemoEditor.js';
 import MemoCard from './components/MemoCard.js';
@@ -11,6 +10,9 @@ import CalendarView from './components/CalendarView.js';
 import KanbanView from './components/KanbanView.js';
 import FocusMode from './components/FocusMode.js';
 import { Icons, CATEGORIES } from './constants.js';
+import { useToast } from './context/ToastContext.js';
+import { useNotificationScheduler } from './hooks/useNotificationScheduler.js';
+import { useSyncService } from './hooks/useSyncService.js';
 
 const App: React.FC = () => {
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -18,13 +20,16 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     try {
       return localStorage.getItem('darkMode') === 'true' || 
              (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
     } catch { return false; }
   });
+
+  const { addToast } = useToast();
+  const { isSyncing, performSync } = useSyncService();
 
   useEffect(() => {
     if (darkMode) {
@@ -38,66 +43,17 @@ const App: React.FC = () => {
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
-  const notifiedIds = useRef<Set<string>>(new Set());
+  // Define updateMemo first so it can be used in hooks
+  const updateMemo = async (updatedMemo: Memo) => {
+    const upgraded = { ...updatedMemo, updatedAt: Date.now() };
+    setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
+    await storage.upsertMemo(upgraded);
+    const allMemos = await storage.getMemos(true);
+    await performSync(allMemos, setMemos, true); // Silent sync on update
+  };
 
-  const performSync = useCallback(async (currentMemos: Memo[]) => {
-    const config = syncService.getConfig();
-    if (config.provider === 'none') return currentMemos;
-    setIsSyncing(true);
-    try {
-      let merged: Memo[] = currentMemos;
-      if (config.provider === 'supabase') merged = await syncService.syncWithSupabase(config, currentMemos);
-      else if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
-      else if (config.provider === 'gist') merged = await syncService.syncWithGist(config, currentMemos);
-
-      await storage.saveMemos(merged);
-      setMemos(merged.filter(m => !m.isDeleted));
-      return merged;
-    } catch (err) {
-      console.error("Sync failed:", err);
-      return currentMemos;
-    } finally {
-      setIsSyncing(false);
-    }
-  }, []);
-
-  // Notification Scheduler
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      memos.forEach(memo => {
-        if (memo.reminderAt && now >= memo.reminderAt && !notifiedIds.current.has(memo.id)) {
-          notifiedIds.current.add(memo.id);
-
-          if (Notification.permission === "granted") {
-            try {
-              new Notification("任务提醒", {
-                body: memo.content || "你有一个待办事项到期了",
-                icon: '/favicon.ico'
-              });
-            } catch (e) {
-              console.warn("Notification failed to display", e);
-            }
-          } else {
-            alert(`提醒: ${memo.content}`);
-          }
-
-          // Handle repeat logic
-          if (memo.reminderRepeat && memo.reminderRepeat !== 'none') {
-            const nextTime = memo.reminderAt + (memo.reminderRepeat === 'daily' ? 86400000 : 86400000 * 7);
-            updateMemo({ ...memo, reminderAt: nextTime });
-            notifiedIds.current.delete(memo.id); // Allow re-notification for the new time
-          }
-        }
-      });
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [memos]);
+  // Notification Scheduler Hook
+  useNotificationScheduler(memos, updateMemo);
 
   useEffect(() => {
     const initApp = async () => {
@@ -105,7 +61,7 @@ const App: React.FC = () => {
         await storage.migrateFromLocalStorage();
         let storedMemos = await storage.getMemos();
 
-        // 自动清理 2 天前完成的任务
+        // Auto-clean tasks completed > 2 days ago
         const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
         const memosToDelete = storedMemos.filter(m =>
           m.isArchived && m.completedAt && m.completedAt < twoDaysAgo
@@ -122,14 +78,15 @@ const App: React.FC = () => {
 
         setMemos(storedMemos);
         setIsLoading(false);
-        await performSync(storedMemos);
+        await performSync(storedMemos, setMemos, true); // Initial sync silent
       } catch (err) {
         console.error("App initialization failed:", err);
+        addToast("Failed to load data", "error");
         setIsLoading(false);
       }
     };
     initApp();
-  }, [performSync]);
+  }, [performSync, addToast]);
 
   const addMemo = async (memoData: Partial<Memo>) => {
     const now = Date.now();
@@ -152,16 +109,9 @@ const App: React.FC = () => {
     const updatedLocal = [newMemo, ...memos];
     setMemos(updatedLocal);
     await storage.upsertMemo(newMemo);
+    addToast("Task created successfully", "success");
     const allMemos = await storage.getMemos(true);
-    await performSync(allMemos);
-  };
-
-  const updateMemo = async (updatedMemo: Memo) => {
-    const upgraded = { ...updatedMemo, updatedAt: Date.now() };
-    setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
-    await storage.upsertMemo(upgraded);
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos);
+    await performSync(allMemos, setMemos, true);
   };
 
   const deleteMemo = async (id: string) => {
@@ -170,8 +120,9 @@ const App: React.FC = () => {
       const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
       setMemos(prev => prev.filter(m => m.id !== id));
       await storage.upsertMemo(deletedMemo);
+      addToast("Task deleted", "info");
       const allMemos = await storage.getMemos(true);
-      await performSync(allMemos);
+      await performSync(allMemos, setMemos, true);
     }
   };
 
@@ -183,8 +134,9 @@ const App: React.FC = () => {
       await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
     }
     setMemos(prev => prev.filter(m => !m.isArchived));
+    addToast("History cleared", "info");
     const allMemos = await storage.getMemos(true);
-    await performSync(allMemos);
+    await performSync(allMemos, setMemos, true);
   };
 
   const allTags = useMemo(() => {
@@ -217,7 +169,7 @@ const App: React.FC = () => {
     });
   }, [memos, filter, searchQuery]);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -239,7 +191,7 @@ const App: React.FC = () => {
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4">
+        <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -257,13 +209,13 @@ const App: React.FC = () => {
           <div className="flex gap-2">
             <button 
               onClick={toggleDarkMode}
-              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300"
+              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
             >
               {darkMode ? <Icons.Moon className="w-5 h-5" /> : <Icons.Sun className="w-5 h-5" />}
             </button>
             <button 
               onClick={() => setIsSyncSettingsOpen(true)}
-              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300"
+              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
             >
               <Icons.Settings className="w-5 h-5" />
             </button>
@@ -279,7 +231,7 @@ const App: React.FC = () => {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 bg-white border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 text-slate-700 placeholder-slate-400 transition-all"
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 placeholder-slate-400 transition-all"
             />
           </div>
         </div>
@@ -296,17 +248,25 @@ const App: React.FC = () => {
         {filter === 'calendar' ? (
           <CalendarView memos={filteredMemos} />
         ) : filter === 'kanban' ? (
-          <KanbanView memos={filteredMemos} onUpdate={updateMemo} onDelete={deleteMemo} />
+          <KanbanView 
+            memos={filteredMemos} 
+            onUpdate={updateMemo} 
+            onDelete={deleteMemo}
+            onAdd={addMemo}
+          />
         ) : filter === 'focus' ? (
           <FocusMode />
         ) : (
           <div className="grid grid-cols-1 gap-4 pb-24">
             {filteredMemos.length === 0 ? (
-              <div className="text-center py-20 opacity-50">
-                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                  <Icons.List className="w-8 h-8" />
+              <div className="flex flex-col items-center justify-center py-20 opacity-60">
+                <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-slate-400 dark:text-slate-500 shadow-inner">
+                  <Icons.List className="w-10 h-10" />
                 </div>
-                <p className="text-slate-500 font-medium">No tasks found</p>
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No tasks found</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs text-center">
+                  {searchQuery ? `No matches for "${searchQuery}"` : "You're all caught up! Add a new task to get started."}
+                </p>
               </div>
             ) : (
               filteredMemos.map(memo => (
