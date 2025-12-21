@@ -353,11 +353,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
 
       {showWhiteboard && (
         <Whiteboard 
+          initialData={sketchData || undefined}
           onSave={(data) => {
             setSketchData(data);
             setShowWhiteboard(false);
           }}
-          onClose={() => setShowWhiteboard(false)}
+          onCancel={() => setShowWhiteboard(false)}
         />
       )}
     </div>
