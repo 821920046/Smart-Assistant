@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icons } from '../constants.js';
+import { Icons, CATEGORIES } from '../constants.js';
 import { Memo } from '../types.js';
 import TaskInsights from './TaskInsights.js';
 
@@ -13,13 +13,18 @@ interface SidebarProps {
   isSyncing: boolean;
   memos: Memo[];
   onClearHistory?: () => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos, onClearHistory
+  activeFilter, setActiveFilter, tags, onOpenSyncSettings, isSyncing, memos, onClearHistory, darkMode, onToggleDarkMode
 }) => {
   const menuItems = [
     { id: 'all', icon: Icons.List, label: 'Tasks' },
+    { id: 'calendar', icon: Icons.Clock, label: 'Calendar' },
+    { id: 'kanban', icon: Icons.Grid, label: 'Kanban' },
+    { id: 'focus', icon: Icons.Target, label: 'Focus' },
     { id: 'important', icon: Icons.Sparkles, label: 'Important' },
     { id: 'archived', icon: Icons.Archive, label: 'History' },
   ];
@@ -67,6 +72,31 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4">Folders</h3>
+          <div className="space-y-1">
+            {CATEGORIES.map(category => (
+              <button
+                key={category}
+                onClick={() => setActiveFilter(category)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  activeFilter === category
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icons.Folder className={`w-4 h-4 ${activeFilter === category ? 'text-blue-500' : 'text-slate-400'}`} />
+                  <span>{category}</span>
+                </div>
+                <span className={`text-xs ${activeFilter === category ? 'text-blue-500 font-bold' : 'text-slate-400'}`}>
+                  {memos.filter(m => m.category === category && !m.isArchived && !m.isDeleted).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4">Insights</h3>
           <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
             <TaskInsights memos={memos} />
@@ -75,6 +105,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="mt-auto pt-6">
+        <button
+          onClick={onToggleDarkMode}
+          className="w-full flex items-center justify-between px-4 py-3 mb-4 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100"
+        >
+          <span className="flex items-center gap-3">
+            {darkMode ? <Icons.Moon className="w-4 h-4" /> : <Icons.Sun className="w-4 h-4" />}
+            {darkMode ? 'Dark Mode' : 'Light Mode'}
+          </span>
+          <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-300'}`}>
+            <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+        </button>
+
         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Cloud Sync</span>

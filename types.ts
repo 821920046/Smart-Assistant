@@ -26,6 +26,7 @@ export interface Memo {
   isDeleted?: boolean;
   remoteId?: string;
   priority: Priority;
+  category?: string;
   completedAt?: number; // 任务完成时间，用于自动清理
 }
 

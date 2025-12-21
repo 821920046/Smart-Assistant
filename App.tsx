@@ -7,7 +7,10 @@ import MemoEditor from './components/MemoEditor.js';
 import MemoCard from './components/MemoCard.js';
 import ChatAssistant from './components/ChatAssistant.js';
 import SyncSettings from './components/SyncSettings.js';
-import { Icons } from './constants.js';
+import CalendarView from './components/CalendarView.js';
+import KanbanView from './components/KanbanView.js';
+import FocusMode from './components/FocusMode.js';
+import { Icons, CATEGORIES } from './constants.js';
 
 const App: React.FC = () => {
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -16,6 +19,24 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem('darkMode') === 'true' || 
+             (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch { return false; }
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   const notifiedIds = useRef<Set<string>>(new Set());
 
@@ -166,11 +187,21 @@ const App: React.FC = () => {
     await performSync(allMemos);
   };
 
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    memos.forEach(memo => {
+      memo.tags.forEach(tag => tags.add(tag));
+    });
+    return Array.from(tags).sort();
+  }, [memos]);
+
   const filteredMemos = useMemo(() => {
     let result = memos;
+
     if (filter === 'important') result = result.filter(m => m.priority === 'important');
     else if (filter === 'favorites') result = result.filter(m => m.isFavorite);
     else if (filter === 'archived') result = result.filter(m => m.isArchived);
+    else if (CATEGORIES.includes(filter)) result = result.filter(m => m.category === filter);
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -191,11 +222,17 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <Sidebar
-        activeFilter={filter} setActiveFilter={setFilter}
-        tags={[]} onExport={() => { }} onImport={() => { }}
-        onOpenSyncSettings={() => setIsSyncSettingsOpen(true)} isSyncing={isSyncing}
+        activeFilter={filter}
+        setActiveFilter={setFilter}
+        tags={allTags}
+        onExport={() => {}}
+        onImport={() => {}}
+        onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
+        isSyncing={isSyncing}
         memos={memos}
         onClearHistory={clearHistory}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
@@ -205,12 +242,18 @@ const App: React.FC = () => {
             <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-md shadow-blue-200">
               <Icons.Logo className="w-5 h-5" />
             </div>
-            <h1 className="text-lg font-bold text-slate-800">Smart Assistant</h1>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-white">Smart Assistant</h1>
           </div>
           <div className="flex gap-2">
             <button 
+              onClick={toggleDarkMode}
+              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300"
+            >
+              {darkMode ? <Icons.Moon className="w-5 h-5" /> : <Icons.Sun className="w-5 h-5" />}
+            </button>
+            <button 
               onClick={() => setIsSyncSettingsOpen(true)}
-              className="p-2 bg-white rounded-full shadow-sm text-slate-600"
+              className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300"
             >
               <Icons.Settings className="w-5 h-5" />
             </button>
@@ -232,30 +275,41 @@ const App: React.FC = () => {
         </div>
 
         {/* Editor */}
-        {filter !== 'archived' && (
-          <MemoEditor onSave={addMemo} />
+        {filter !== 'archived' && filter !== 'calendar' && filter !== 'kanban' && filter !== 'focus' && (
+          <MemoEditor 
+            onSave={addMemo} 
+            defaultCategory={CATEGORIES.includes(filter) ? filter : undefined}
+          />
         )}
 
-        {/* Tasks List */}
-        <div className="grid grid-cols-1 gap-4 pb-24">
-          {filteredMemos.length === 0 ? (
-            <div className="text-center py-20 opacity-50">
-              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                <Icons.List className="w-8 h-8" />
+        {/* Content Area */}
+        {filter === 'calendar' ? (
+          <CalendarView memos={filteredMemos} />
+        ) : filter === 'kanban' ? (
+          <KanbanView memos={filteredMemos} onUpdate={updateMemo} onDelete={deleteMemo} />
+        ) : filter === 'focus' ? (
+          <FocusMode />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 pb-24">
+            {filteredMemos.length === 0 ? (
+              <div className="text-center py-20 opacity-50">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                  <Icons.List className="w-8 h-8" />
+                </div>
+                <p className="text-slate-500 font-medium">No tasks found</p>
               </div>
-              <p className="text-slate-500 font-medium">No tasks found</p>
-            </div>
-          ) : (
-            filteredMemos.map(memo => (
-              <MemoCard
-                key={memo.id}
-                memo={memo}
-                onUpdate={updateMemo}
-                onDelete={deleteMemo}
-              />
-            ))
-          )}
-        </div>
+            ) : (
+              filteredMemos.map(memo => (
+                <MemoCard
+                  key={memo.id}
+                  memo={memo}
+                  onUpdate={updateMemo}
+                  onDelete={deleteMemo}
+                />
+              ))
+            )}
+          </div>
+        )}
       </main>
 
       <ChatAssistant contextMemos={memos.map(m => m.content)} />

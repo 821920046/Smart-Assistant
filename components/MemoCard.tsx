@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import { Memo, Priority } from '../types.js';
 import { Icons } from '../constants.js';
 import { generateSpeech } from '../services/gemini.js';
+import SimpleMarkdown from './SimpleMarkdown.js';
 
 interface MemoCardProps {
   memo: Memo;
   onUpdate: (memo: Memo) => void;
   onDelete: (id: string) => void;
   onTagClick?: (tag: string) => void;
+  compact?: boolean;
 }
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
   const styles = {
-    important: 'bg-rose-100 text-rose-700',
-    normal: 'bg-blue-100 text-blue-700',
-    secondary: 'bg-slate-100 text-slate-500'
+    important: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    normal: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
   };
   const labels = { important: 'Important', normal: 'Normal', secondary: 'Low' };
   
@@ -25,7 +27,7 @@ const PriorityTag = ({ priority }: { priority: Priority }) => {
   );
 };
 
-const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
+const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -90,18 +92,23 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className={`memo-card group relative p-6 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+    <div className={`memo-card group relative ${compact ? 'p-3' : 'p-6'} ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-4'}`}>
         <div className="flex items-center gap-2">
           <PriorityTag priority={memo.priority || 'normal'} />
-          {memo.reminderAt && (
-            <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium bg-slate-50 px-2 py-1 rounded-lg">
+          {memo.category && (
+            <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-100 dark:border-slate-700">
+              {memo.category}
+            </span>
+          )}
+          {memo.reminderAt && !compact && (
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-medium bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg">
               <Icons.Clock className="w-3 h-3" />
               <span>{new Date(memo.reminderAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
               {memo.reminderRepeat && memo.reminderRepeat !== 'none' && (
-                <span className="text-[9px] px-1 bg-slate-200 rounded text-slate-600">{getRepeatLabel()}</span>
+                <span className="text-[9px] px-1 bg-slate-200 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300">{getRepeatLabel()}</span>
               )}
             </div>
           )}
@@ -111,7 +118,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
           <button 
             onClick={handlePlayTTS} 
             disabled={isPlaying}
-            className={`p-2 rounded-full hover:bg-slate-100 transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`}
+            className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`}
             title="Read Aloud"
           >
             <Icons.Volume />
@@ -121,7 +128,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
               setIsDeleting(true);
               setTimeout(() => onDelete(memo.id), 300);
             }}
-            className="p-2 rounded-full hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"
+            className="p-2 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 hover:text-rose-500 transition-colors"
             title="Delete"
           >
             <Icons.Trash />
@@ -142,12 +149,12 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
                 <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
                   todo.completed 
                     ? 'bg-blue-500 border-blue-500' 
-                    : 'bg-white border-slate-300 group-hover/item:border-blue-400'
+                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 group-hover/item:border-blue-400'
                 }`}>
                   {todo.completed && <Icons.Check className="w-3.5 h-3.5 text-white" />}
                 </div>
                 <span className={`text-sm leading-relaxed transition-all ${
-                  todo.completed ? 'text-slate-400 line-through' : 'text-slate-700'
+                  todo.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'
                 }`}>
                   {todo.text}
                 </span>
@@ -156,20 +163,20 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete }) => {
           </ul>
         ) : (
           <div className="prose prose-sm max-w-none">
-            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{memo.content}</p>
+            <SimpleMarkdown content={memo.content} />
           </div>
         )}
         
         {memo.sketchData && (
-          <div className="mt-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+          <div className="mt-4 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
              <img src={memo.sketchData} alt="Sketch" className="w-full h-auto" />
           </div>
         )}
       </div>
 
       {/* Footer Tags */}
-      {memo.tags && memo.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50">
+      {memo.tags && memo.tags.length > 0 && !compact && (
+        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700/50">
           {memo.tags.map(tag => (
             <span key={tag} className="text-xs text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
               #{tag}
