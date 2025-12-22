@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { Icons } from '../constants.js';
+import { syncService } from '../services/sync.js';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -10,31 +11,53 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseKey, setSupabaseKey] = useState('');
+  const [showConfig, setShowConfig] = useState(false);
+  
   const { login, register, loading, error, clearError } = useAuth();
+
+  useEffect(() => {
+    // Load existing config if available
+    const config = syncService.getConfig();
+    if (config.provider === 'supabase' && config.settings.supabaseUrl && config.settings.supabaseKey) {
+      setSupabaseUrl(config.settings.supabaseUrl);
+      setSupabaseKey(config.settings.supabaseKey);
+    } else {
+      setShowConfig(true); // Auto-show if missing
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save Supabase config first
+    if (supabaseUrl && supabaseKey) {
+      syncService.saveConfig({
+        provider: 'supabase',
+        settings: { supabaseUrl, supabaseKey }
+      });
+    } else {
+      // If config is missing, show error
+      // But maybe let AuthContext throw "Supabase not configured"
+    }
+
     try {
       if (isLogin) {
         await login(email, password);
         onClose();
       } else {
         await register(email, password);
-        // If registration is successful and auto-login happens, close.
-        // If email confirmation is needed, the catch block in AuthContext throws, 
-        // but wait... in AuthContext I throw 'Registration successful...' as an error to show toast?
-        // Actually in AuthContext I threw an error for email confirmation.
-        // Let's handle that.
         onClose();
       }
     } catch (err) {
-      // Error is already set in context, but we can also alert here or let the UI show it
+      // Error is already set in context
     }
   };
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
-      <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden animate-card">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden animate-card max-h-[90vh] overflow-y-auto no-scrollbar">
         <div className="p-8 relative">
           <button 
             onClick={onClose}
@@ -43,7 +66,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             <Icons.X className="w-6 h-6" />
           </button>
 
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Icons.User className="w-8 h-8" />
             </div>
@@ -62,6 +85,45 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 {error}
               </div>
             )}
+
+            <div className="space-y-3 pb-2">
+               <button 
+                 type="button"
+                 onClick={() => setShowConfig(!showConfig)}
+                 className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 transition-colors w-full"
+               >
+                 <Icons.Settings className="w-3 h-3" />
+                 <span>Server Configuration</span>
+                 <Icons.ChevronDown className={`w-3 h-3 ml-auto transition-transform ${showConfig ? 'rotate-180' : ''}`} />
+               </button>
+               
+               {showConfig && (
+                 <div className="space-y-3 pt-1 animate-card">
+                   <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Supabase URL</label>
+                     <input
+                       type="text"
+                       value={supabaseUrl}
+                       onChange={(e) => setSupabaseUrl(e.target.value)}
+                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                       placeholder="https://xyz.supabase.co"
+                       required
+                     />
+                   </div>
+                   <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Anon Key</label>
+                     <input
+                       type="password"
+                       value={supabaseKey}
+                       onChange={(e) => setSupabaseKey(e.target.value)}
+                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                       placeholder="Supabase API Key"
+                       required
+                     />
+                   </div>
+                 </div>
+               )}
+            </div>
 
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email</label>

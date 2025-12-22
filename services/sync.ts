@@ -19,20 +19,6 @@ export interface SyncConfig {
 
 export const syncService = {
   getConfig: (): SyncConfig => {
-    // 优先读取环境变量配置（从 Cloudflare Pages 设置）
-    const envSupabaseUrl = (window as any).process?.env?.SUPABASE_URL || process.env.SUPABASE_URL;
-    const envSupabaseKey = (window as any).process?.env?.SUPABASE_KEY || process.env.SUPABASE_KEY;
-
-    if (envSupabaseUrl && envSupabaseKey) {
-      return {
-        provider: 'supabase',
-        settings: {
-          supabaseUrl: envSupabaseUrl,
-          supabaseKey: envSupabaseKey
-        }
-      };
-    }
-
     // 回退到 localStorage 配置
     try {
       const saved = localStorage.getItem('memo_sync_config');
