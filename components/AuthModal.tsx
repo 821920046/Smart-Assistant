@@ -86,45 +86,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               </div>
             )}
 
-            <div className="space-y-3 pb-2">
-               <button 
-                 type="button"
-                 onClick={() => setShowConfig(!showConfig)}
-                 className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 transition-colors w-full"
-               >
-                 <Icons.Settings className="w-3 h-3" />
-                 <span>Server Configuration</span>
-                 <Icons.ChevronDown className={`w-3 h-3 ml-auto transition-transform ${showConfig ? 'rotate-180' : ''}`} />
-               </button>
-               
-               {showConfig && (
-                 <div className="space-y-3 pt-1 animate-card">
-                   <div className="space-y-1">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Supabase URL</label>
-                     <input
-                       type="text"
-                       value={supabaseUrl}
-                       onChange={(e) => setSupabaseUrl(e.target.value)}
-                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
-                       placeholder="https://xyz.supabase.co"
-                       required
-                     />
-                   </div>
-                   <div className="space-y-1">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Anon Key</label>
-                     <input
-                       type="password"
-                       value={supabaseKey}
-                       onChange={(e) => setSupabaseKey(e.target.value)}
-                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
-                       placeholder="Supabase API Key"
-                       required
-                     />
-                   </div>
-                 </div>
-               )}
-            </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email</label>
               <div className="relative">
@@ -164,6 +125,45 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               {loading && <Icons.Loader className="w-4 h-4 animate-spin" />}
               {isLogin ? 'Sign In' : 'Create Account'}
             </button>
+
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+               <button 
+                 type="button"
+                 onClick={() => setShowConfig(!showConfig)}
+                 className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 transition-colors w-full justify-center"
+               >
+                 <Icons.Settings className="w-3 h-3" />
+                 <span>Server Configuration</span>
+                 <Icons.ChevronDown className={`w-3 h-3 transition-transform ${showConfig ? 'rotate-180' : ''}`} />
+               </button>
+               
+               {showConfig && (
+                 <div className="space-y-3 pt-1 animate-card bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl">
+                   <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Supabase URL</label>
+                     <input
+                       type="text"
+                       value={supabaseUrl}
+                       onChange={(e) => setSupabaseUrl(e.target.value)}
+                       className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                       placeholder="https://xyz.supabase.co"
+                       required
+                     />
+                   </div>
+                   <div className="space-y-1">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Anon Key</label>
+                     <input
+                       type="password"
+                       value={supabaseKey}
+                       onChange={(e) => setSupabaseKey(e.target.value)}
+                       className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                       placeholder="Supabase API Key"
+                       required
+                     />
+                   </div>
+                 </div>
+               )}
+            </div>
           </form>
 
           <div className="mt-6 text-center">
