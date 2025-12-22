@@ -16,10 +16,16 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     try {
       syncService.saveConfig(config);
       // 这里由 App.tsx 处理实际同步，此处仅关闭
-      if (onSyncComplete) {
-        onSyncComplete();
+      if (typeof onSyncComplete === 'function') {
+        try {
+          onSyncComplete();
+        } catch (innerErr) {
+          console.warn('onSyncComplete failed:', innerErr);
+        }
       }
-      onClose();
+      if (typeof onClose === 'function') {
+        onClose();
+      }
     } catch (e) {
       alert('配置有误: ' + (e as Error).message);
     } finally {
@@ -72,22 +78,25 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                    <span>已检测到系统环境变量配置，无需手动输入。</span>
                  </div>
-              ) : null}
-              <input 
-                type="text" placeholder="Supabase Project URL" 
-                value={config.settings.supabaseUrl || ''} 
-                onChange={e => updateSetting('supabaseUrl', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <input 
-                type="password" placeholder="Anon Key" 
-                value={config.settings.supabaseKey || ''} 
-                onChange={e => updateSetting('supabaseKey', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-                * 请在 Supabase 创建 memos 表，包含 id(text), content(text), updatedAt(int8) 等字段。
-              </p>
+              ) : (
+                <>
+                  <input 
+                    type="text" placeholder="Supabase Project URL" 
+                    value={config.settings.supabaseUrl || ''} 
+                    onChange={e => updateSetting('supabaseUrl', e.target.value)}
+                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <input 
+                    type="password" placeholder="Anon Key" 
+                    value={config.settings.supabaseKey || ''} 
+                    onChange={e => updateSetting('supabaseKey', e.target.value)}
+                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p className="text-[10px] text-slate-400 leading-relaxed px-1">
+                    * 请在 Supabase 创建 memos 表，包含 id(text), content(text), updatedAt(int8) 等字段。
+                  </p>
+                </>
+              )}
             </div>
           )}
 
