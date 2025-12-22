@@ -3,12 +3,17 @@ import { Memo } from '../types.js';
 import { syncService } from '../services/sync.js';
 import { storage } from '../services/storage.js';
 import { useToast } from '../context/ToastContext.js';
+import { useAuth } from '../context/AuthContext.js';
 
 export const useSyncService = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const performSync = useCallback(async (currentMemos: Memo[], setMemos: (memos: Memo[]) => void, silent = false) => {
+    // Enforce sync only for logged-in users
+    if (!user) return currentMemos;
+
     const config = syncService.getConfig();
     if (config.provider === 'none') return currentMemos;
     

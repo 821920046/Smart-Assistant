@@ -142,8 +142,38 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <div className="mt-auto pt-6">
-            <div className="mb-4">
+          <div className="mt-auto pt-6 flex flex-col gap-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Cloud Sync</span>
+                <div className={`w-2 h-2 rounded-full transition-all ${
+                  isSyncing 
+                    ? 'bg-amber-400 animate-pulse ring-2 ring-amber-100 dark:ring-amber-900' 
+                    : 'bg-emerald-400 ring-2 ring-emerald-100 dark:ring-emerald-900'
+                }`} />
+              </div>
+              <button
+                onClick={onOpenSyncSettings}
+                className="w-full py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-slate-200 dark:shadow-none"
+              >
+                Manage Sync
+              </button>
+            </div>
+
+            <button
+              onClick={onToggleDarkMode}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
+            >
+              <span className="flex items-center gap-3">
+                {darkMode ? <Icons.Moon className="w-4 h-4" /> : <Icons.Sun className="w-4 h-4" />}
+                {darkMode ? 'Dark Mode' : 'Light Mode'}
+              </span>
+              <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+              </div>
+            </button>
+
+            <div>
               {user ? (
                 <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 flex items-center gap-3 shadow-sm">
                   <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm shrink-0">
@@ -171,36 +201,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span>Sign In / Register</span>
                 </button>
               )}
-            </div>
-
-            <button
-              onClick={onToggleDarkMode}
-              className="w-full flex items-center justify-between px-4 py-3 mb-4 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
-            >
-              <span className="flex items-center gap-3">
-                {darkMode ? <Icons.Moon className="w-4 h-4" /> : <Icons.Sun className="w-4 h-4" />}
-                {darkMode ? 'Dark Mode' : 'Light Mode'}
-              </span>
-              <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-300'}`}>
-                <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
-              </div>
-            </button>
-
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Cloud Sync</span>
-                <div className={`w-2 h-2 rounded-full transition-all ${
-                  isSyncing 
-                    ? 'bg-amber-400 animate-pulse ring-2 ring-amber-100 dark:ring-amber-900' 
-                    : 'bg-emerald-400 ring-2 ring-emerald-100 dark:ring-emerald-900'
-                }`} />
-              </div>
-              <button
-                onClick={onOpenSyncSettings}
-                className="w-full py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-slate-200 dark:shadow-none"
-              >
-                {isSyncing ? 'Syncing...' : 'Manage Sync'}
-              </button>
             </div>
           </div>
         </div>

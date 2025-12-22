@@ -11,7 +11,7 @@ import KanbanView from './components/KanbanView.js';
 import FocusMode from './components/FocusMode.js';
 import { Icons, CATEGORIES } from './constants.js';
 import { useToast } from './context/ToastContext.js';
-import { AuthProvider } from './context/AuthContext.js';
+import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { useNotificationScheduler } from './hooks/useNotificationScheduler.js';
 import { useSyncService } from './hooks/useSyncService.js';
 import AuthModal from './components/AuthModal.js';
@@ -33,6 +33,14 @@ const AppContent: React.FC = () => {
 
   const { addToast } = useToast();
   const { isSyncing, performSync } = useSyncService();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      performSync(memos, setMemos, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (darkMode) {
@@ -182,7 +190,7 @@ const AppContent: React.FC = () => {
         tags={allTags}
         onExport={() => {}}
         onImport={() => {}}
-        onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
+        onOpenSyncSettings={() => user ? setIsSyncSettingsOpen(true) : setIsAuthModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         isSyncing={isSyncing}
         memos={memos}
