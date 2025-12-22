@@ -16,7 +16,9 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     try {
       syncService.saveConfig(config);
       // 这里由 App.tsx 处理实际同步，此处仅关闭
-      onSyncComplete();
+      if (onSyncComplete) {
+        onSyncComplete();
+      }
       onClose();
     } catch (e) {
       alert('配置有误: ' + (e as Error).message);
@@ -65,6 +67,12 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
           {config.provider === 'supabase' && (
             <div className="space-y-4 animate-card">
+              {config.settings.supabaseUrl && config.settings.supabaseKey && (config.settings.supabaseUrl.includes(process.env.SUPABASE_URL || 'NEVER_MATCH') || (window as any).process?.env?.SUPABASE_URL) ? (
+                 <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-xs flex items-center gap-2">
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                   <span>已检测到系统环境变量配置，无需手动输入。</span>
+                 </div>
+              ) : null}
               <input 
                 type="text" placeholder="Supabase Project URL" 
                 value={config.settings.supabaseUrl || ''} 
