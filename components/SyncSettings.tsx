@@ -73,29 +73,19 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
           {config.provider === 'supabase' && (
             <div className="space-y-4 animate-card">
-              {config.settings.supabaseUrl && config.settings.supabaseKey && (config.settings.supabaseUrl.includes(process.env.SUPABASE_URL || 'NEVER_MATCH') || (window as any).process?.env?.SUPABASE_URL) ? (
+              {((window as any).process?.env?.SUPABASE_URL || process.env.SUPABASE_URL) ? (
                  <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-xs flex items-center gap-2">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                   <span>已检测到系统环境变量配置，无需手动输入。</span>
+                   <span>已检测到系统环境变量配置，Supabase 连接已就绪。</span>
                  </div>
               ) : (
-                <>
-                  <input 
-                    type="text" placeholder="Supabase Project URL" 
-                    value={config.settings.supabaseUrl || ''} 
-                    onChange={e => updateSetting('supabaseUrl', e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  <input 
-                    type="password" placeholder="Anon Key" 
-                    value={config.settings.supabaseKey || ''} 
-                    onChange={e => updateSetting('supabaseKey', e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-                    * 请在 Supabase 创建 memos 表，包含 id(text), content(text), updatedAt(int8) 等字段。
-                  </p>
-                </>
+                 <div className="p-4 bg-amber-50 text-amber-700 rounded-2xl text-xs flex flex-col gap-2">
+                   <div className="flex items-center gap-2 font-bold">
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                     <span>未配置环境变量</span>
+                   </div>
+                   <p className="opacity-90">请在后台配置 SUPABASE_URL 和 SUPABASE_KEY 以启用同步功能。</p>
+                 </div>
               )}
             </div>
           )}
