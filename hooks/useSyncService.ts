@@ -30,7 +30,7 @@ export const useSyncService = () => {
     } catch (err) {
       console.error("Sync failed:", err);
       if (!silent) {
-        addToast('Sync failed. Check your settings.', 'error');
+        addToast(`Sync failed: ${(err as Error).message}`, 'error');
       }
       return currentMemos;
     } finally {

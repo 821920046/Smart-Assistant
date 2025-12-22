@@ -70,10 +70,19 @@ export const syncService = {
     if (!supabaseUrl || !supabaseKey) throw new Error('Supabase 配置不完整');
 
     try {
-      const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?select=*`, {
-        headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+      const fetchUrl = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?select=*`;
+      console.log('Syncing with Supabase URL:', fetchUrl); // Debug log
+
+      const res = await fetch(fetchUrl, {
+        headers: { 
+          'apikey': supabaseKey, 
+          'Authorization': `Bearer ${supabaseKey}` 
+        }
       });
-      if (!res.ok) throw new Error(`Supabase API 错误: ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Supabase API 错误 (${res.status}): ${errText}`);
+      }
       const remoteMemos: Memo[] = await res.json();
 
       const merged = syncService.mergeMemos(localMemos, remoteMemos);
@@ -92,7 +101,7 @@ export const syncService = {
       if (!upsertRes.ok) {
         const errorText = await upsertRes.text();
         console.error('Supabase UPSERT failed:', errorText);
-        throw new Error(`Supabase 保存错误: ${upsertRes.status}`);
+        throw new Error(`Supabase 保存错误 (${upsertRes.status}): ${errorText}`);
       }
 
       return merged;
