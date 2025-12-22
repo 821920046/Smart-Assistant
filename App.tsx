@@ -286,8 +286,8 @@ const App: React.FC = () => {
 
       {isSyncSettingsOpen && (
         <SyncSettings 
-          isOpen={isSyncSettingsOpen} 
           onClose={() => setIsSyncSettingsOpen(false)} 
+          onSyncComplete={() => performSync(memos, setMemos, false)}
         />
       )}
     </div>
