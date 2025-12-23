@@ -5,7 +5,7 @@ import { TodoItem, Priority } from "../types.js";
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("Gemini API_KEY is not defined in process.env");
+    return null;
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -13,6 +13,8 @@ const getAI = () => {
 export async function extractTasks(content: string, forceTodo: boolean = false): Promise<TodoItem[]> {
   try {
     const ai = getAI();
+    if (!ai) return [];
+
     const systemPrompt = forceTodo 
       ? "The user wants to create a checklist. Extract every meaningful line as a separate actionable todo item."
       : "Extract actionable todo items from this note content. Assign priorities based on the content's urgency.";
@@ -54,6 +56,7 @@ export async function extractTasks(content: string, forceTodo: boolean = false):
 export async function suggestTags(content: string): Promise<string[]> {
   try {
     const ai = getAI();
+    if (!ai) return [];
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Suggest 1-3 tags for this note. Output JSON array. Content: "${content}"`,
@@ -74,6 +77,7 @@ export async function suggestTags(content: string): Promise<string[]> {
 export async function askAssistant(query: string, contextMemos: string[]): Promise<string> {
   try {
     const ai = getAI();
+    if (!ai) return "请先配置 Gemini API Key 以使用 AI 助手功能。";
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `You are a helpful Personal Brain Assistant. Below are the user's notes. Answer their question based on these notes. If the notes don't have the answer, use Google Search to provide an accurate response.
@@ -96,6 +100,7 @@ export async function askAssistant(query: string, contextMemos: string[]): Promi
 export async function generateSpeech(text: string): Promise<string | undefined> {
   try {
     const ai = getAI();
+    if (!ai) return undefined;
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: `Please read this clearly: ${text}` }] }],
