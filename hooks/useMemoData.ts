@@ -25,15 +25,16 @@ export const useMemoData = () => {
   // Define updateMemo first
   const updateMemo = useCallback(async (updatedMemo: Memo) => {
     const upgraded = { ...updatedMemo, updatedAt: Date.now() };
-    setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
+    
+    // Update local state
+    const newMemos = memos.map(m => m.id === upgraded.id ? upgraded : m);
+    setMemos(newMemos);
+    
     await storage.upsertMemo(upgraded);
     
-    // We get all memos from storage to ensure consistency before sync
-    // But for performance, we might just rely on local state if we trust it.
-    // The original code did:
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true); // Silent sync
-  }, [performSync]);
+    // Use local state for sync instead of reading from storage
+    await performSync(newMemos, setMemos, true); // Silent sync
+  }, [memos, performSync]);
 
   // Notification Scheduler
   useNotificationScheduler(memos, updateMemo);
@@ -92,24 +93,24 @@ export const useMemoData = () => {
     };
     
     // Optimistic update
-    setMemos(prev => [newMemo, ...prev]);
+    const newMemos = [newMemo, ...memos];
+    setMemos(newMemos);
     await storage.upsertMemo(newMemo);
     addToast("Task created successfully", "success");
     
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true);
-  }, [addToast, performSync]);
+    await performSync(newMemos, setMemos, true);
+  }, [memos, addToast, performSync]);
 
   const deleteMemo = useCallback(async (id: string) => {
     const memoToDelete = memos.find(m => m.id === id);
     if (memoToDelete) {
       const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
-      setMemos(prev => prev.filter(m => m.id !== id));
+      const newMemos = memos.filter(m => m.id !== id);
+      setMemos(newMemos);
       await storage.upsertMemo(deletedMemo);
       addToast("Task deleted", "info");
       
-      const allMemos = await storage.getMemos(true);
-      await performSync(allMemos, setMemos, true);
+      await performSync(newMemos, setMemos, true);
     }
   }, [memos, addToast, performSync]);
 
@@ -120,11 +121,11 @@ export const useMemoData = () => {
     for (const memo of archivedMemos) {
       await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
     }
-    setMemos(prev => prev.filter(m => !m.isArchived));
+    const newMemos = memos.filter(m => !m.isArchived);
+    setMemos(newMemos);
     addToast("History cleared", "info");
     
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true);
+    await performSync(newMemos, setMemos, true);
   }, [memos, addToast, performSync]);
 
   const allTags = useMemo(() => {

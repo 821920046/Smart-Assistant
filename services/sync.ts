@@ -173,6 +173,19 @@ export const syncService = {
 
     const merged = syncService.mergeMemos(localMemos, remoteMemos);
 
+    // Optimization: Check if we need to upload
+    // We only upload if merged contains items newer than remote, or new items
+    const needsUpload = merged.some(m => {
+      const remote = remoteMemos.find(r => r.id === m.id);
+      if (!remote) return true; // New memo not in remote
+      return m.updatedAt > remote.updatedAt; // Memo updated locally
+    });
+
+    if (!needsUpload) {
+      console.log('WebDAV remote is already up to date. Skipping upload.');
+      return merged;
+    }
+
     try {
       const putRes = await fetch(fullUrl, {
         method: 'PUT',
@@ -217,6 +230,18 @@ export const syncService = {
     }
 
     const merged = syncService.mergeMemos(localMemos, remoteMemos);
+
+    // Optimization: Check if we need to upload
+    const needsUpload = merged.some(m => {
+      const remote = remoteMemos.find(r => r.id === m.id);
+      if (!remote) return true;
+      return m.updatedAt > remote.updatedAt;
+    });
+
+    if (!needsUpload && gistId) {
+      console.log('Gist remote is already up to date. Skipping upload.');
+      return merged;
+    }
 
     const body = {
       description: 'Memo AI Sync Data',

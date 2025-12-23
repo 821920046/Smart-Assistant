@@ -1,14 +1,15 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatAssistant from './components/ChatAssistant';
 import SyncSettings from './components/SyncSettings';
 import AuthModal from './components/AuthModal';
 import MainContent from './components/MainContent';
-import { Icons, CATEGORIES } from './constants';
+import { Icons } from './constants';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
 import { useMemoData } from './hooks/useMemoData';
 import { useDarkMode } from './hooks/useDarkMode';
+import { useMemoFilter } from './hooks/useMemoFilter';
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('all');
@@ -21,6 +22,8 @@ const AppContent: React.FC = () => {
   const { 
     memos, setMemos, isLoading, addMemo, updateMemo, deleteMemo, clearHistory, allTags, isSyncing, performSync, syncError
   } = useMemoData();
+
+  const filteredMemos = useMemoFilter(memos, filter, searchQuery);
 
   const { user } = useAuth();
 
@@ -44,28 +47,6 @@ const AppContent: React.FC = () => {
       }
     }
   }, [syncError, addToast]);
-
-  const filteredMemos = useMemo(() => {
-    let result = memos;
-
-    if (filter === 'important') result = result.filter(m => m.priority === 'important');
-    else if (filter === 'favorites') result = result.filter(m => m.isFavorite);
-    else if (filter === 'archived') result = result.filter(m => m.isArchived);
-    else if (CATEGORIES.includes(filter)) result = result.filter(m => m.category === filter);
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(m => m.content.toLowerCase().includes(q));
-    }
-
-    const priorityWeight = { important: 3, normal: 2, secondary: 1 };
-    return [...result].sort((a, b) => {
-      const pA = priorityWeight[a.priority || 'normal'];
-      const pB = priorityWeight[b.priority || 'normal'];
-      if (pA !== pB) return pB - pA;
-      return b.createdAt - a.createdAt;
-    });
-  }, [memos, filter, searchQuery]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
 

@@ -9,6 +9,7 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [supabaseUrl, setSupabaseUrl] = useState('');
@@ -51,9 +52,39 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         onClose();
       }
     } catch (err) {
-      // Error is already set in context
+      const msg = (err as Error).message;
+      if (msg.includes('check your email')) {
+        setIsVerificationSent(true);
+        clearError();
+      }
     }
   };
+
+  if (isVerificationSent) {
+    return (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+        <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden animate-card">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Icons.Mail className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+              Check your inbox
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-6">
+              We've sent a verification link to <span className="text-slate-900 dark:text-white font-bold">{email}</span>. Please click the link to activate your account.
+            </p>
+            <button
+              onClick={() => { setIsVerificationSent(false); setIsLogin(true); }}
+              className="w-full py-4 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-2xl text-sm font-black uppercase tracking-widest transition-all"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
