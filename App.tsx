@@ -80,6 +80,7 @@ const AppContent: React.FC = () => {
         onOpenSyncSettings={() => user ? setIsSyncSettingsOpen(true) : setIsAuthModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         isSyncing={isSyncing}
+        syncError={syncError}
         memos={memos}
         onClearHistory={clearHistory}
         darkMode={darkMode}

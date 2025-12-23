@@ -11,7 +11,7 @@ export const useMemoData = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   const { addToast } = useToast();
-  const { performSync, isSyncing } = useSyncService();
+  const { performSync, isSyncing, syncError } = useSyncService();
   const { user } = useAuth();
 
   // Initial Sync on User Change
