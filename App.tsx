@@ -24,15 +24,26 @@ const AppContent: React.FC = () => {
 
   const { user } = useAuth();
 
+  const { addToast } = useToast();
+
   // Handle Sync Error (Task D)
   useEffect(() => {
     if (syncError) {
-      // If error is 401 (Auth) or related to keys, open settings
+      // 1. Auth Error (401)
       if (syncError.message.includes('401') || syncError.message.includes('Key')) {
+        addToast("Authentication failed. Please check your sync settings.", "error");
         setIsSyncSettingsOpen(true);
+      } 
+      // 2. Conflict Error (409)
+      else if (syncError.message.includes('409')) {
+        addToast("Sync conflict detected. Please retry manually.", "error");
+      }
+      // 3. Server Error (500)
+      else if (syncError.message.includes('500') || syncError.message.includes('服务器错误')) {
+         addToast("Server error. Sync will be retried later.", "error");
       }
     }
-  }, [syncError]);
+  }, [syncError, addToast]);
 
   const filteredMemos = useMemo(() => {
     let result = memos;

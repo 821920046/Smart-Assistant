@@ -13,6 +13,7 @@ interface SidebarProps {
   onOpenSyncSettings: () => void;
   onOpenAuth: () => void;
   isSyncing: boolean;
+  syncError?: Error | null;
   memos: Memo[];
   onClearHistory?: () => void;
   darkMode: boolean;
@@ -149,8 +150,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className={`w-2 h-2 rounded-full transition-all ${
                   isSyncing 
                     ? 'bg-amber-400 animate-pulse ring-2 ring-amber-100 dark:ring-amber-900' 
-                    : 'bg-emerald-400 ring-2 ring-emerald-100 dark:ring-emerald-900'
-                }`} />
+                    : syncError 
+                      ? 'bg-red-500 ring-2 ring-red-100 dark:ring-red-900'
+                      : 'bg-emerald-400 ring-2 ring-emerald-100 dark:ring-emerald-900'
+                }`} title={syncError ? syncError.message : isSyncing ? 'Syncing...' : 'Synced'} />
               </div>
               <button
                 onClick={onOpenSyncSettings}
