@@ -23,7 +23,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  activeFilter, setActiveFilter, tags, onOpenSyncSettings, onOpenAuth, isSyncing, memos, onClearHistory, darkMode, onToggleDarkMode, isOpen, onClose
+  activeFilter, setActiveFilter, tags, onOpenSyncSettings, onOpenAuth, isSyncing, syncError, memos, onClearHistory, darkMode, onToggleDarkMode, isOpen, onClose
 }) => {
   const { user, logout } = useAuth();
 
