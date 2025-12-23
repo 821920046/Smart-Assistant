@@ -1,162 +1,38 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Memo } from './types.js';
-import { storage } from './services/storage.js';
-import Sidebar from './components/Sidebar.js';
-import MemoEditor from './components/MemoEditor.js';
-import MemoCard from './components/MemoCard.js';
-import ChatAssistant from './components/ChatAssistant.js';
-import SyncSettings from './components/SyncSettings.js';
-import CalendarView from './components/CalendarView.js';
-import KanbanView from './components/KanbanView.js';
-import FocusMode from './components/FocusMode.js';
-import { Icons, CATEGORIES } from './constants.js';
-import { useToast } from './context/ToastContext.js';
-import { AuthProvider, useAuth } from './context/AuthContext.js';
-import { useNotificationScheduler } from './hooks/useNotificationScheduler.js';
-import { useSyncService } from './hooks/useSyncService.js';
-import AuthModal from './components/AuthModal.js';
+import React, { useState, useMemo, useEffect } from 'react';
+import Sidebar from './components/Sidebar';
+import ChatAssistant from './components/ChatAssistant';
+import SyncSettings from './components/SyncSettings';
+import AuthModal from './components/AuthModal';
+import MainContent from './components/MainContent';
+import { Icons, CATEGORIES } from './constants';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { useToast } from './context/ToastContext';
+import { useMemoData } from './hooks/useMemoData';
+import { useDarkMode } from './hooks/useDarkMode';
 
 const AppContent: React.FC = () => {
-  const [memos, setMemos] = useState<Memo[]>([]);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    try {
-      return localStorage.getItem('darkMode') === 'true' || 
-             (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    } catch { return false; }
-  });
 
-  const { addToast } = useToast();
-  const { isSyncing, performSync } = useSyncService();
+  const { darkMode, toggleDarkMode } = useDarkMode();
+  const { 
+    memos, setMemos, isLoading, addMemo, updateMemo, deleteMemo, clearHistory, allTags, isSyncing, performSync, syncError
+  } = useMemoData();
+
   const { user } = useAuth();
 
+  // Handle Sync Error (Task D)
   useEffect(() => {
-    if (user) {
-      performSync(memos, setMemos, false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-
-  // Define updateMemo first so it can be used in hooks
-  const updateMemo = async (updatedMemo: Memo) => {
-    const upgraded = { ...updatedMemo, updatedAt: Date.now() };
-    setMemos(prev => prev.map(m => m.id === upgraded.id ? upgraded : m));
-    await storage.upsertMemo(upgraded);
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true); // Silent sync on update
-  };
-
-  // Notification Scheduler Hook
-  useNotificationScheduler(memos, updateMemo);
-
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        await storage.migrateFromLocalStorage();
-        let storedMemos = await storage.getMemos();
-
-        // Auto-clean tasks completed > 2 days ago
-        const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
-        const memosToDelete = storedMemos.filter(m =>
-          m.isArchived && m.completedAt && m.completedAt < twoDaysAgo
-        );
-
-        if (memosToDelete.length > 0) {
-          for (const memo of memosToDelete) {
-            await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
-          }
-          storedMemos = storedMemos.filter(m =>
-            !(m.isArchived && m.completedAt && m.completedAt < twoDaysAgo)
-          );
-        }
-
-        setMemos(storedMemos);
-        setIsLoading(false);
-        await performSync(storedMemos, setMemos, true); // Initial sync silent
-      } catch (err) {
-        console.error("App initialization failed:", err);
-        addToast("Failed to load data", "error");
-        setIsLoading(false);
+    if (syncError) {
+      // If error is 401 (Auth) or related to keys, open settings
+      if (syncError.message.includes('401') || syncError.message.includes('Key')) {
+        setIsSyncSettingsOpen(true);
       }
-    };
-    initApp();
-  }, [performSync, addToast]);
-
-  const addMemo = async (memoData: Partial<Memo>) => {
-    const now = Date.now();
-    const newMemo: Memo = {
-      id: Math.random().toString(36).substr(2, 6),
-      content: memoData.content || '',
-      type: 'todo',
-      todos: memoData.todos || [],
-      tags: memoData.tags || [],
-      dueDate: memoData.dueDate,
-      reminderAt: memoData.reminderAt,
-      reminderRepeat: memoData.reminderRepeat || 'none',
-      sketchData: memoData.sketchData,
-      createdAt: now,
-      updatedAt: now,
-      isArchived: false,
-      isFavorite: false,
-      priority: memoData.priority || 'normal'
-    };
-    const updatedLocal = [newMemo, ...memos];
-    setMemos(updatedLocal);
-    await storage.upsertMemo(newMemo);
-    addToast("Task created successfully", "success");
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true);
-  };
-
-  const deleteMemo = async (id: string) => {
-    const memoToDelete = memos.find(m => m.id === id);
-    if (memoToDelete) {
-      const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
-      setMemos(prev => prev.filter(m => m.id !== id));
-      await storage.upsertMemo(deletedMemo);
-      addToast("Task deleted", "info");
-      const allMemos = await storage.getMemos(true);
-      await performSync(allMemos, setMemos, true);
     }
-  };
-
-  const clearHistory = async () => {
-    const archivedMemos = memos.filter(m => m.isArchived);
-    if (archivedMemos.length === 0) return;
-
-    for (const memo of archivedMemos) {
-      await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
-    }
-    setMemos(prev => prev.filter(m => !m.isArchived));
-    addToast("History cleared", "info");
-    const allMemos = await storage.getMemos(true);
-    await performSync(allMemos, setMemos, true);
-  };
-
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    memos.forEach(memo => {
-      memo.tags.forEach(tag => tags.add(tag));
-    });
-    return Array.from(tags).sort();
-  }, [memos]);
+  }, [syncError]);
 
   const filteredMemos = useMemo(() => {
     let result = memos;
@@ -248,50 +124,14 @@ const AppContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Editor */}
-        {filter !== 'archived' && filter !== 'calendar' && filter !== 'kanban' && filter !== 'focus' && (
-          <MemoEditor 
-            onSave={addMemo} 
-            defaultCategory={CATEGORIES.includes(filter) ? filter : undefined}
-          />
-        )}
-
-        {/* Content Area */}
-        {filter === 'calendar' ? (
-          <CalendarView memos={filteredMemos} />
-        ) : filter === 'kanban' ? (
-          <KanbanView 
-            memos={filteredMemos} 
-            onUpdate={updateMemo} 
-            onDelete={deleteMemo}
-            onAdd={addMemo}
-          />
-        ) : filter === 'focus' ? (
-          <FocusMode />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 pb-24">
-            {filteredMemos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 opacity-60">
-                <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-slate-400 dark:text-slate-500 shadow-inner">
-                  <Icons.List className="w-10 h-10" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No tasks found</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs text-center">
-                  {searchQuery ? `No matches for "${searchQuery}"` : "You're all caught up! Add a new task to get started."}
-                </p>
-              </div>
-            ) : (
-              filteredMemos.map(memo => (
-                <MemoCard
-                  key={memo.id}
-                  memo={memo}
-                  onUpdate={updateMemo}
-                  onDelete={deleteMemo}
-                />
-              ))
-            )}
-          </div>
-        )}
+        <MainContent 
+          filter={filter}
+          searchQuery={searchQuery}
+          filteredMemos={filteredMemos}
+          onAdd={addMemo}
+          onUpdate={updateMemo}
+          onDelete={deleteMemo}
+        />
       </main>
 
       <ChatAssistant contextMemos={memos.map(m => m.content)} />

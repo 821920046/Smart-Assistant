@@ -33,6 +33,15 @@ export const syncService = {
     localStorage.setItem('memo_sync_config', JSON.stringify(config));
   },
 
+  getLastSyncTime: (): number => {
+    const time = localStorage.getItem('memo_last_sync_time');
+    return time ? parseInt(time, 10) : 0;
+  },
+
+  setLastSyncTime: (time: number) => {
+    localStorage.setItem('memo_last_sync_time', time.toString());
+  },
+
   mergeMemos: (local: Memo[], remote: Memo[]): Memo[] => {
     const memoMap = new Map<string, Memo>();
     // 本地数据作为基础
@@ -55,9 +64,13 @@ export const syncService = {
     const { supabaseUrl, supabaseKey } = config.settings;
     if (!supabaseUrl || !supabaseKey) throw new Error('Supabase 配置不完整');
 
+    const lastSyncTime = syncService.getLastSyncTime();
+    const currentSyncStart = Date.now();
+
     try {
-      const fetchUrl = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?select=*`;
-      console.log('Syncing with Supabase URL:', fetchUrl); // Debug log
+      // Delta Sync: Fetch only updated memos
+      const fetchUrl = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?select=*&updatedAt=gt.${lastSyncTime}`;
+      console.log('Syncing with Supabase URL:', fetchUrl);
 
       const res = await fetch(fetchUrl, {
         headers: { 
@@ -65,30 +78,73 @@ export const syncService = {
           'Authorization': `Bearer ${supabaseKey}` 
         }
       });
+
       if (!res.ok) {
         const errText = await res.text();
+        if (res.status === 401) throw new Error('Supabase 认证失败: 请检查 Key (401)');
+        if (res.status === 409) throw new Error('Supabase 数据冲突 (409)');
+        if (res.status >= 500) throw new Error(`Supabase 服务器错误 (${res.status})`);
         throw new Error(`Supabase API 错误 (${res.status}): ${errText}`);
       }
+      
       const remoteMemos: Memo[] = await res.json();
-
       const merged = syncService.mergeMemos(localMemos, remoteMemos);
 
-      const upsertRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?on_conflict=id`, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(merged)
+      // Delta Sync: Upload only local memos modified since last sync
+      // We check against lastSyncTime. 
+      // Note: We should filter based on the ORIGINAL localMemos, but merged contains the latest state.
+      // If a remote memo updated our local memo, we don't necessarily need to push it back unless we changed it too.
+      // However, simplified approach: Push anything in 'merged' that has updatedAt > lastSyncTime.
+      // But wait, if we just downloaded it, it has a new updatedAt? 
+      // Actually, usually we keep the remote updatedAt if it's newer.
+      // So if we downloaded a remote memo with updatedAt > lastSyncTime, we don't need to push it back.
+      // We only need to push if the ID was in localMemos AND its updatedAt > lastSyncTime, 
+      // OR if it's a new memo created locally (updatedAt > lastSyncTime).
+      
+      const memosToPush = merged.filter(m => {
+        // Push if it's newer than last sync
+        // AND (it originated locally OR we modified it locally)
+        // A simple heuristic: if the timestamp is newer than lastSyncTime, we might need to push it.
+        // But we want to avoid echoing back what we just downloaded.
+        
+        // If the memo came from remoteMemos, we don't need to push it back unless we merged it with local changes that made it even newer.
+        // But merge logic takes the one with larger updatedAt.
+        // If remote is newer, merged has remote version. We don't need to push.
+        // If local is newer, merged has local version. We need to push.
+        
+        const remoteVersion = remoteMemos.find(r => r.id === m.id);
+        if (remoteVersion && remoteVersion.updatedAt === m.updatedAt) {
+          return false; // It's exactly what we got from server, don't push back
+        }
+        
+        // Otherwise, it's either local-only or local is newer
+        return m.updatedAt > lastSyncTime;
       });
 
-      if (!upsertRes.ok) {
-        const errorText = await upsertRes.text();
-        console.error('Supabase UPSERT failed:', errorText);
-        throw new Error(`Supabase 保存错误 (${upsertRes.status}): ${errorText}`);
+      if (memosToPush.length > 0) {
+        console.log(`Pushing ${memosToPush.length} memos to Supabase...`);
+        const upsertRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/memos?on_conflict=id`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(memosToPush)
+        });
+
+        if (!upsertRes.ok) {
+          const errorText = await upsertRes.text();
+          console.error('Supabase UPSERT failed:', errorText);
+          throw new Error(`Supabase 保存错误 (${upsertRes.status}): ${errorText}`);
+        }
+      } else {
+        console.log('No local changes to push.');
       }
+
+      // Update last sync time only if everything succeeded
+      syncService.setLastSyncTime(currentSyncStart);
 
       return merged;
     } catch (e) {
