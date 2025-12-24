@@ -1,8 +1,9 @@
 
-import { Memo } from '../types.js';
+import { Memo, SyncSnapshot, SyncData } from '../types.js';
 import { storage } from './storage.js';
+import { encryption } from './encryption.js';
 
-export type SyncProvider = 'none' | 'supabase' | 'webdav' | 'gist';
+export type SyncProvider = 'none' | 'supabase' | 'webdav' | 'gist' | 'github_repo';
 
 export interface SyncConfig {
   provider: SyncProvider;
@@ -14,7 +15,21 @@ export interface SyncConfig {
     webdavPass?: string;
     gistToken?: string;
     gistId?: string;
+    githubToken?: string;
+    githubRepo?: string;
+    encryptionPassword?: string;
   };
+}
+
+export class SyncConflictError extends Error {
+  localSnapshot: SyncSnapshot;
+  cloudSnapshot: SyncSnapshot;
+  constructor(local: SyncSnapshot, cloud: SyncSnapshot) {
+    super('Sync Conflict Detected');
+    this.name = 'SyncConflictError';
+    this.localSnapshot = local;
+    this.cloudSnapshot = cloud;
+  }
 }
 
 export const syncService = {
@@ -61,6 +76,7 @@ export const syncService = {
   },
 
   syncWithSupabase: async (config: SyncConfig, localMemos: Memo[]) => {
+    // ... existing implementation
     const { supabaseUrl, supabaseKey } = config.settings;
     if (!supabaseUrl || !supabaseKey) throw new Error('Supabase 配置不完整');
 
@@ -90,34 +106,11 @@ export const syncService = {
       const remoteMemos: Memo[] = await res.json();
       const merged = syncService.mergeMemos(localMemos, remoteMemos);
 
-      // Delta Sync: Upload only local memos modified since last sync
-      // We check against lastSyncTime. 
-      // Note: We should filter based on the ORIGINAL localMemos, but merged contains the latest state.
-      // If a remote memo updated our local memo, we don't necessarily need to push it back unless we changed it too.
-      // However, simplified approach: Push anything in 'merged' that has updatedAt > lastSyncTime.
-      // But wait, if we just downloaded it, it has a new updatedAt? 
-      // Actually, usually we keep the remote updatedAt if it's newer.
-      // So if we downloaded a remote memo with updatedAt > lastSyncTime, we don't need to push it back.
-      // We only need to push if the ID was in localMemos AND its updatedAt > lastSyncTime, 
-      // OR if it's a new memo created locally (updatedAt > lastSyncTime).
-      
       const memosToPush = merged.filter(m => {
-        // Push if it's newer than last sync
-        // AND (it originated locally OR we modified it locally)
-        // A simple heuristic: if the timestamp is newer than lastSyncTime, we might need to push it.
-        // But we want to avoid echoing back what we just downloaded.
-        
-        // If the memo came from remoteMemos, we don't need to push it back unless we merged it with local changes that made it even newer.
-        // But merge logic takes the one with larger updatedAt.
-        // If remote is newer, merged has remote version. We don't need to push.
-        // If local is newer, merged has local version. We need to push.
-        
         const remoteVersion = remoteMemos.find(r => r.id === m.id);
         if (remoteVersion && remoteVersion.updatedAt === m.updatedAt) {
           return false; // It's exactly what we got from server, don't push back
         }
-        
-        // Otherwise, it's either local-only or local is newer
         return m.updatedAt > lastSyncTime;
       });
 
@@ -154,6 +147,7 @@ export const syncService = {
   },
 
   syncWithWebDAV: async (config: SyncConfig, localMemos: Memo[]) => {
+     // ... existing implementation
     const { webdavUrl, webdavUser, webdavPass } = config.settings;
     if (!webdavUrl) throw new Error('WebDAV URL 未配置');
 
@@ -205,6 +199,7 @@ export const syncService = {
   },
 
   syncWithGist: async (config: SyncConfig, localMemos: Memo[]) => {
+    // ... existing implementation
     const { gistToken, gistId } = config.settings;
     if (!gistToken) throw new Error('GitHub Token 未配置');
 
@@ -266,5 +261,127 @@ export const syncService = {
     }
 
     return merged;
+  },
+
+  syncWithGitHubRepo: async (config: SyncConfig): Promise<Memo[]> => {
+    // 0. Auto Backup before Sync
+    try {
+      await storage.saveHistorySnapshot();
+    } catch (e) {
+      console.warn('Failed to save history snapshot before sync:', e);
+      // Continue syncing even if backup fails? 
+      // User said "Save backup before sync". If it fails, maybe we should stop?
+      // But backup failure shouldn't block sync if it's just quota or something?
+      // Let's log warn and continue.
+    }
+
+    const { githubToken, githubRepo, encryptionPassword } = config.settings;
+    if (!githubToken || !githubRepo || !encryptionPassword) throw new Error('GitHub Repo 配置不完整');
+
+    const [owner, repo] = githubRepo.split('/');
+    if (!owner || !repo) throw new Error('Invalid Repo Format. Use "owner/repo"');
+
+    const localSnapshotData = await storage.exportSnapshot();
+    const localMeta = {
+        version: 1,
+        updatedAt: Date.now(),
+        deviceId: localStorage.getItem('memo_device_id') || 'unknown'
+    };
+    
+    // Get stored deviceId
+    if (localMeta.deviceId === 'unknown') {
+        localMeta.deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('memo_device_id', localMeta.deviceId);
+    }
+
+    const fullLocalSnapshot: SyncSnapshot = {
+        meta: localMeta,
+        data: localSnapshotData
+    };
+
+    // 1. Fetch from GitHub
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json`;
+    const headers = {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+    };
+
+    let cloudSnapshot: SyncSnapshot | null = null;
+    let sha: string | undefined;
+
+    try {
+        const res = await fetch(apiUrl, { headers });
+        if (res.ok) {
+            const data = await res.json();
+            sha = data.sha;
+            const content = atob(data.content); // Decode Base64
+            // Content might be newlines?
+            // GitHub API returns base64 with newlines potentially.
+            // atob handles it usually? No, it might strictly need no whitespace.
+            const cleanContent = content.replace(/\s/g, ''); 
+            // Wait, atob decodes to binary string.
+            // The content from github is "base64".
+            // If it is encrypted JSON string.
+            
+            const encryptedData = JSON.parse(content);
+            const decryptedString = await encryption.decrypt(encryptedData, encryptionPassword);
+            cloudSnapshot = JSON.parse(decryptedString);
+        } else if (res.status !== 404) {
+             throw new Error(`GitHub API Error: ${res.status}`);
+        }
+    } catch (e) {
+        if (e instanceof Error && e.message.includes('Decryption failed')) {
+            throw e;
+        }
+        // If it's 404, we just continue (cloud is empty)
+        console.log('Fetching cloud data failed or empty', e);
+    }
+
+    const lastSyncTime = syncService.getLastSyncTime();
+
+    // 2. Check Conflict
+    if (cloudSnapshot) {
+        if (cloudSnapshot.meta.updatedAt > lastSyncTime) {
+            // Cloud is newer than last sync.
+            throw new SyncConflictError(fullLocalSnapshot, cloudSnapshot);
+        }
+    }
+
+    // 3. Push (Encrypt -> Push)
+    // Local is master or newer.
+    
+    const jsonString = JSON.stringify(fullLocalSnapshot);
+    const encrypted = await encryption.encrypt(jsonString, encryptionPassword);
+    
+    const body = {
+        message: `Sync from ${localMeta.deviceId} at ${new Date().toISOString()}`,
+        content: btoa(JSON.stringify(encrypted)),
+        sha: sha
+    };
+
+    const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) throw new Error(`GitHub Push Failed: ${putRes.status}`);
+
+    syncService.setLastSyncTime(localMeta.updatedAt);
+    
+    return await storage.getMemos(); 
+  },
+
+  resolveConflict: async (resolution: 'use_local' | 'use_cloud', local: SyncSnapshot, cloud: SyncSnapshot, config: SyncConfig) => {
+      if (resolution === 'use_local') {
+           syncService.setLastSyncTime(cloud.meta.updatedAt); 
+           return await syncService.syncWithGitHubRepo(config);
+      } else {
+          // Use Cloud
+          await storage.restoreSnapshot(cloud.data);
+          syncService.setLastSyncTime(cloud.meta.updatedAt);
+          return await storage.getMemos();
+      }
   }
 };

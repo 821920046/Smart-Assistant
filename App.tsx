@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import { Icons } from './constants';
@@ -8,10 +8,12 @@ import { useMemoData } from './hooks/useMemoData';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SyncConflictError } from './services/sync';
 
 const ChatAssistant = React.lazy(() => import('./components/ChatAssistant'));
 const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
+const ConflictResolver = React.lazy(() => import('./components/ConflictResolver'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('all');
@@ -19,6 +21,7 @@ const AppContent: React.FC = () => {
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [conflictError, setConflictError] = useState<SyncConflictError | null>(null);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
   const { 
@@ -34,21 +37,47 @@ const AppContent: React.FC = () => {
   // Handle Sync Error (Task D)
   useEffect(() => {
     if (syncError) {
+      if (syncError.name === 'SyncConflictError') {
+          setConflictError(syncError as SyncConflictError);
+      }
       // 1. Auth Error (401)
-      if (syncError.message.includes('401') || syncError.message.includes('Key')) {
+      else if (syncError.message.includes('401') || syncError.message.includes('Key')) {
         addToast("Authentication failed. Please check your sync settings.", "error");
         setIsSyncSettingsOpen(true);
       } 
-      // 2. Conflict Error (409)
+      // 2. Conflict Error (409) - Supabase specific
       else if (syncError.message.includes('409')) {
         addToast("Sync conflict detected. Please retry manually.", "error");
       }
       // 3. Server Error (500)
       else if (syncError.message.includes('500') || syncError.message.includes('服务器错误')) {
          addToast("Server error. Sync will be retried later.", "error");
+      } else {
+         addToast(`Sync Error: ${syncError.message}`, "error");
       }
     }
   }, [syncError, addToast]);
+
+  // Auto Sync Triggers
+  useEffect(() => {
+      if (!user) return;
+
+      // 1. Timer (5 min)
+      const timer = setInterval(() => {
+          performSync(memos, setMemos, true);
+      }, 5 * 60 * 1000);
+
+      // 2. Window Blur
+      const handleBlur = () => {
+          performSync(memos, setMemos, true);
+      };
+      window.addEventListener('blur', handleBlur);
+
+      return () => {
+          clearInterval(timer);
+          window.removeEventListener('blur', handleBlur);
+      };
+  }, [user, performSync, memos, setMemos]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
 
@@ -151,6 +180,20 @@ const AppContent: React.FC = () => {
           {isAuthModalOpen && (
             <AuthModal onClose={() => setIsAuthModalOpen(false)} />
           )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+            {conflictError && (
+                <ConflictResolver 
+                    error={conflictError}
+                    onResolve={(resolvedMemos) => {
+                        setMemos(resolvedMemos);
+                        setConflictError(null);
+                        addToast('Sync conflict resolved.', 'success');
+                    }}
+                    onCancel={() => setConflictError(null)}
+                />
+            )}
         </Suspense>
       </div>
     </ErrorBoundary>

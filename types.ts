@@ -35,4 +35,22 @@ export interface TranscriptionTurn {
   text: string;
 }
 
+export interface SyncMeta {
+  version: number;
+  updatedAt: number;
+  deviceId: string;
+  checksum?: string;
+}
+
+export interface SyncData {
+  memos: Memo[];
+  todos: Memo[];
+  whiteboards: Memo[];
+}
+
+export interface SyncSnapshot {
+  meta: SyncMeta;
+  data: SyncData;
+}
+
 export const APP_VERSION = '2.7.0';

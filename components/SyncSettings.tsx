@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { syncService, SyncConfig, SyncProvider } from '../services/sync.js';
+import { storage } from '../services/storage.js';
 
 interface SyncSettingsProps {
   onClose: () => void;
@@ -10,6 +11,53 @@ interface SyncSettingsProps {
 const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) => {
   const [config, setConfig] = useState<SyncConfig>(syncService.getConfig());
   const [isTesting, setIsTesting] = useState(false);
+  const [snapshots, setSnapshots] = useState<{id: number, date: string, data: any}[]>([]);
+  const [lastSyncTime, setLastSyncTime] = useState<number>(0);
+
+  useEffect(() => {
+    loadSnapshots();
+    setLastSyncTime(syncService.getLastSyncTime());
+  }, []);
+
+  const loadSnapshots = async () => {
+    try {
+      const list = await storage.getHistorySnapshots();
+      setSnapshots(list);
+    } catch (e) {
+      console.error('Failed to load snapshots', e);
+    }
+  };
+
+  const handleRestore = async (snapshot: any) => {
+    if (!confirm(`Restore snapshot from ${new Date(snapshot.date).toLocaleString()}? Current data will be replaced.`)) return;
+    try {
+        await storage.restoreSnapshot(snapshot.data);
+        alert('Restored successfully! Page will reload.');
+        window.location.reload();
+    } catch(e) {
+        alert('Restore failed: ' + (e as Error).message);
+    }
+  };
+
+  const handleDeleteSnapshot = async (id: number) => {
+    if (!confirm('Delete this snapshot?')) return;
+    try {
+        await storage.deleteHistorySnapshot(id);
+        loadSnapshots();
+    } catch(e) {
+        alert('Delete failed: ' + (e as Error).message);
+    }
+  };
+
+  const handleCreateSnapshot = async () => {
+    try {
+      await storage.saveHistorySnapshot();
+      await loadSnapshots();
+      alert('Backup created successfully!');
+    } catch (e) {
+      alert('Backup failed: ' + (e as Error).message);
+    }
+  };
 
   const saveAndSync = async () => {
     setIsTesting(true);
@@ -46,7 +94,9 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
         <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">同步设置</h2>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Multi-device Continuity</p>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                {lastSyncTime ? `Last Sync: ${new Date(lastSyncTime).toLocaleString()}` : 'Not synced yet'}
+            </p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-900 text-2xl">&times;</button>
         </header>
@@ -55,7 +105,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           <section className="space-y-4">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
             <div className="grid grid-cols-2 gap-3">
-              {(['none', 'supabase', 'webdav', 'gist'] as SyncProvider[]).map(p => (
+              {(['none', 'supabase', 'webdav', 'gist', 'github_repo'] as SyncProvider[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setConfig({ ...config, provider: p })}
@@ -65,7 +115,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                     : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
                   }`}
                 >
-                  {p === 'none' ? '仅本地' : p}
+                  {p === 'none' ? '仅本地' : p === 'github_repo' ? 'GitHub Repo' : p}
                 </button>
               ))}
             </div>
@@ -85,6 +135,35 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 onChange={e => updateSetting('supabaseKey', e.target.value)}
                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
+            </div>
+          )}
+
+          {config.provider === 'github_repo' && (
+            <div className="space-y-4 animate-card">
+               <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
+                核心原则：Local-First / 云端仅备份 / 单人使用 / 冲突可控
+              </div>
+              <input 
+                type="password" placeholder="GitHub Personal Access Token (Repo Scope)" 
+                value={config.settings.githubToken || ''} 
+                onChange={e => updateSetting('githubToken', e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <input 
+                type="text" placeholder="Repository (username/repo)" 
+                value={config.settings.githubRepo || ''} 
+                onChange={e => updateSetting('githubRepo', e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <input 
+                type="password" placeholder="Sync Password (Encryption)" 
+                value={config.settings.encryptionPassword || ''} 
+                onChange={e => updateSetting('encryptionPassword', e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <p className="text-[10px] text-slate-400 px-2">
+                数据将使用 AES-256 加密存储在您的私有仓库中。
+              </p>
             </div>
           )}
 
@@ -129,6 +208,32 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
               />
             </div>
           )}
+
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">本地历史快照 (Auto Backup)</label>
+                <div className="flex gap-2">
+                    <button onClick={handleCreateSnapshot} className="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-lg">NEW BACKUP</button>
+                    <button onClick={loadSnapshots} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-2 py-1">REFRESH</button>
+                </div>
+            </div>
+            
+            <div className="bg-slate-50 rounded-2xl p-2 max-h-40 overflow-y-auto space-y-2">
+                {snapshots.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No snapshots found.</div>}
+                {snapshots.map(s => (
+                    <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-700">{new Date(s.date).toLocaleString()}</span>
+                            <span className="text-[10px] text-slate-400">{s.data.memos.length + s.data.todos.length + s.data.whiteboards.length} items</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => handleRestore(s)} className="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-200">RESTORE</button>
+                            <button onClick={() => handleDeleteSnapshot(s.id)} className="text-[10px] font-black text-slate-300 hover:text-red-500 px-2">×</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+          </section>
         </div>
 
         <footer className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
