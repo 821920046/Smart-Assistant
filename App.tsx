@@ -60,8 +60,6 @@ const AppContent: React.FC = () => {
 
   // Auto Sync Triggers
   useEffect(() => {
-      if (!user) return;
-
       // 1. Timer (5 min)
       const timer = setInterval(() => {
           performSync(memos, setMemos, true);
@@ -77,7 +75,7 @@ const AppContent: React.FC = () => {
           clearInterval(timer);
           window.removeEventListener('blur', handleBlur);
       };
-  }, [user, performSync, memos, setMemos]);
+  }, [performSync, memos, setMemos]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
 
@@ -90,7 +88,7 @@ const AppContent: React.FC = () => {
           tags={allTags}
           onExport={() => {}}
           onImport={() => {}}
-          onOpenSyncSettings={() => user ? setIsSyncSettingsOpen(true) : setIsAuthModalOpen(true)}
+          onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
           isSyncing={isSyncing}
           syncError={syncError}
@@ -121,7 +119,7 @@ const AppContent: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <button 
-                onClick={() => user ? setIsSyncSettingsOpen(true) : setIsAuthModalOpen(true)}
+                onClick={() => setIsSyncSettingsOpen(true)}
                 className={`p-2 rounded-full shadow-sm border transition-all ${
                   user 
                     ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800' 
