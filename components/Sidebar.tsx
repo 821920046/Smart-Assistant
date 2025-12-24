@@ -171,6 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-300'}`}>
                 <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
               </div>
+            </button>
           </div>
         </div>
       </aside>
