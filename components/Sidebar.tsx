@@ -2,7 +2,6 @@ import React from 'react';
 import { Icons, CATEGORIES } from '../constants.js';
 import { Memo } from '../types.js';
 import TaskInsights from './TaskInsights.js';
-import { useAuth } from '../context/AuthContext.js';
 
 interface SidebarProps {
   activeFilter: string;
@@ -25,8 +24,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   activeFilter, setActiveFilter, tags, onOpenSyncSettings, onOpenAuth, isSyncing, syncError, memos, onClearHistory, darkMode, onToggleDarkMode, isOpen, onClose
 }) => {
-  const { user, logout } = useAuth();
-
   const menuItems = [
     { id: 'all', icon: Icons.List, label: 'Tasks' },
     { id: 'calendar', icon: Icons.Clock, label: 'Calendar' },
@@ -174,37 +171,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-300'}`}>
                 <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
               </div>
-            </button>
-
-            <div>
-              {user ? (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 flex items-center gap-3 shadow-sm">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm shrink-0">
-                    {user.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate" title={user.email}>{user.email}</p>
-                    <button 
-                      onClick={logout} 
-                      className="text-[10px] text-slate-500 hover:text-red-500 transition-colors font-medium flex items-center gap-1 mt-0.5"
-                    >
-                      <Icons.LogOut className="w-3 h-3" />
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button 
-                  onClick={onOpenAuth}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-blue-200 dark:shadow-none transition-all flex items-center justify-center gap-2 group"
-                >
-                  <div className="p-1 bg-white/20 rounded-full group-hover:scale-110 transition-transform">
-                    <Icons.User className="w-3 h-3" />
-                  </div>
-                  <span>Sign In / Register</span>
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </aside>
