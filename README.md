@@ -1,62 +1,96 @@
-# 🤖 Smart Assistant v2.5
+# 🧠 Smart Assistant
 
-A minimalist intelligent thinking space and smart task management center powered by Google Gemini 3 series models. This project integrates voice, drawing, text, and checklists into a truly cross-platform synchronized "Second Brain."
+> **A "Local-First" Intelligent Second Brain powered by Google Gemini 3.**  
+> Redefining personal knowledge management with AI-native reasoning, real-time voice interaction, and privacy-focused synchronization.
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react)
+![Gemini](https://img.shields.io/badge/AI-Gemini%203-8E75B2.svg?logo=google)
+![LocalFirst](https://img.shields.io/badge/Data-Local_First-success.svg)
+
+## 📖 Introduction
+
+**Smart Assistant** is a minimalist yet powerful productivity tool designed for the AI era. Unlike traditional note-taking apps, it integrates **Google Gemini 3** models directly into your workflow to help you organize thoughts, extract tasks, and visualize ideas.
+
+We strictly follow the **Local-First** philosophy:
+*   **Your Data is Yours:** All data is stored locally in your browser (IndexedDB).
+*   **No Forced Login:** Use the app immediately without registration.
+*   **Private Sync:** Sync your data across devices using your own **GitHub Private Repository** or **WebDAV**, protected by **AES-256 encryption**.
 
 ## ✨ Key Features
 
-- **🚀 Gemini 3 Driven**: Core reasoning and creation powered by the latest `gemini-3-flash-preview` and `gemini-3-pro-preview` models.
-- **🎙️ Real-time Voice Transcription**: Powered by `gemini-2.5-flash-native-audio` for ultra-low latency speech-to-text.
-- **📋 Intelligent Checklist Mode**:
-  - **Dedicated Mode Switch**: New checklist button in the editor forces AI to extract actionable items.
-  - **Dual Parsing Mechanism**: Built-in local regex parsing as a fallback for real-time task extraction.
-  - **Smart Priority Assignment**: Automatically assigns High/Medium/Low priorities based on content context.
-- **🎨 Creative Whiteboard**: Built-in high-definition Canvas with undo/redo, multi-color brushes, and eraser support.
-- **🔄 Universal Sync**: Built-in drivers for `Supabase`, `WebDAV` (e.g., Nutstore), and `GitHub Gist` with conflict resolution based on `updatedAt`.
-- **💾 High Performance Storage**: Upgraded from LocalStorage to **IndexedDB** for seamless handling of massive data.
-- **🔊 Natural TTS**: One-click text-to-speech for all records using high-quality preset voices.
-- **📊 Contextual Management**: Supports tag categorization, full-text semantic search, due dates, and real-time reminders.
+### 🤖 AI-Native Workflow
+*   **Gemini 3 Powered:** Built on `gemini-3-flash-preview` and `gemini-3-pro-preview` for deep reasoning and context understanding.
+*   **Real-time Voice:** Ultra-low latency voice transcription and interaction using `gemini-2.5-flash-native-audio`.
+*   **Smart Insights:** AI automatically analyzes your tasks to provide weekly summaries and productivity insights.
+
+### 🔒 Privacy & Synchronization
+*   **Local-First Architecture:** Data lives in your device's IndexedDB. No server required for basic usage.
+*   **Encrypted Cloud Sync:**
+    *   **GitHub Repository Sync (Recommended):** Store your data in a private GitHub repo.
+    *   **AES-256 Encryption:** All data synced to the cloud is encrypted with a user-defined password. Even the cloud provider cannot read your notes.
+    *   **Other Providers:** Supports WebDAV (e.g., Nutstore/Nextcloud) and Supabase.
+*   **Conflict Resolution:** Smart conflict detection with a dedicated UI to resolve data differences between devices.
+*   **Local Snapshots:** Automatic local backups and history management to prevent data loss.
+
+### 📝 Advanced Editor
+*   **Smart Checklists:** One-click conversion of natural language text into actionable to-do lists with priority analysis.
+*   **Creative Whiteboard:** Integrated canvas for sketching ideas, supporting multi-color brushes and unlimited undo/redo.
+*   **Rich Context:** Support for tagging, full-text search, archiving, and "Focus Mode."
 
 ## 🛠️ Tech Stack
 
-- **UI Framework**: React 19 (Strict Mode)
-- **Styling**: Tailwind CSS 3
-- **AI Engine**: Google Generative AI SDK (@google/genai)
-- **Data Persistence**: IndexedDB (Local-First strategy)
-- **Sync Layer**: Fetch API + Custom Sync Engines (WebDAV/Supabase/Gist)
-- **Build**: Native ESM Module loading (No-build tooling required)
+*   **Frontend:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+*   **Styling:** [Tailwind CSS 3](https://tailwindcss.com/)
+*   **AI SDK:** [Google Generative AI SDK](https://www.npmjs.com/package/@google/genai)
+*   **Storage:** Native [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
+*   **Encryption:** Web Crypto API (AES-GCM 256-bit)
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Get API Key
-Visit [Google AI Studio](https://aistudio.google.com/) to generate your API Key.
+### Prerequisites
+*   Node.js 18+
+*   A Google Gemini API Key ([Get it here](https://aistudio.google.com/))
 
-### 2. Configure Environment
-Set the following in your deployment environment:
-- `API_KEY`: Your Google Gemini API Key.
+### Installation
 
-### 3. Setup Sync (Optional)
-Click **[Sync Settings]** in the sidebar and follow the [SYNC_GUIDE.md](./SYNC_GUIDE.md) to configure your cloud storage.
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/your-username/smart-assistant.git
+    cd smart-assistant
+    ```
 
-## 📂 Directory Structure
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-- `index.html`: Entry point with global process shims and Import Map.
-- `App.tsx`: Main application logic and cross-platform state management.
-- `components/`:
-  - `MemoEditor.tsx`: Integrated editor (Checklist, Voice, Drawing).
-  - `MemoCard.tsx`: Intelligent rendering card.
-  - `VoiceInterface.tsx`: Real-time streaming voice processor.
-  - `Whiteboard.tsx`: Responsive drawing system.
-  - `SyncSettings.tsx`: Configuration center for sync drivers.
-- `services/`:
-  - `storage.ts`: Persistence layer via IndexedDB.
-  - `sync.ts`: Implementation of cross-platform synchronization.
-  - `gemini.ts`: AI capability encapsulation.
+3.  **Configure Environment**
+    Create a `.env` file in the root directory:
+    ```env
+    VITE_GEMINI_API_KEY=your_api_key_here
+    ```
 
-## 🔐 Privacy
+4.  **Run Locally**
+    ```bash
+    npm run dev
+    ```
 
-- **Local First**: All data is primarily stored in your local browser.
-- **Encrypted Transfer**: Sync processes use standard encryption; API calls go directly to Google.
-- **No Tracking**: This project does not collect any personal data.
+## 🔄 Synchronization Guide
 
----
-*Inspired by usememos/memos. Re-imagined for the AI Era.*
+Smart Assistant allows you to sync data across devices without a central server.
+
+**Recommended: GitHub Private Repo Sync**
+1.  Create a **new empty private repository** on GitHub (e.g., `my-notes-data`).
+2.  Generate a **Personal Access Token (Classic)** with `repo` scope.
+3.  In Smart Assistant, click **Manage Sync** -> **GitHub Repo**.
+4.  Enter your Token, Repo Name (`username/repo`), and a **Sync Password**.
+5.  *Note: Your Sync Password is used to encrypt data. Do not lose it!*
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
