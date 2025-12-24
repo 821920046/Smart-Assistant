@@ -188,4 +188,4 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
   );
 };
 
-export default MemoCard;
+export default React.memo(MemoCard);

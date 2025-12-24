@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Memo } from '../types';
 import { storage } from '../services/storage';
 import { useToast } from '../context/ToastContext';
@@ -8,33 +8,40 @@ import { useNotificationScheduler } from './useNotificationScheduler';
 
 export const useMemoData = () => {
   const [memos, setMemos] = useState<Memo[]>([]);
+  const memosRef = useRef<Memo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const { addToast } = useToast();
   const { performSync, isSyncing, syncError } = useSyncService();
   const { user } = useAuth();
 
+  // Keep ref in sync
+  useEffect(() => {
+    memosRef.current = memos;
+  }, [memos]);
+
   // Initial Sync on User Change
   useEffect(() => {
     if (user) {
-      performSync(memos, setMemos, false);
+      performSync(memosRef.current, setMemos, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Define updateMemo first
   const updateMemo = useCallback(async (updatedMemo: Memo) => {
+    const currentMemos = memosRef.current;
     const upgraded = { ...updatedMemo, updatedAt: Date.now() };
     
     // Update local state
-    const newMemos = memos.map(m => m.id === upgraded.id ? upgraded : m);
+    const newMemos = currentMemos.map(m => m.id === upgraded.id ? upgraded : m);
     setMemos(newMemos);
     
     await storage.upsertMemo(upgraded);
     
     // Use local state for sync instead of reading from storage
     await performSync(newMemos, setMemos, true); // Silent sync
-  }, [memos, performSync]);
+  }, [performSync]);
 
   // Notification Scheduler
   useNotificationScheduler(memos, updateMemo);
@@ -74,6 +81,7 @@ export const useMemoData = () => {
   }, [performSync, addToast]);
 
   const addMemo = useCallback(async (memoData: Partial<Memo>) => {
+    const currentMemos = memosRef.current;
     const now = Date.now();
     const newMemo: Memo = {
       id: Math.random().toString(36).substr(2, 6),
@@ -93,40 +101,42 @@ export const useMemoData = () => {
     };
     
     // Optimistic update
-    const newMemos = [newMemo, ...memos];
+    const newMemos = [newMemo, ...currentMemos];
     setMemos(newMemos);
     await storage.upsertMemo(newMemo);
     addToast("Task created successfully", "success");
     
     await performSync(newMemos, setMemos, true);
-  }, [memos, addToast, performSync]);
+  }, [addToast, performSync]);
 
   const deleteMemo = useCallback(async (id: string) => {
-    const memoToDelete = memos.find(m => m.id === id);
+    const currentMemos = memosRef.current;
+    const memoToDelete = currentMemos.find(m => m.id === id);
     if (memoToDelete) {
       const deletedMemo = { ...memoToDelete, isDeleted: true, updatedAt: Date.now() };
-      const newMemos = memos.filter(m => m.id !== id);
+      const newMemos = currentMemos.filter(m => m.id !== id);
       setMemos(newMemos);
       await storage.upsertMemo(deletedMemo);
       addToast("Task deleted", "info");
       
       await performSync(newMemos, setMemos, true);
     }
-  }, [memos, addToast, performSync]);
+  }, [addToast, performSync]);
 
   const clearHistory = useCallback(async () => {
-    const archivedMemos = memos.filter(m => m.isArchived);
+    const currentMemos = memosRef.current;
+    const archivedMemos = currentMemos.filter(m => m.isArchived);
     if (archivedMemos.length === 0) return;
 
     for (const memo of archivedMemos) {
       await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
     }
-    const newMemos = memos.filter(m => !m.isArchived);
+    const newMemos = currentMemos.filter(m => !m.isArchived);
     setMemos(newMemos);
     addToast("History cleared", "info");
     
     await performSync(newMemos, setMemos, true);
-  }, [memos, addToast, performSync]);
+  }, [addToast, performSync]);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();

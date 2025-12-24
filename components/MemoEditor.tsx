@@ -352,14 +352,16 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
       </div>
 
       {showWhiteboard && (
-        <Whiteboard 
-          initialData={sketchData || undefined}
-          onSave={(data) => {
-            setSketchData(data);
-            setShowWhiteboard(false);
-          }}
-          onCancel={() => setShowWhiteboard(false)}
-        />
+        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div></div>}>
+          <Whiteboard 
+            initialData={sketchData || undefined}
+            onSave={(data) => {
+              setSketchData(data);
+              setShowWhiteboard(false);
+            }}
+            onCancel={() => setShowWhiteboard(false)}
+          />
+        </Suspense>
       )}
     </div>
   );

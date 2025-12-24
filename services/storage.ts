@@ -5,11 +5,18 @@ const DB_NAME = 'MemoAI_DB';
 const STORE_NAME = 'memos';
 const DB_VERSION = 1;
 
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 export const storage = {
   initDB: (): Promise<IDBDatabase> => {
-    return new Promise((resolve, reject) => {
+    if (dbPromise) return dbPromise;
+
+    dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        dbPromise = null; // Reset on error
+        reject(request.error);
+      };
       request.onsuccess = () => resolve(request.result);
       request.onupgradeneeded = (event) => {
         const db = request.result;
@@ -18,6 +25,7 @@ export const storage = {
         }
       };
     });
+    return dbPromise;
   },
 
   getMemos: async (includeDeleted = false): Promise<Memo[]> => {
