@@ -105,7 +105,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           <section className="space-y-4">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
             <div className="grid grid-cols-2 gap-3">
-              {(['none', 'supabase', 'webdav', 'gist', 'github_repo'] as SyncProvider[]).map(p => (
+              {(['none', 'supabase', 'webdav', 'github_repo'] as SyncProvider[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setConfig({ ...config, provider: p })}
@@ -189,23 +189,6 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                   className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
-            </div>
-          )}
-
-          {config.provider === 'gist' && (
-            <div className="space-y-4 animate-card">
-              <input 
-                type="password" placeholder="GitHub Personal Access Token" 
-                value={config.settings.gistToken || ''} 
-                onChange={e => updateSetting('gistToken', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <input 
-                type="text" placeholder="Gist ID (留空自动创建)" 
-                value={config.settings.gistId || ''} 
-                onChange={e => updateSetting('gistId', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
             </div>
           )}
 
