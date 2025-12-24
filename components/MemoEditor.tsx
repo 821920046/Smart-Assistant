@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import { Icons, CATEGORIES } from '../constants.js';
-import Whiteboard from './Whiteboard.js';
 import { extractTasks, suggestTags } from '../services/gemini.js';
 import { Memo, TodoItem, Priority, RepeatInterval } from '../types.js';
+
+const Whiteboard = React.lazy(() => import('./Whiteboard.js'));
 
 interface MemoEditorProps {
   onSave: (memo: Partial<Memo>) => void;

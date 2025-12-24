@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
-import ChatAssistant from './components/ChatAssistant';
-import SyncSettings from './components/SyncSettings';
-import AuthModal from './components/AuthModal';
 import MainContent from './components/MainContent';
 import { Icons } from './constants';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -10,6 +7,11 @@ import { useToast } from './context/ToastContext';
 import { useMemoData } from './hooks/useMemoData';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useMemoFilter } from './hooks/useMemoFilter';
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+const ChatAssistant = React.lazy(() => import('./components/ChatAssistant'));
+const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
+const AuthModal = React.lazy(() => import('./components/AuthModal'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('all');
