@@ -32,6 +32,44 @@ export class SyncConflictError extends Error {
   }
 }
 
+const DATA_BRANCH = 'smart-assistant-data';
+
+async function ensureSyncBranch(token: string, owner: string, repo: string) {
+    const headers = { 
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+    };
+
+    // 1. Check if branch exists
+    const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${DATA_BRANCH}`, { headers });
+    if (branchRes.ok) return;
+
+    // 2. If not, get default branch
+    const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+    if (!repoRes.ok) throw new Error('Failed to fetch repo info');
+    const repoData = await repoRes.json();
+    const defaultBranch = repoData.default_branch || 'main';
+
+    // 3. Get default branch SHA
+    const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, { headers });
+    if (!refRes.ok) throw new Error('Failed to fetch default branch ref');
+    const refData = await refRes.json();
+    
+    // 4. Create branch
+    const createRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            ref: `refs/heads/${DATA_BRANCH}`,
+            sha: refData.object.sha
+        })
+    });
+    
+    if (!createRes.ok && createRes.status !== 422) { // 422 means already exists (race condition)
+        throw new Error('Failed to create sync data branch');
+    }
+}
+
 export const syncService = {
   getConfig: (): SyncConfig => {
     // 回退到 localStorage 配置
@@ -281,6 +319,9 @@ export const syncService = {
     const [owner, repo] = githubRepo.split('/');
     if (!owner || !repo) throw new Error('Invalid Repo Format. Use "owner/repo"');
 
+    // Ensure branch exists
+    await ensureSyncBranch(githubToken, owner, repo);
+
     const localSnapshotData = await storage.exportSnapshot();
     const localMeta = {
         version: 1,
@@ -299,8 +340,8 @@ export const syncService = {
         data: localSnapshotData
     };
 
-    // 1. Fetch from GitHub
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json`;
+    // 1. Fetch from GitHub (Use DATA_BRANCH)
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}`;
     const headers = {
         'Authorization': `token ${githubToken}`,
         'Accept': 'application/vnd.github.v3+json',
@@ -357,10 +398,14 @@ export const syncService = {
     const body = {
         message: `Sync from ${localMeta.deviceId} at ${new Date().toISOString()}`,
         content: btoa(JSON.stringify(encrypted)),
-        sha: sha
+        sha: sha,
+        branch: DATA_BRANCH
     };
 
-    const putRes = await fetch(apiUrl, {
+    // PUT URL must not have query params for branch, branch is in body
+    const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json`;
+
+    const putRes = await fetch(putUrl, {
         method: 'PUT',
         headers,
         body: JSON.stringify(body)
