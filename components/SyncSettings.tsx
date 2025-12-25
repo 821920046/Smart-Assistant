@@ -88,6 +88,42 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     }));
   };
 
+  const handleExportConfig = () => {
+    const dataStr = JSON.stringify(config, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `smart-assistant-config-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedConfig = JSON.parse(event.target?.result as string);
+        if (importedConfig && importedConfig.provider) {
+          setConfig(importedConfig);
+          alert('Config imported successfully!');
+        } else {
+          alert('Invalid config file.');
+        }
+      } catch (err) {
+        alert('Failed to parse config file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = '';
+  };
+
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
       <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-card">
@@ -98,7 +134,23 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 {lastSyncTime ? `Last Sync: ${new Date(lastSyncTime).toLocaleString()}` : 'Not synced yet'}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-900 text-2xl">&times;</button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleExportConfig}
+              title="Export Config"
+              className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <label 
+              title="Import Config"
+              className="p-2 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </label>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-900 text-2xl ml-2">&times;</button>
+          </div>
         </header>
 
         <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto no-scrollbar">
