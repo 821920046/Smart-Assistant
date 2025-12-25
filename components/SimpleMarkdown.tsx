@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SimpleMarkdown: React.FC<{ content: string }> = ({ content }) => {
+const SimpleMarkdown: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
 
@@ -72,7 +72,7 @@ const SimpleMarkdown: React.FC<{ content: string }> = ({ content }) => {
     elements.push(<p key={index} className="mb-1 text-slate-700 dark:text-slate-300">{parseInline(line)}</p>);
   });
 
-  return <div className="text-sm leading-relaxed">{elements}</div>;
+  return <div className={`leading-relaxed ${className || 'text-sm'}`}>{elements}</div>;
 };
 
 const parseInline = (text: string): React.ReactNode[] => {

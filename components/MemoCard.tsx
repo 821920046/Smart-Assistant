@@ -111,11 +111,24 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
       {/* Content */}
       <div className="space-y-3">
          {/* Main Content Title Style */}
-         <div className="cursor-pointer" onClick={() => onUpdate(memo)}>
-            <SimpleMarkdown 
-                content={memo.content} 
-                className={`${compact ? 'text-lg font-bold leading-relaxed tracking-tight' : 'text-lg font-bold leading-relaxed'} text-slate-800 dark:text-slate-100 line-clamp-4`} 
-            />
+         <div className="cursor-pointer group/content" onClick={() => onUpdate(memo)}>
+            {/* Title - Larger & Bold */}
+            <div className="mb-1.5 break-words">
+                <SimpleMarkdown 
+                    content={memo.content.split('\n')[0] || ''} 
+                    className="text-xl font-bold leading-normal text-slate-900 dark:text-slate-100" 
+                />
+            </div>
+            
+            {/* Description - Weakened */}
+            {memo.content.includes('\n') && (
+                <div className="line-clamp-3 opacity-90 break-words">
+                    <SimpleMarkdown 
+                        content={memo.content.split('\n').slice(1).join('\n')} 
+                        className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" 
+                    />
+                </div>
+            )}
          </div>
          
          {/* Todos */}

@@ -103,13 +103,14 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
             onDrop={(e) => handleDrop(e, col.id)}
           >
             {/* Header */}
-            <div className={`p-4 flex items-center justify-between font-bold ${col.titleColor} border-b border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/20 sticky top-0 z-10 backdrop-blur-md rounded-t-2xl`}>
-              <div className="flex items-center gap-3">
+            <div className={`p-3 flex items-center justify-between font-bold ${col.titleColor} border-b border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/20 sticky top-0 z-10 backdrop-blur-md rounded-t-2xl`}>
+              <div className="flex items-center gap-2">
                 <span className="text-base uppercase tracking-wider font-extrabold">{col.label}</span>
-                <span className="bg-white/60 dark:bg-black/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">
+                <span className="bg-white/60 dark:bg-black/20 px-2 py-0.5 rounded-full text-xs font-mono font-bold opacity-70">
                   {colMemos.length}
                 </span>
               </div>
+              
               <div className="flex items-center gap-2">
                  {!isCompletedCol && (
                      <button 
@@ -117,10 +118,11 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
                             const input = document.getElementById(`quick-add-${col.id}`);
                             input?.focus();
                         }}
-                        className="p-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-blue-500 hover:text-white text-current transition-all shadow-sm active:scale-95"
-                        title="Quick Add Task"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md active:scale-95 transition-all"
+                        title="Add New Task"
                      >
-                         <Icons.Plus className="w-5 h-5" />
+                         <Icons.Plus className="w-4 h-4" />
+                         <span className="text-xs font-bold">New Task</span>
                      </button>
                  )}
                  {isCompletedCol && <Icons.CheckCircle className="w-5 h-5 opacity-50" />}
