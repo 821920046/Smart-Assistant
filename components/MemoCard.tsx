@@ -92,13 +92,118 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
   };
 
   return (
-    <div className={`memo-card group relative ${compact ? 'p-3' : 'p-6'} ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+    <div className={`memo-card group relative bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md transition-all duration-200 ${compact ? 'p-4' : 'p-6'} ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
       
       {/* Header */}
-      <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-4'}`}>
-        <div className="flex items-center gap-2">
-          <PriorityTag priority={memo.priority || 'normal'} />
-          {memo.category && (
+      {!compact && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <PriorityTag priority={memo.priority || 'normal'} />
+            {memo.tags?.map(tag => (
+                <span key={tag} className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md">
+                    #{tag}
+                </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="space-y-3">
+         {/* Main Content Title Style */}
+         <div className="cursor-pointer" onClick={() => onUpdate(memo)}>
+            <SimpleMarkdown 
+                content={memo.content} 
+                className={`${compact ? 'text-base font-semibold leading-snug' : 'text-lg font-bold leading-relaxed'} text-slate-800 dark:text-slate-100 line-clamp-3`} 
+            />
+         </div>
+         
+         {/* Meta Info Line (Compact Mode) */}
+         {compact && (
+             <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-50 dark:border-slate-700/30">
+                 <div className="flex items-center gap-2">
+                     <div className={`w-2 h-2 rounded-full ${
+                         memo.priority === 'important' ? 'bg-rose-500' : 
+                         memo.priority === 'secondary' ? 'bg-slate-300' : 'bg-blue-500'
+                     }`} />
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                         {memo.priority || 'NORMAL'}
+                     </span>
+                 </div>
+                 {memo.tags && memo.tags.length > 0 && (
+                     <div className="flex gap-1">
+                         {memo.tags.slice(0, 2).map(tag => (
+                             <span key={tag} className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+                                 #{tag}
+                             </span>
+                         ))}
+                         {memo.tags.length > 2 && <span className="text-[9px] text-slate-400">+{memo.tags.length - 2}</span>}
+                     </div>
+                 )}
+             </div>
+         )}
+
+         {/* Todos */}
+         {memo.todos && memo.todos.length > 0 && (
+             <div className="space-y-1.5 pt-2">
+                 {memo.todos.slice(0, compact ? 3 : undefined).map(todo => (
+                     <div key={todo.id} className="flex items-start gap-2 group/todo">
+                         <button 
+                             onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
+                             className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                                 todo.completed 
+                                 ? 'bg-blue-500 border-blue-500 text-white' 
+                                 : 'border-slate-300 hover:border-blue-400 bg-white dark:bg-slate-700 dark:border-slate-600'
+                             }`}
+                         >
+                             {todo.completed && <Icons.Check className="w-3 h-3" />}
+                         </button>
+                         <span className={`text-sm flex-1 break-words ${todo.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                             {todo.text}
+                         </span>
+                     </div>
+                 ))}
+                 {compact && memo.todos.length > 3 && (
+                     <p className="text-xs text-slate-400 pl-6">... {memo.todos.length - 3} more items</p>
+                 )}
+             </div>
+         )}
+      </div>
+
+      {/* Footer Actions (Only show on hover or non-compact) */}
+      {!compact && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-700/50">
+             <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>{new Date(memo.createdAt).toLocaleDateString()}</span>
+                {memo.reminderTime && (
+                    <div className="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                        <Icons.Bell className="w-3 h-3" />
+                        <span>{new Date(memo.reminderTime).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                )}
+             </div>
+             
+             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onUpdate(memo)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-600 transition-colors">
+                    <Icons.Edit className="w-4 h-4" />
+                </button>
+                <button onClick={handlePlayTTS} className={`p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400 hover:text-blue-600'}`}>
+                     {isPlaying ? <Icons.Volume2 className="w-4 h-4" /> : <Icons.Volume1 className="w-4 h-4" />}
+                </button>
+                <button onClick={() => {
+                    if (confirm('Delete this memo?')) {
+                        setIsDeleting(true);
+                        setTimeout(() => onDelete(memo.id), 200);
+                    }
+                }} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
+                    <Icons.Trash className="w-4 h-4" />
+                </button>
+             </div>
+        </div>
+      )}
+    </div>
+  );
+};          {memo.category && (
             <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-100 dark:border-slate-700">
               {memo.category}
             </span>
