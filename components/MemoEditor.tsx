@@ -178,12 +178,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 gap-4">
         
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Category Selector */}
           <div className="relative">
              <button
                 onClick={() => setShowCategoryOptions(!showCategoryOptions)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors border border-slate-100 dark:border-slate-700"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors border border-slate-100 dark:border-slate-700 min-h-[36px]"
              >
                 <Icons.Folder className="w-3.5 h-3.5" />
                 <span>{category}</span>
@@ -209,7 +209,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
           </div>
 
           {/* Priority Selector */}
-          <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
+          <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px]">
             {(Object.keys(priorityConfig) as Priority[]).map((p) => (
               <button
                 key={p}
@@ -226,54 +226,54 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
 
           {/* Editor Toolbar */}
-          <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 overflow-x-auto no-scrollbar max-w-full">
+          <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 overflow-x-auto no-scrollbar max-w-[200px] md:max-w-full min-h-[36px]">
             <button
               onClick={() => insertMarkdown('h1')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Heading 1"
             >
               <Icons.Heading1 className="w-4 h-4" />
             </button>
             <button
               onClick={() => insertMarkdown('h2')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Heading 2"
             >
               <Icons.Heading2 className="w-4 h-4" />
             </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1" />
+            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0" />
             <button
               onClick={() => insertMarkdown('bold')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Bold"
             >
               <Icons.Bold className="w-4 h-4" />
             </button>
             <button
               onClick={() => insertMarkdown('italic')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Italic"
             >
               <Icons.Italic className="w-4 h-4" />
             </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1" />
+            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0" />
             <button
               onClick={() => insertMarkdown('list')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="List"
             >
               <Icons.ListOrdered className="w-4 h-4" />
             </button>
             <button
               onClick={() => insertMarkdown('quote')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Quote"
             >
               <Icons.Quote className="w-4 h-4" />
             </button>
             <button
               onClick={() => insertMarkdown('code')}
-              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all"
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all flex-shrink-0"
               title="Code Block"
             >
               <Icons.Code className="w-4 h-4" />
@@ -283,22 +283,25 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
 
           {/* Action Buttons */}
-          <button 
-            onClick={() => setShowWhiteboard(true)}
-            className={`p-2 rounded-lg transition-all ${sketchData ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title="Draw"
-          >
-            <Icons.Pen />
-          </button>
+          <div className="flex items-center gap-1">
+             <button 
+                onClick={() => setShowWhiteboard(true)}
+                className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${sketchData ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title="Draw"
+             >
+                <Icons.Pen />
+             </button>
 
-          <div className="relative">
-            <button 
-              onClick={() => setShowReminderOptions(!showReminderOptions)}
-              className={`p-2 rounded-lg transition-all ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Set Reminder"
-            >
-              <Icons.Clock />
-            </button>
+             <div className="relative">
+                <button 
+                  onClick={() => setShowReminderOptions(!showReminderOptions)}
+                  className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  title="Set Reminder"
+                >
+                  <Icons.Clock />
+                </button>
+                {/* Reminder Options Popup Code... */}
+
             
             {showReminderOptions && (
               <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
@@ -325,6 +328,26 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                     </select>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                     <button
+                        onClick={() => {
+                            setShowReminderOptions(false);
+                        }}
+                        className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
+                     >
+                        Confirm
+                     </button>
+                     <button
+                        onClick={() => {
+                            setReminderAt('');
+                            setReminderRepeat('none');
+                            setShowReminderOptions(false);
+                        }}
+                        className="flex-1 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                     >
+                        Clear
+                     </button>
                   </div>
                 </div>
               </div>

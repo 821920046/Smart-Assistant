@@ -119,16 +119,6 @@ const AppContent: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <button 
-                onClick={() => setIsSyncSettingsOpen(true)}
-                className={`p-2 rounded-full shadow-sm border transition-all ${
-                  user 
-                    ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800' 
-                    : 'bg-white text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                }`}
-              >
-                <Icons.User className="w-5 h-5" />
-              </button>
-              <button 
                 onClick={toggleDarkMode}
                 className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
               >
