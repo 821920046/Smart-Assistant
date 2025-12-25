@@ -354,6 +354,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
             )}
           </div>
         </div>
+        </div>
 
         {/* Save Button */}
         <button

@@ -117,8 +117,8 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
                             const input = document.getElementById(`quick-add-${col.id}`);
                             input?.focus();
                         }}
-                        className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-current opacity-60 hover:opacity-100 transition-all"
-                        title="New Task"
+                        className="p-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-blue-500 hover:text-white text-current transition-all shadow-sm active:scale-95"
+                        title="Quick Add Task"
                      >
                          <Icons.Plus className="w-5 h-5" />
                      </button>
