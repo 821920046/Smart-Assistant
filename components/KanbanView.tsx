@@ -44,14 +44,18 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
     e.dataTransfer.effectAllowed = 'move';
     // Add visual feedback class to dragged element
     if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.classList.add('opacity-50', 'scale-105', 'shadow-2xl');
+      // User request: scale(1.02), deeper shadow
+      e.currentTarget.classList.add('opacity-90', 'scale-[1.02]', 'shadow-2xl', 'rotate-1', 'cursor-grabbing');
     }
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
     // Remove visual feedback
     if (e.currentTarget instanceof HTMLElement) {
-        e.currentTarget.classList.remove('opacity-50', 'scale-105', 'shadow-2xl');
+        e.currentTarget.classList.remove('opacity-90', 'scale-[1.02]', 'shadow-2xl', 'rotate-1', 'cursor-grabbing');
+        // Add drop animation class
+        e.currentTarget.classList.add('transition-transform', 'duration-300');
+        setTimeout(() => e.currentTarget.classList.remove('transition-transform', 'duration-300'), 300);
     }
     setDragOverColumn(null);
   };
@@ -94,9 +98,9 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
         return (
           <div 
             key={col.id} 
-            className={`min-w-[300px] w-[320px] shrink-0 rounded-2xl border flex flex-col h-full snap-center bg-opacity-50 backdrop-blur-sm transition-all duration-200 
+            className={`min-w-[300px] w-[320px] shrink-0 rounded-2xl border flex flex-col h-full snap-center backdrop-blur-sm transition-all duration-200 
                 ${isDragOver 
-                    ? 'border-blue-400 bg-blue-50/80 dark:bg-blue-900/30 scale-[1.02] shadow-xl' 
+                    ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 ring-4 ring-blue-100 dark:ring-blue-900/30' 
                     : `${col.color} hover:border-black/10 dark:hover:border-white/10`
                 }`}
             onDragOver={(e) => handleDragOver(e, col.id)}
@@ -189,6 +193,18 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
           </div>
         );
       })}
+      {/* Mobile FAB (Floating Action Button) */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <button
+            onClick={() => {
+                // Default to 'normal' priority or open a general add modal
+                onAdd({ type: 'todo', priority: 'normal', content: '' });
+            }}
+            className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+        >
+            <Icons.Plus className="w-8 h-8" />
+        </button>
+      </div>
     </div>
   );
 };

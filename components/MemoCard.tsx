@@ -133,20 +133,20 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
          
          {/* Todos */}
          {memo.todos && memo.todos.length > 0 && (
-             <div className="space-y-1.5 pt-2">
+             <div className="space-y-2 pt-2">
                  {memo.todos.slice(0, compact ? 3 : undefined).map(todo => (
-                     <div key={todo.id} className="flex items-start gap-2 group/todo">
+                     <div key={todo.id} className="flex items-start gap-3 group/todo p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                          <button 
                              onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
-                             className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                             className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                                  todo.completed 
                                  ? 'bg-blue-500 border-blue-500 text-white' 
-                                 : 'border-slate-300 hover:border-blue-400 bg-white dark:bg-slate-700 dark:border-slate-600'
+                                 : 'border-slate-300 hover:border-blue-400 bg-white dark:bg-slate-800 dark:border-slate-600'
                              }`}
                          >
-                             {todo.completed && <Icons.Check className="w-3 h-3" />}
+                             {todo.completed && <Icons.Check className="w-3.5 h-3.5" />}
                          </button>
-                         <span className={`text-sm flex-1 break-words ${todo.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                         <span className={`text-sm flex-1 break-words leading-relaxed ${todo.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 dark:text-slate-200 font-medium'}`}>
                              {todo.text}
                          </span>
                      </div>
