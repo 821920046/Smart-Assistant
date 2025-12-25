@@ -63,6 +63,17 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     setIsTesting(true);
     try {
       syncService.saveConfig(config);
+      
+      // Auto-upload config to GitHub if provider is github_repo
+      if (config.provider === 'github_repo') {
+          try {
+              await syncService.uploadSyncConfigToGithub(config);
+          } catch (e) {
+              console.warn('Failed to upload sync config to GitHub:', e);
+              // Non-blocking, just warn
+          }
+      }
+
       // 这里由 App.tsx 处理实际同步，此处仅关闭
       if (typeof onSyncComplete === 'function') {
         try {
@@ -79,6 +90,31 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleCloudRestore = async () => {
+      const token = config.settings.githubToken;
+      if (!token) {
+          alert('Please enter your GitHub Token first.');
+          return;
+      }
+      
+      if (!confirm('This will search your GitHub repositories for a sync config and overwrite current settings. Continue?')) return;
+
+      setIsTesting(true);
+      try {
+          const restoredConfig = await syncService.restoreConfigFromGithub(token);
+          if (restoredConfig) {
+              setConfig(restoredConfig);
+              alert('Config found and restored! Click "Save & Sync" to apply.');
+          } else {
+              alert('No config file (.sync-config.json) found in your repositories.');
+          }
+      } catch (e) {
+          alert('Restore failed: ' + (e as Error).message);
+      } finally {
+          setIsTesting(false);
+      }
   };
 
   const updateSetting = (key: string, value: string) => {
@@ -195,12 +231,22 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
                 核心原则：Local-First / 云端仅备份 / 单人使用 / 冲突可控
               </div>
-              <input 
-                type="password" placeholder="GitHub Personal Access Token (Repo Scope)" 
-                value={config.settings.githubToken || ''} 
-                onChange={e => updateSetting('githubToken', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
+              <div className="relative">
+                <input 
+                    type="password" placeholder="GitHub Personal Access Token (Repo Scope)" 
+                    value={config.settings.githubToken || ''} 
+                    onChange={e => updateSetting('githubToken', e.target.value)}
+                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 pr-32"
+                />
+                {config.settings.githubToken && !config.settings.githubRepo && (
+                    <button 
+                        onClick={handleCloudRestore}
+                        className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
+                    >
+                        从云端恢复配置
+                    </button>
+                )}
+              </div>
               <input 
                 type="text" placeholder="Repository (username/repo)" 
                 value={config.settings.githubRepo || ''} 

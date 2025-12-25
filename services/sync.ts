@@ -383,5 +383,109 @@ export const syncService = {
           syncService.setLastSyncTime(cloud.meta.updatedAt);
           return await storage.getMemos();
       }
+  },
+
+  uploadSyncConfigToGithub: async (config: SyncConfig) => {
+    if (config.provider !== 'github_repo') return;
+    const { githubToken, githubRepo, encryptionPassword } = config.settings;
+    if (!githubToken || !githubRepo) return;
+
+    const [owner, repo] = githubRepo.split('/');
+    if (!owner || !repo) return;
+
+    const configToSave = {
+      syncType: 'github',
+      repo: githubRepo,
+      encrypted: !!encryptionPassword,
+      encryptionPassword: encryptionPassword, // Stored in Private Repo
+      updatedAt: Date.now()
+    };
+
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/.sync-config.json`;
+    const headers = {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+    };
+
+    // Check if file exists to get SHA
+    let sha: string | undefined;
+    try {
+        const res = await fetch(apiUrl, { headers });
+        if (res.ok) {
+            const data = await res.json();
+            sha = data.sha;
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(configToSave, null, 2))));
+    const body = {
+        message: `Update sync config`,
+        content: content,
+        sha: sha
+    };
+
+    await fetch(apiUrl, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(body)
+    });
+  },
+
+  restoreConfigFromGithub: async (token: string): Promise<SyncConfig | null> => {
+      // 1. Get User
+      const userRes = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `token ${token}` }
+      });
+      if (!userRes.ok) throw new Error('Invalid Token');
+      const user = await userRes.json();
+      const username = user.login;
+
+      // 2. Search for config file
+      // Note: Search API has rate limits.
+      const searchUrl = `https://api.github.com/search/code?q=filename:.sync-config.json+user:${username}`;
+      const searchRes = await fetch(searchUrl, {
+          headers: { 
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+          }
+      });
+      
+      if (!searchRes.ok) {
+           // Fallback: Try to list repos and check specific file? Too slow.
+           // Maybe the user just created the repo and search hasn't indexed it yet.
+           // Let's assume search works.
+           throw new Error('Search failed. GitHub Search API might be rate limited or file not indexed yet.');
+      }
+
+      const searchData = await searchRes.json();
+      if (!searchData.items || searchData.items.length === 0) {
+          return null;
+      }
+
+      // 3. Get Content (Use the first result)
+      const fileUrl = searchData.items[0].url; // API URL to get file content
+      const fileRes = await fetch(fileUrl, {
+          headers: { 'Authorization': `token ${token}` }
+      });
+      if (!fileRes.ok) throw new Error('Failed to fetch config file');
+
+      const fileData = await fileRes.json();
+      // content is base64
+      // Use decodeURIComponent(escape(atob(str))) to handle utf-8
+      const content = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
+      const json = JSON.parse(content);
+
+      // 4. Construct Config
+      return {
+          provider: 'github_repo',
+          settings: {
+              githubToken: token,
+              githubRepo: json.repo,
+              encryptionPassword: json.encryptionPassword
+          }
+      };
   }
 };
