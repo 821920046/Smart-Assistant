@@ -13,11 +13,14 @@ export const useSyncService = () => {
   const debounceRef = useState<{ timer: NodeJS.Timeout | null }>({ timer: null })[0];
 
   const executeSync = useCallback(async (currentMemos: Memo[], setMemos: (memos: Memo[]) => void, silent = false) => {
-    // Enforce sync only for logged-in users
-    if (!user) return currentMemos;
-
     const config = syncService.getConfig();
     if (config.provider === 'none') return currentMemos;
+    
+    // Only require user login if provider is NOT configured manually (i.e. using app's default backend)
+    // But since this app is "Local-First / BYOS", we generally don't strictly require "user" object for sync
+    // unless the specific provider logic needs it.
+    // For GitHub/WebDAV/Self-hosted Supabase, the config.settings contains auth info.
+
     
     setIsSyncing(true);
     setSyncError(null);
