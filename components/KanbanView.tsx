@@ -174,18 +174,6 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
           </div>
         );
       })}
-      {/* Mobile FAB (Floating Action Button) */}
-      <div className="md:hidden fixed bottom-6 right-6 z-50">
-        <button
-            onClick={() => {
-                // Default to 'normal' priority or open a general add modal
-                onAdd({ type: 'todo', priority: 'normal', content: '' });
-            }}
-            className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-        >
-            <Icons.Plus className="w-8 h-8" />
-        </button>
-      </div>
     </div>
   );
 };

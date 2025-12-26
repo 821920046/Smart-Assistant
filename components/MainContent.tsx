@@ -51,6 +51,26 @@ const MainContent: React.FC<MainContentProps> = ({
            onDelete={onDelete}
         />
       )}
+
+      {/* Mobile FAB */}
+      <button 
+        onClick={() => {
+          if (filter === 'kanban') {
+            onAdd({ type: 'todo', priority: 'normal', content: '' });
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Small timeout to allow scroll to start/finish
+            setTimeout(() => {
+              const textarea = document.querySelector('textarea');
+              if (textarea) textarea.focus();
+            }, 100);
+          }
+        }}
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full bg-indigo-500 text-white shadow-lg text-xl flex items-center justify-center hover:bg-indigo-600 active:scale-95 transition-all z-50"
+        aria-label="Add new memo"
+      >
+        +
+      </button>
     </>
   );
 };

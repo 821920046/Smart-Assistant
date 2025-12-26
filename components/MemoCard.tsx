@@ -91,11 +91,15 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
     return 'Weekly';
   };
 
+  const hasTodos = memo.todos && memo.todos.length > 0;
+
   return (
-    <div className={`memo-card group relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-all duration-200 ${
+    <div className={`memo-card group relative bg-white dark:bg-slate-800 transition-all duration-200 ${
         compact 
-        ? 'p-4 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-[1px]' 
-        : 'p-6 shadow-sm hover:shadow-md'
+        ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-[1px]' 
+        : hasTodos 
+            ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md'
+            : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md max-w-2xl mx-auto'
     } ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
       
       {/* Header - Non-compact only */}
@@ -113,14 +117,20 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
       )}
 
       {/* Content */}
-      <div className={compact ? "" : "space-y-3"}>
+      <div className={compact ? "" : "space-y-4"}>
          {/* Main Content Title Style */}
          <div className="cursor-pointer group/content" onClick={() => onUpdate(memo)}>
             {/* Title */}
-            <div className={`break-words ${compact ? 'mb-1' : 'mb-1.5'}`}>
+            <div className={`break-words ${compact ? 'mb-1' : 'mb-2'}`}>
                 <SimpleMarkdown 
                     content={memo.content.split('\n')[0] || ''} 
-                    className={`${compact ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' : 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'}`} 
+                    className={`${
+                        compact 
+                        ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' 
+                        : hasTodos 
+                            ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
+                            : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
+                    }`} 
                 />
             </div>
             
@@ -129,32 +139,50 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
                 <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
                     <SimpleMarkdown 
                         content={memo.content.split('\n').slice(1).join('\n')} 
-                        className={`${compact ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' : 'text-sm text-slate-600 dark:text-slate-400 leading-loose'}`} 
+                        className={`${
+                            compact 
+                            ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' 
+                            : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
+                        }`} 
                     />
                 </div>
             )}
          </div>
          
          {/* Todos */}
-         {memo.todos && memo.todos.length > 0 && (
-             <div className={`space-y-2 ${compact ? 'mb-3' : 'pt-2'}`}>
-                 {memo.todos.slice(0, compact ? 3 : undefined).map(todo => (
-                     <div key={todo.id} className="flex items-start gap-3 group/todo p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                         <button 
-                             onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
-                             className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                                 todo.completed 
-                                 ? 'bg-indigo-500 border-indigo-500 text-white' 
-                                 : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
-                             }`}
-                         >
-                             {todo.completed && <Icons.Check className="w-3 h-3" />}
-                         </button>
-                         <span className={`text-xs flex-1 break-words leading-relaxed ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-600 dark:text-slate-300'}`}>
-                             {todo.text}
-                         </span>
-                     </div>
-                 ))}
+         {hasTodos && (
+             <div className={`space-y-2.5 ${compact ? 'mb-3' : 'pt-2'}`}>
+                 {memo.todos.slice(0, compact ? 3 : undefined).map(todo => {
+                     const [title, ...desc] = todo.text.split('\n');
+                     return (
+                         <div key={todo.id} className={`flex items-start gap-3 group/todo transition-all duration-200 ${
+                             compact 
+                             ? 'p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                             : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
+                         }`}>
+                             <button 
+                                 onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
+                                 className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                                     todo.completed 
+                                     ? 'bg-indigo-500 border-indigo-500 text-white' 
+                                     : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
+                                 }`}
+                             >
+                                 {todo.completed && <Icons.Check className="w-3 h-3" />}
+                             </button>
+                             <div className="flex-1">
+                                 <p className={`text-sm font-medium leading-relaxed break-words ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-slate-200'}`}>
+                                     {title}
+                                 </p>
+                                 {desc.length > 0 && !todo.completed && (
+                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                         {desc.join(' ')}
+                                     </p>
+                                 )}
+                             </div>
+                         </div>
+                     );
+                 })}
                  {compact && memo.todos.length > 3 && (
                      <p className="text-[10px] text-slate-400 pl-7">... {memo.todos.length - 3} more</p>
                  )}
