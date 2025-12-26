@@ -4,7 +4,8 @@ import { Memo, SyncData } from '../types.js';
 const DB_NAME = 'MemoAI_DB';
 const STORE_NAME = 'memos';
 const SNAPSHOT_STORE_NAME = 'snapshots';
-const DB_VERSION = 2;
+const AUDIO_STORE_NAME = 'audio_notes';
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -26,6 +27,9 @@ export const storage = {
         }
         if (!db.objectStoreNames.contains(SNAPSHOT_STORE_NAME)) {
           db.createObjectStore(SNAPSHOT_STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
+          db.createObjectStore(AUDIO_STORE_NAME, { keyPath: 'id' });
         }
       };
     });
@@ -157,6 +161,48 @@ export const storage = {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(SNAPSHOT_STORE_NAME, 'readwrite');
       const store = transaction.objectStore(SNAPSHOT_STORE_NAME);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  // Audio Storage
+  saveAudio: async (blob: Blob): Promise<string> => {
+    const db = await storage.initDB();
+    const id = crypto.randomUUID();
+    const audioData = {
+      id,
+      blob,
+      createdAt: Date.now()
+    };
+    return new Promise<string>((resolve, reject) => {
+      const transaction = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(AUDIO_STORE_NAME);
+      const request = store.put(audioData);
+      request.onsuccess = () => resolve(id);
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  getAudio: async (id: string): Promise<Blob | null> => {
+    const db = await storage.initDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(AUDIO_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(AUDIO_STORE_NAME);
+      const request = store.get(id);
+      request.onsuccess = () => {
+        resolve(request.result ? request.result.blob : null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  deleteAudio: async (id: string) => {
+    const db = await storage.initDB();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(AUDIO_STORE_NAME);
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);

@@ -28,6 +28,10 @@ export interface Memo {
   priority: Priority;
   category?: string;
   completedAt?: number; // 任务完成时间，用于自动清理
+  audio?: {
+    id: string;
+    duration: number;
+  };
 }
 
 export interface TranscriptionTurn {

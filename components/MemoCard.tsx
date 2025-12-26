@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Memo, Priority } from '../types.js';
 import { Icons } from '../constants.js';
 import { generateSpeech } from '../services/gemini.js';
+import { storage } from '../services/storage.js';
 import SimpleMarkdown from './SimpleMarkdown.js';
 
 interface MemoCardProps {
@@ -30,6 +31,22 @@ const PriorityTag = ({ priority }: { priority: Priority }) => {
 const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let url: string | null = null;
+    if (memo.audio?.id) {
+      storage.getAudio(memo.audio.id).then(blob => {
+        if (blob) {
+          url = URL.createObjectURL(blob);
+          setAudioUrl(url);
+        }
+      });
+    }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [memo.audio?.id]);
 
   const handleToggleTodo = (todoId: string) => {
     const updatedTodos = memo.todos?.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
@@ -148,6 +165,19 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
                 </div>
             )}
          </div>
+
+         {/* Audio Player */}
+         {memo.audio && audioUrl && (
+           <div className={`flex items-center gap-3 mt-3 p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700 ${compact ? 'w-full' : 'w-fit'}`} onClick={(e) => e.stopPropagation()}>
+              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                <Icons.Mic className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Audio Note</span>
+                <audio src={audioUrl} controls className="h-6 w-full max-w-[200px]" />
+              </div>
+           </div>
+         )}
          
          {/* Todos */}
          {hasTodos && (

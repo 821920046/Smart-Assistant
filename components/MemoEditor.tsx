@@ -1,7 +1,9 @@
-import React, { useState, useRef, Suspense } from 'react';
+import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Icons, CATEGORIES } from '../constants';
 import { extractTasks, suggestTags } from '../services/gemini';
 import { Memo, TodoItem, Priority, RepeatInterval } from '../types';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { storage } from '../services/storage';
 
 const Whiteboard = React.lazy(() => import('./Whiteboard'));
 
@@ -23,6 +25,19 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
   const [showReminderOptions, setShowReminderOptions] = useState(false);
   const [category, setCategory] = useState<string>(defaultCategory || 'Personal');
   const [showCategoryOptions, setShowCategoryOptions] = useState(false);
+  
+  const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (audioBlob) {
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setAudioUrl(null);
+    }
+  }, [audioBlob]);
 
   React.useEffect(() => {
     if (defaultCategory) {
@@ -85,11 +100,16 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
   };
 
   const handleSave = async () => {
-    if (!content.trim() && !sketchData) return;
+    if (!content.trim() && !sketchData && !audioBlob) return;
     setIsProcessing(true);
     try {
       let todos: TodoItem[] = [];
       let tags: string[] = [];
+      let audioId = undefined;
+
+      if (audioBlob) {
+        audioId = await storage.saveAudio(audioBlob);
+      }
 
       if (content.trim()) {
         const results = await Promise.all([
@@ -105,10 +125,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
       }
 
       onSave({
-        content: content || (sketchData ? '[Sketch]' : ''),
+        content: content || (sketchData ? '[Sketch]' : '') || (audioBlob ? '[Audio Note]' : ''),
         todos,
         tags,
         sketchData: sketchData || undefined,
+        audio: audioId ? { id: audioId, duration: recordingTime } : undefined,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
         reminderRepeat,
@@ -125,6 +146,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
       setReminderAt('');
       setReminderRepeat('none');
       setSketchData(null);
+      resetRecording();
       setPriority('normal');
       setCategory(defaultCategory || 'Personal');
       setShowReminderOptions(false);
@@ -155,6 +177,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
     <div className="memo-card p-4 md:p-6 mb-8 relative z-20">
       {/* Input Area */}
       <div className="relative">
+        {isRecording && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-full text-xs font-bold shadow-lg animate-pulse z-30">
+                <div className="w-2 h-2 bg-white rounded-full" />
+                <span>Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+            </div>
+        )}
         <textarea
           ref={textareaRef}
           value={content}
@@ -171,6 +199,31 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
               className="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
             >
               <Icons.Trash />
+            </button>
+          </div>
+        )}
+
+        {audioBlob && (
+          <div className="relative mt-4 group w-full md:w-fit flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+             <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+               <Icons.Mic className="w-5 h-5" />
+             </div>
+             <div className="flex flex-col">
+               <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Audio Note</span>
+               <span className="text-[10px] text-slate-500 dark:text-slate-400">{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+             </div>
+             {audioUrl && (
+                <audio src={audioUrl} controls className="h-8 w-32 md:w-48 ml-2" />
+             )}
+             <button 
+              onClick={() => {
+                if (confirm('Are you sure you want to discard this recording?')) {
+                  resetRecording();
+                }
+              }}
+              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1"
+            >
+              <Icons.X className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -285,6 +338,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
+             <button 
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${isRecording ? 'text-red-600 bg-red-50 dark:bg-red-900/30 animate-pulse' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title={isRecording ? "Stop Recording" : "Record Audio"}
+             >
+                {isRecording ? <Icons.Stop className="w-4 h-4" /> : <Icons.Mic className="w-4 h-4" />}
+             </button>
+
              <button 
                 onClick={() => setShowWhiteboard(true)}
                 className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${sketchData ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
