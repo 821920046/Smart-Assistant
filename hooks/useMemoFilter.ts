@@ -17,12 +17,21 @@ export const useMemoFilter = (memos: Memo[], filter: string, searchQuery: string
 
     // 2. Filter by View/Category
     switch (filter) {
+      case 'dashboard':
+      case 'tasks':
       case 'all':
       case 'calendar':
       case 'kanban':
       case 'focus':
         // Show active memos (not archived)
-        // Note: 'calendar', 'kanban', 'focus' are view modes that show active tasks
+        filtered = filtered.filter(m => !m.isArchived);
+        break;
+      case 'notes':
+        // Show active memos of type 'memo'
+        filtered = filtered.filter(m => !m.isArchived && m.type === 'memo');
+        break;
+      case 'settings':
+        // No memos needed specifically, or all? Just return all active for now to prevent errors
         filtered = filtered.filter(m => !m.isArchived);
         break;
       case 'important':

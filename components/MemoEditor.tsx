@@ -8,9 +8,10 @@ const Whiteboard = React.lazy(() => import('./Whiteboard.js'));
 interface MemoEditorProps {
   onSave: (memo: Partial<Memo>) => void;
   defaultCategory?: string;
+  defaultType?: 'todo' | 'memo';
 }
 
-const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
+const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaultType = 'todo' }) => {
   const [content, setContent] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [priority, setPriority] = useState<Priority>('normal');
@@ -111,7 +112,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory }) => {
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
         reminderRepeat,
-        type: 'todo',
+        type: defaultType,
         createdAt: Date.now(),
         isArchived: false,
         isFavorite: false,

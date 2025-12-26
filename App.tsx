@@ -16,7 +16,7 @@ const AuthModal = React.lazy(() => import('./components/AuthModal'));
 const ConflictResolver = React.lazy(() => import('./components/ConflictResolver'));
 
 const AppContent: React.FC = () => {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -85,17 +85,6 @@ const AppContent: React.FC = () => {
         <Sidebar
           activeFilter={filter}
           setActiveFilter={setFilter}
-          tags={allTags}
-          onExport={() => {}}
-          onImport={() => {}}
-          onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
-          isSyncing={isSyncing}
-          syncError={syncError}
-          memos={memos}
-          onClearHistory={clearHistory}
-          darkMode={darkMode}
-          onToggleDarkMode={toggleDarkMode}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
@@ -118,6 +107,7 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-2">
+              {/* Keep dark mode toggle in mobile header for convenience */}
               <button 
                 onClick={toggleDarkMode}
                 className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
@@ -127,13 +117,18 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar - Hide in Settings/Dashboard? Or keep? 
+              User says "Notes: Search priority > Category".
+              Dashboard: "Overview".
+              Maybe keep it globally or hide in Dashboard/Settings.
+              I'll keep it for now.
+          */}
           <div className="sticky top-20 md:top-0 z-30 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-2 md:py-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none transition-all">
             <div className="relative group">
               <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="Search tasks & notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 placeholder-slate-400 transition-all"
@@ -144,10 +139,21 @@ const AppContent: React.FC = () => {
           <MainContent 
             filter={filter}
             searchQuery={searchQuery}
+            memos={memos}
             filteredMemos={filteredMemos}
             onAdd={addMemo}
             onUpdate={updateMemo}
             onDelete={deleteMemo}
+            onNavigate={(view) => setFilter(view)}
+            
+            darkMode={darkMode}
+            onToggleDarkMode={toggleDarkMode}
+            isSyncing={isSyncing}
+            syncError={syncError}
+            onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
+            onExport={() => {}} // TODO: Implement export
+            onImport={() => {}} // TODO: Implement import
+            onClearHistory={clearHistory}
           />
         </main>
 

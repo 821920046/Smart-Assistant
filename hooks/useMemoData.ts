@@ -86,7 +86,7 @@ export const useMemoData = () => {
     const newMemo: Memo = {
       id: Math.random().toString(36).substr(2, 6),
       content: memoData.content || '',
-      type: 'todo',
+      type: memoData.type || 'todo',
       todos: memoData.todos || [],
       tags: memoData.tags || [],
       dueDate: memoData.dueDate,
