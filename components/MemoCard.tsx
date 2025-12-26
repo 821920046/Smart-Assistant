@@ -120,12 +120,12 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
                 />
             </div>
             
-            {/* Description - Weakened */}
+            {/* Description - Notes Style (Commit 4) */}
             {memo.content.includes('\n') && (
-                <div className="line-clamp-3 opacity-90 break-words">
+                <div className="line-clamp-3 opacity-90 break-words mt-1">
                     <SimpleMarkdown 
                         content={memo.content.split('\n').slice(1).join('\n')} 
-                        className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" 
+                        className="text-sm text-slate-600 dark:text-slate-400 leading-loose" 
                     />
                 </div>
             )}

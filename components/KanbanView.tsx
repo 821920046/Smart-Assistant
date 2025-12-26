@@ -100,7 +100,7 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
             key={col.id} 
             className={`min-w-[300px] w-[320px] shrink-0 rounded-2xl border flex flex-col h-full snap-center backdrop-blur-sm transition-all duration-200 
                 ${isDragOver 
-                    ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 ring-4 ring-blue-100 dark:ring-blue-900/30' 
+                    ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-900/30 ring-4 ring-blue-200 dark:ring-blue-800/50 shadow-xl' 
                     : `${col.color} hover:border-black/10 dark:hover:border-white/10`
                 }`}
             onDragOver={(e) => handleDragOver(e, col.id)}
@@ -141,7 +141,7 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
                     draggable
                     onDragStart={(e) => handleDragStart(e, memo.id)}
                     onDragEnd={handleDragEnd}
-                    className="transform transition-all hover:-translate-y-1 duration-200 cursor-move active:cursor-grabbing"
+                    className="transform transition-all hover:-translate-y-1 duration-200 cursor-move active:cursor-grabbing touch-manipulation select-none"
                 >
                   <MemoCard 
                     memo={memo} 

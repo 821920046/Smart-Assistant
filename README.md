@@ -24,6 +24,11 @@ We strictly follow the **Local-First** philosophy:
 *   **Real-time Voice:** Ultra-low latency voice transcription and interaction using `gemini-2.5-flash-native-audio`.
 *   **Smart Insights:** AI automatically analyzes your tasks to provide weekly summaries and productivity insights.
 
+### 📊 Visual Task Management
+*   **Interactive Kanban:** Drag-and-drop tasks between columns (Important, Normal, Low) with smooth animations and haptic-like visual feedback.
+*   **Unified UI System:** A consistent design language across Todos and Notes, featuring card-style layouts, refined typography, and clear semantic colors.
+*   **Mobile-First Experience:** Fully optimized for mobile with touch-friendly controls, swipe gestures, and a quick-access Floating Action Button (FAB).
+
 ### 🔒 Privacy & Synchronization
 *   **Local-First Architecture:** Data lives in your device's IndexedDB. No server required for basic usage.
 *   **Encrypted Cloud Sync:**
