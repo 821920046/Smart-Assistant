@@ -10,7 +10,6 @@ import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
 
-const ChatAssistant = React.lazy(() => import('./components/ChatAssistant'));
 const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
 const ConflictResolver = React.lazy(() => import('./components/ConflictResolver'));
