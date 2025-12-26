@@ -92,7 +92,11 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
   };
 
   return (
-    <div className={`memo-card group relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-all duration-200 ${compact ? 'p-5 hover:shadow-lg hover:-translate-y-0.5' : 'p-6 shadow-sm hover:shadow-md'} ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+    <div className={`memo-card group relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-all duration-200 ${
+        compact 
+        ? 'p-4 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-[1px]' 
+        : 'p-6 shadow-sm hover:shadow-md'
+    } ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
       
       {/* Header - Non-compact only */}
       {!compact && (
@@ -109,23 +113,23 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
       )}
 
       {/* Content */}
-      <div className="space-y-3">
+      <div className={compact ? "" : "space-y-3"}>
          {/* Main Content Title Style */}
          <div className="cursor-pointer group/content" onClick={() => onUpdate(memo)}>
-            {/* Title - Larger & Bold */}
-            <div className="mb-1.5 break-words">
+            {/* Title */}
+            <div className={`break-words ${compact ? 'mb-1' : 'mb-1.5'}`}>
                 <SimpleMarkdown 
                     content={memo.content.split('\n')[0] || ''} 
-                    className="text-xl font-bold leading-normal text-slate-900 dark:text-slate-100" 
+                    className={`${compact ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' : 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'}`} 
                 />
             </div>
             
-            {/* Description - Notes Style (Commit 4) */}
+            {/* Description */}
             {memo.content.includes('\n') && (
-                <div className="line-clamp-3 opacity-90 break-words mt-1">
+                <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
                     <SimpleMarkdown 
                         content={memo.content.split('\n').slice(1).join('\n')} 
-                        className="text-sm text-slate-600 dark:text-slate-400 leading-loose" 
+                        className={`${compact ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' : 'text-sm text-slate-600 dark:text-slate-400 leading-loose'}`} 
                     />
                 </div>
             )}
@@ -133,80 +137,42 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
          
          {/* Todos */}
          {memo.todos && memo.todos.length > 0 && (
-             <div className="space-y-2 pt-2">
+             <div className={`space-y-2 ${compact ? 'mb-3' : 'pt-2'}`}>
                  {memo.todos.slice(0, compact ? 3 : undefined).map(todo => (
                      <div key={todo.id} className="flex items-start gap-3 group/todo p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                          <button 
                              onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
-                             className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                             className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all ${
                                  todo.completed 
-                                 ? 'bg-blue-500 border-blue-500 text-white' 
-                                 : 'border-slate-300 hover:border-blue-400 bg-white dark:bg-slate-800 dark:border-slate-600'
+                                 ? 'bg-indigo-500 border-indigo-500 text-white' 
+                                 : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
                              }`}
                          >
-                             {todo.completed && <Icons.Check className="w-3.5 h-3.5" />}
+                             {todo.completed && <Icons.Check className="w-3 h-3" />}
                          </button>
-                         <span className={`text-sm flex-1 break-words leading-relaxed ${todo.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 dark:text-slate-200 font-medium'}`}>
+                         <span className={`text-xs flex-1 break-words leading-relaxed ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-600 dark:text-slate-300'}`}>
                              {todo.text}
                          </span>
                      </div>
                  ))}
                  {compact && memo.todos.length > 3 && (
-                     <p className="text-xs text-slate-400 pl-6">... {memo.todos.length - 3} more items</p>
+                     <p className="text-[10px] text-slate-400 pl-7">... {memo.todos.length - 3} more</p>
                  )}
              </div>
          )}
 
-         {/* Compact Footer Structure (New) */}
+         {/* Compact Footer Structure (User Requested) */}
          {compact && (
-             <>
-                 {/* Separator */}
-                 <div className="h-px bg-slate-100 dark:bg-slate-700/50 my-3" />
-                 
-                 {/* Meta Info Row */}
-                 <div className="flex items-center justify-between text-xs text-slate-400">
-                     {/* Left: Tags */}
-                     <div className="flex items-center gap-2 overflow-hidden">
-                         {memo.tags && memo.tags.length > 0 ? (
-                            <>
-                                {memo.tags.slice(0, 2).map(tag => (
-                                     <span key={tag} className="font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded-md whitespace-nowrap">
-                                         #{tag}
-                                     </span>
-                                ))}
-                                {memo.tags.length > 2 && <span className="px-1">+{memo.tags.length - 2}</span>}
-                            </>
-                         ) : (
-                            <span className="text-slate-300 italic opacity-50">No tags</span>
-                         )}
-                     </div>
-
-                     {/* Right: Priority & Time */}
-                     <div className="flex items-center gap-3 shrink-0">
-                         {/* Priority */}
-                         <div className={`flex items-center gap-1.5 ${
-                             memo.priority === 'important' ? 'text-rose-500 font-bold' : 
-                             memo.priority === 'secondary' ? 'text-slate-400' : 'text-blue-500 font-medium'
-                         }`}>
-                             <div className={`w-2 h-2 rounded-full ${
-                                 memo.priority === 'important' ? 'bg-rose-500' : 
-                                 memo.priority === 'secondary' ? 'bg-slate-300' : 'bg-blue-500'
-                             }`} />
-                             <span className="uppercase text-[10px] tracking-wider">
-                                 {memo.priority || 'NORMAL'}
-                             </span>
-                         </div>
-
-                         {/* Time (Reminder) */}
-                         {memo.reminderTime && (
-                            <div className="flex items-center gap-1 text-orange-500 font-medium">
-                                <Icons.Bell className="w-3 h-3" />
-                                <span>{new Date(memo.reminderTime).toLocaleDateString(undefined, {month:'numeric', day:'numeric'})}</span>
-                            </div>
-                         )}
-                     </div>
-                 </div>
-             </>
+             <div className="flex items-center justify-between text-xs text-slate-400 mt-auto pt-2">
+                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                    memo.priority === 'important' ? 'bg-rose-50 text-rose-600' :
+                    memo.priority === 'secondary' ? 'bg-slate-100 text-slate-500' :
+                    'bg-indigo-50 text-indigo-600'
+                 }`}>
+                   {memo.priority === 'important' ? 'High' : memo.priority === 'secondary' ? 'Low' : 'Normal'}
+                 </span>
+                 <span>{new Date(memo.createdAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}</span>
+             </div>
          )}
       </div>
 

@@ -44,15 +44,15 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
     e.dataTransfer.effectAllowed = 'move';
     // Add visual feedback class to dragged element
     if (e.currentTarget instanceof HTMLElement) {
-      // User request: scale(1.02), deeper shadow
-      e.currentTarget.classList.add('opacity-90', 'scale-[1.02]', 'shadow-2xl', 'rotate-1', 'cursor-grabbing');
+      // User request: Enhanced drag feedback
+      e.currentTarget.classList.add('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
     }
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
     // Remove visual feedback
     if (e.currentTarget instanceof HTMLElement) {
-        e.currentTarget.classList.remove('opacity-90', 'scale-[1.02]', 'shadow-2xl', 'rotate-1', 'cursor-grabbing');
+        e.currentTarget.classList.remove('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
         // Add drop animation class
         e.currentTarget.classList.add('transition-transform', 'duration-300');
         setTimeout(() => e.currentTarget.classList.remove('transition-transform', 'duration-300'), 300);
@@ -98,50 +98,47 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
         return (
           <div 
             key={col.id} 
-            className={`min-w-[300px] w-[320px] shrink-0 rounded-2xl border flex flex-col h-full snap-center backdrop-blur-sm transition-all duration-200 
+            className={`w-[320px] flex-shrink-0 rounded-2xl border flex flex-col h-full snap-center transition-all duration-200 
                 ${isDragOver 
-                    ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-900/30 ring-4 ring-blue-200 dark:ring-blue-800/50 shadow-xl' 
-                    : `${col.color} hover:border-black/10 dark:hover:border-white/10`
-                }`}
+                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700 ring-4 ring-indigo-200 dark:ring-indigo-900/30' 
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'
+                } p-3`}
             onDragOver={(e) => handleDragOver(e, col.id)}
             onDrop={(e) => handleDrop(e, col.id)}
           >
             {/* Header */}
-            <div className={`p-3 flex items-center justify-between font-bold ${col.titleColor} border-b border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/20 sticky top-0 z-10 backdrop-blur-md rounded-t-2xl`}>
+            <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
-                <span className="text-base uppercase tracking-wider font-extrabold">{col.label}</span>
-                <span className="bg-white/60 dark:bg-black/20 px-2 py-0.5 rounded-full text-xs font-mono font-bold opacity-70">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+                  {col.label}
+                </h3>
+                <span className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full text-xs font-mono font-bold text-slate-600 dark:text-slate-400">
                   {colMemos.length}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
-                 {!isCompletedCol && (
-                     <button 
-                        onClick={() => {
-                            const input = document.getElementById(`quick-add-${col.id}`);
-                            input?.focus();
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md active:scale-95 transition-all"
-                        title="Add New Task"
-                     >
-                         <Icons.Plus className="w-4 h-4" />
-                         <span className="text-xs font-bold">New Task</span>
-                     </button>
-                 )}
-                 {isCompletedCol && <Icons.CheckCircle className="w-5 h-5 opacity-50" />}
-              </div>
+              {!isCompletedCol && (
+                 <button 
+                    onClick={() => {
+                        const input = document.getElementById(`quick-add-${col.id}`);
+                        input?.focus();
+                    }}
+                    className="px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors"
+                 >
+                   + New
+                 </button>
+               )}
             </div>
             
             {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pb-2">
               {colMemos.map(memo => (
                 <div 
                     key={memo.id} 
                     draggable
                     onDragStart={(e) => handleDragStart(e, memo.id)}
                     onDragEnd={handleDragEnd}
-                    className="transform transition-all hover:-translate-y-1 duration-200 cursor-move active:cursor-grabbing touch-manipulation select-none"
+                    className="transform transition-all duration-200 cursor-move active:cursor-grabbing touch-manipulation select-none"
                 >
                   <MemoCard 
                     memo={memo} 
@@ -152,42 +149,26 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
                 </div>
               ))}
               {colMemos.length === 0 && (
-                <div className="h-32 border-2 border-dashed border-black/5 dark:border-white/5 rounded-xl flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 m-2">
-                  <div className="p-3 bg-black/5 dark:bg-white/5 rounded-full">
-                    {isCompletedCol ? <Icons.Check className="w-5 h-5 opacity-50" /> : <Icons.Tag className="w-5 h-5 opacity-50" />}
-                  </div>
-                  <span className="text-xs font-medium">Drop items here</span>
+                <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 gap-1 opacity-60">
+                    <span className="text-xs font-medium">No tasks</span>
                 </div>
               )}
             </div>
 
-            {/* Quick Add Footer */}
+            {/* Quick Add Footer (Simplified) */}
             {!isCompletedCol && (
-              <div className="p-3 border-t border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/30 rounded-b-2xl backdrop-blur-md sticky bottom-0 z-10">
-                <div className="flex flex-col gap-2">
-                    <div className="relative group">
-                        <input
-                            id={`quick-add-${col.id}`}
-                            type="text"
-                            value={quickAddText[col.id] || ''}
-                            onChange={(e) => setQuickAddText(prev => ({ ...prev, [col.id]: e.target.value }))}
-                            onKeyDown={(e) => handleKeyDown(e, col.id)}
-                            placeholder="Type a new task..."
-                            className="w-full bg-white dark:bg-slate-800 border-2 border-transparent focus:border-blue-500/50 rounded-xl px-4 py-3 text-sm shadow-sm dark:text-white placeholder-slate-400 transition-all outline-none"
-                        />
-                         <button
-                            onClick={() => handleQuickAdd(col.id)}
-                            disabled={!quickAddText[col.id]?.trim()}
-                            className={`absolute right-2 top-2 bottom-2 aspect-square flex items-center justify-center rounded-lg transition-all ${
-                                quickAddText[col.id]?.trim() 
-                                ? 'bg-blue-600 text-white shadow-md hover:scale-105 active:scale-95' 
-                                : 'bg-slate-100 text-slate-300 dark:bg-slate-700 dark:text-slate-600'
-                            }`}
-                        >
-                            <Icons.ArrowRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
+              <div className="mt-2 relative group">
+                <input
+                    id={`quick-add-${col.id}`}
+                    type="text"
+                    value={quickAddText[col.id] || ''}
+                    onChange={(e) => setQuickAddText(prev => ({ ...prev, [col.id]: e.target.value }))}
+                    onKeyDown={(e) => {
+                         if (e.key === 'Enter') handleQuickAdd(col.id);
+                    }}
+                    placeholder="Add a card..."
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-2 text-sm shadow-sm dark:text-white placeholder-slate-400 transition-all outline-none"
+                />
               </div>
             )}
           </div>
