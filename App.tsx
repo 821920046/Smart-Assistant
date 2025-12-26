@@ -158,10 +158,6 @@ const AppContent: React.FC = () => {
         </main>
 
         <Suspense fallback={null}>
-          <ChatAssistant contextMemos={memos.map(m => m.content)} />
-        </Suspense>
-
-        <Suspense fallback={null}>
           {isSyncSettingsOpen && (
             <SyncSettings 
               onClose={() => setIsSyncSettingsOpen(false)} 
