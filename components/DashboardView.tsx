@@ -42,22 +42,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
             You have {todayTodos.length} tasks for today.
           </p>
         </div>
-        <div className="flex gap-2">
-            <button 
-                onClick={() => onNavigate('tasks')}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm shadow-indigo-200 dark:shadow-none"
-            >
-                <Icons.Plus className="w-4 h-4" />
-                <span>New Task</span>
-            </button>
-            <button 
-                onClick={() => onNavigate('notes')}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
-            >
-                <Icons.FileText className="w-4 h-4" />
-                <span>New Note</span>
-            </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
