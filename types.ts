@@ -32,6 +32,7 @@ export interface Memo {
     id: string;
     duration: number;
   };
+  source?: 'voice' | 'text';
 }
 
 export interface TranscriptionTurn {

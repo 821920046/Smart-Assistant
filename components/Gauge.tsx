@@ -1,39 +1,40 @@
 import React from 'react';
 
 interface GaugeProps {
-  value: number;       // 当前完成数
-  total: number;       // 总数
+  value: number;
+  max: number;
   title: string;
-  subtitle?: string;
-  color?: string;      // 主色
-  emptyText?: string;
+  color?: string;
+  centerContent?: React.ReactNode;
+  footerContent?: React.ReactNode;
+  className?: string;
 }
 
 export const Gauge: React.FC<GaugeProps> = ({
   value,
-  total,
+  max,
   title,
-  subtitle,
-  color = "#6366F1", // indigo-500
-  emptyText = "No tasks"
+  color = "#6366F1",
+  centerContent,
+  footerContent,
+  className = ""
 }) => {
-  const radius = 72;
-  const stroke = 10;
+  const radius = 70;
+  const stroke = 8;
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
 
-  const percent = total === 0 ? 0 : Math.min(value / total, 1);
+  const percent = max === 0 ? 0 : Math.min(value / max, 1);
   const strokeDashoffset = circumference - percent * circumference;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center">
-      <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-200">{title}</h3>
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-between h-full ${className}`}>
+      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-2 w-full text-center truncate">{title}</h3>
 
-      <div className="relative flex flex-col items-center justify-center">
+      <div className="relative flex items-center justify-center my-2">
         <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
-          {/* background */}
           <circle
-            stroke="#E5E7EB"
+            stroke="#F3F4F6"
             className="dark:stroke-slate-700"
             fill="transparent"
             strokeWidth={stroke}
@@ -41,15 +42,13 @@ export const Gauge: React.FC<GaugeProps> = ({
             cx={radius}
             cy={radius}
           />
-
-          {/* progress */}
           <circle
             stroke={color}
             fill="transparent"
             strokeWidth={stroke}
             strokeLinecap="round"
             strokeDasharray={`${circumference} ${circumference}`}
-            style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+            style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)' }}
             r={normalizedRadius}
             cx={radius}
             cy={radius}
@@ -57,20 +56,13 @@ export const Gauge: React.FC<GaugeProps> = ({
         </svg>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-bold text-slate-800 dark:text-white">
-            {total === 0 ? "0" : `${value}/${total}`}
-          </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {total === 0 ? emptyText : "Tasks"}
-          </div>
+          {centerContent}
         </div>
       </div>
 
-      {subtitle && (
-        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 text-center">
-          {subtitle}
-        </p>
-      )}
+      <div className="mt-2 w-full">
+        {footerContent}
+      </div>
     </div>
   );
 };
