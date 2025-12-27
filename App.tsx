@@ -9,6 +9,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
+import MobileNav from './components/MobileNav';
 
 const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
 const AuthModal = React.lazy(() => import('./components/AuthModal'));
@@ -88,10 +89,11 @@ const AppContent: React.FC = () => {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full pb-24 md:pb-8">
           {/* Mobile Header */}
           <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50">
             <div className="flex items-center gap-3">
+              {/* Burger Menu for Drawer (Archive/History) */}
               <button 
                 onClick={() => setIsSidebarOpen(true)}
                 className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-800 rounded-lg transition-colors"
@@ -184,6 +186,8 @@ const AppContent: React.FC = () => {
                 />
             )}
         </Suspense>
+
+        <MobileNav activeFilter={filter} setActiveFilter={setFilter} />
       </div>
     </ErrorBoundary>
   );

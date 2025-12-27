@@ -147,7 +147,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
       </div>
 
       {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         
         {/* 1. Task Completion Gauge */}
         <Gauge 
