@@ -2,6 +2,7 @@ import React from 'react';
 import { Memo } from '../types';
 import { Icons } from '../constants';
 import MemoCard from './MemoCard';
+import TaskInsights from './TaskInsights';
 
 interface DashboardViewProps {
   memos: Memo[];
@@ -33,14 +34,18 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
   return (
     <div className="space-y-8 pb-24">
       {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 py-4">
+          <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
             {getGreeting()}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-500 dark:text-slate-400 text-lg">
             You have {todayTodos.length} tasks for today.
           </p>
+        </div>
+        
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <TaskInsights memos={memos} />
         </div>
       </div>
 
