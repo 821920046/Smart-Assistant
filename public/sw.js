@@ -1,11 +1,11 @@
 
-const CACHE_NAME = 'smart-assistant-v3.0';
+const CACHE_NAME = 'smart-assistant-v3.1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/metadata.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {

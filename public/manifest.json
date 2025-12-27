@@ -5,7 +5,6 @@
   "theme_color": "#6366f1",
   "background_color": "#fcfcfd",
   "start_url": "./index.html",
-  "id": "/smart-assistant/",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait-primary",
