@@ -50,7 +50,13 @@ async function ensureSyncBranch(token: string, owner: string, repo: string) {
     const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { 
         headers: { ...headers, 'Cache-Control': 'no-cache' } 
     });
-    if (!repoRes.ok) throw new Error('Failed to fetch repo info');
+    if (!repoRes.ok) {
+        let errDetail = '';
+        try {
+            errDetail = await repoRes.text();
+        } catch (e) {}
+        throw new Error(`Failed to fetch repo info: ${repoRes.status} ${repoRes.statusText} ${errDetail}`);
+    }
     const repoData = await repoRes.json();
     const defaultBranch = repoData.default_branch || 'main';
 
@@ -322,11 +328,14 @@ export const syncService = {
     const { githubToken, githubRepo, encryptionPassword } = config.settings;
     if (!githubToken || !githubRepo || !encryptionPassword) throw new Error('GitHub Repo 配置不完整');
 
-    const [owner, repo] = githubRepo.split('/');
+    const token = githubToken.trim();
+    const repoFullName = githubRepo.trim();
+
+    const [owner, repo] = repoFullName.split('/');
     if (!owner || !repo) throw new Error('Invalid Repo Format. Use "owner/repo"');
 
     // Ensure branch exists
-    await ensureSyncBranch(githubToken, owner, repo);
+    await ensureSyncBranch(token, owner, repo);
 
     const localSnapshotData = await storage.exportSnapshot();
     const localMeta = {
@@ -349,7 +358,7 @@ export const syncService = {
     // 1. Fetch from GitHub (Use DATA_BRANCH)
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}`;
     const headers = {
-        'Authorization': `token ${githubToken}`,
+        'Authorization': `token ${token}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache'
@@ -443,12 +452,15 @@ export const syncService = {
     const { githubToken, githubRepo, encryptionPassword } = config.settings;
     if (!githubToken || !githubRepo) return;
 
-    const [owner, repo] = githubRepo.split('/');
+    const token = githubToken.trim();
+    const repoFullName = githubRepo.trim();
+
+    const [owner, repo] = repoFullName.split('/');
     if (!owner || !repo) return;
 
     const configToSave = {
       syncType: 'github',
-      repo: githubRepo,
+      repo: repoFullName,
       encrypted: !!encryptionPassword,
       encryptionPassword: encryptionPassword, // Stored in Private Repo
       updatedAt: Date.now()
@@ -456,7 +468,7 @@ export const syncService = {
 
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/.sync-config.json`;
     const headers = {
-        'Authorization': `token ${githubToken}`,
+        'Authorization': `token ${token}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
     };
@@ -490,9 +502,10 @@ export const syncService = {
   },
 
   restoreConfigFromGithub: async (token: string): Promise<SyncConfig | null> => {
+      const cleanToken = token.trim();
       // 1. Get User
       const userRes = await fetch('https://api.github.com/user', {
-          headers: { 'Authorization': `token ${token}` }
+          headers: { 'Authorization': `token ${cleanToken}` }
       });
       if (!userRes.ok) throw new Error('Invalid Token');
       const user = await userRes.json();
@@ -503,7 +516,7 @@ export const syncService = {
       const searchUrl = `https://api.github.com/search/code?q=filename:.sync-config.json+user:${username}`;
       const searchRes = await fetch(searchUrl, {
           headers: { 
-              'Authorization': `token ${token}`,
+              'Authorization': `token ${cleanToken}`,
               'Accept': 'application/vnd.github.v3+json'
           }
       });
@@ -523,7 +536,7 @@ export const syncService = {
       // 3. Get Content (Use the first result)
       const fileUrl = searchData.items[0].url; // API URL to get file content
       const fileRes = await fetch(fileUrl, {
-          headers: { 'Authorization': `token ${token}` }
+          headers: { 'Authorization': `token ${cleanToken}` }
       });
       if (!fileRes.ok) throw new Error('Failed to fetch config file');
 
