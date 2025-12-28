@@ -42,13 +42,13 @@ async function ensureSyncBranch(token: string, owner: string, repo: string) {
 
     // 1. Check if branch exists
     const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${DATA_BRANCH}`, { 
-        headers: { ...headers, 'Cache-Control': 'no-cache' } 
+        headers: { ...headers } 
     });
     if (branchRes.ok) return;
 
     // 2. If not, get default branch
     const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { 
-        headers: { ...headers, 'Cache-Control': 'no-cache' } 
+        headers: { ...headers } 
     });
     if (!repoRes.ok) {
         let errDetail = '';
@@ -62,7 +62,7 @@ async function ensureSyncBranch(token: string, owner: string, repo: string) {
 
     // 3. Get default branch SHA
     const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, { 
-        headers: { ...headers, 'Cache-Control': 'no-cache' } 
+        headers: { ...headers } 
     });
     if (!refRes.ok) throw new Error('Failed to fetch default branch ref');
     const refData = await refRes.json();
@@ -360,8 +360,7 @@ export const syncService = {
     const headers = {
         'Authorization': `token ${token}`,
         'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
+        'Content-Type': 'application/json'
     };
 
     let cloudSnapshot: SyncSnapshot | null = null;
@@ -477,7 +476,7 @@ export const syncService = {
     let sha: string | undefined;
     try {
         const res = await fetch(apiUrl, { 
-            headers: { ...headers, 'Cache-Control': 'no-cache' } 
+            headers: { ...headers } 
         });
         if (res.ok) {
             const data = await res.json();
