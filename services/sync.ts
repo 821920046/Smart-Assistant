@@ -492,7 +492,7 @@ export const syncService = {
       syncType: 'github',
       repo: repoFullName,
       encrypted: !!encryptionPassword,
-      encryptionPassword: encryptionPassword, // Stored in Private Repo
+      // encryptionPassword: encryptionPassword, // REMOVED for security reasons
       updatedAt: Date.now()
     };
 
