@@ -31,8 +31,8 @@ export const Gauge: React.FC<GaugeProps> = ({
     <div className={`bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-between h-full ${className}`}>
       <h3 className="text-sm md:text-base font-semibold text-slate-700 dark:text-slate-200 mb-2 w-full text-center truncate">{title}</h3>
 
-      <div className="relative flex items-center justify-center my-2">
-        <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
+      <div className="relative flex items-center justify-center my-2 w-full max-w-[140px]">
+        <svg viewBox={`0 0 ${radius * 2} ${radius * 2}`} className="w-full h-auto transform -rotate-90">
           <circle
             stroke="#F3F4F6"
             className="dark:stroke-slate-700"

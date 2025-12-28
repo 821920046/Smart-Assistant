@@ -147,11 +147,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
       </div>
 
       {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
         
         {/* 1. Task Completion Gauge */}
         <Gauge 
-          title="Today's Progress" 
+          className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
+          title="Today's Progress"  
           value={completedToday} 
           max={totalToday || 1} 
           color="#6366F1" // Indigo
@@ -184,7 +185,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
 
         {/* 2. Pressure Gauge */}
         <Gauge 
-          title="Workload Pressure" 
+          className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
+          title="Workload Pressure"  
           value={importantCount} 
           max={10} // Visual max
           color={pressureStatus.color}
@@ -209,6 +211,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
 
         {/* 3. Voice Notes Stats & Input */}
         <Gauge 
+          className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
           title={isRecording ? "Recording..." : "Voice Notes"}
           value={isRecording ? recordingTime : voiceTodayCount} 
           max={isRecording ? 60 : Math.max(voiceTodayCount * 1.5, 10)} 
