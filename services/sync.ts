@@ -41,13 +41,13 @@ async function ensureSyncBranch(token: string, owner: string, repo: string) {
     };
 
     // 1. Check if branch exists
-    const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${DATA_BRANCH}`, { 
+    const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${DATA_BRANCH}?t=${Date.now()}`, { 
         headers: { ...headers } 
     });
     if (branchRes.ok) return;
 
     // 2. If not, get default branch
-    const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { 
+    const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}?t=${Date.now()}`, { 
         headers: { ...headers } 
     });
     if (!repoRes.ok) {
@@ -61,7 +61,7 @@ async function ensureSyncBranch(token: string, owner: string, repo: string) {
     const defaultBranch = repoData.default_branch || 'main';
 
     // 3. Get default branch SHA
-    const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, { 
+    const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}?t=${Date.now()}`, { 
         headers: { ...headers } 
     });
     if (!refRes.ok) throw new Error('Failed to fetch default branch ref');
@@ -356,7 +356,7 @@ export const syncService = {
     };
 
     // 1. Fetch from GitHub (Use DATA_BRANCH)
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}`;
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`;
     const headers = {
         'Authorization': `token ${token}`,
         'Accept': 'application/vnd.github.v3+json',
@@ -475,7 +475,7 @@ export const syncService = {
     // Check if file exists to get SHA
     let sha: string | undefined;
     try {
-        const res = await fetch(apiUrl, { 
+        const res = await fetch(`${apiUrl}?t=${Date.now()}`, { 
             headers: { ...headers } 
         });
         if (res.ok) {
@@ -503,7 +503,7 @@ export const syncService = {
   restoreConfigFromGithub: async (token: string): Promise<SyncConfig | null> => {
       const cleanToken = token.trim();
       // 1. Get User
-      const userRes = await fetch('https://api.github.com/user', {
+      const userRes = await fetch(`https://api.github.com/user?t=${Date.now()}`, {
           headers: { 'Authorization': `token ${cleanToken}` }
       });
       if (!userRes.ok) throw new Error('Invalid Token');
@@ -512,7 +512,7 @@ export const syncService = {
 
       // 2. Search for config file
       // Note: Search API has rate limits.
-      const searchUrl = `https://api.github.com/search/code?q=filename:.sync-config.json+user:${username}`;
+      const searchUrl = `https://api.github.com/search/code?q=filename:.sync-config.json+user:${username}&t=${Date.now()}`;
       const searchRes = await fetch(searchUrl, {
           headers: { 
               'Authorization': `token ${cleanToken}`,
@@ -534,7 +534,8 @@ export const syncService = {
 
       // 3. Get Content (Use the first result)
       const fileUrl = searchData.items[0].url; // API URL to get file content
-      const fileRes = await fetch(fileUrl, {
+      const separator = fileUrl.includes('?') ? '&' : '?';
+      const fileRes = await fetch(`${fileUrl}${separator}t=${Date.now()}`, {
           headers: { 'Authorization': `token ${cleanToken}` }
       });
       if (!fileRes.ok) throw new Error('Failed to fetch config file');
