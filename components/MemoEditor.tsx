@@ -355,66 +355,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
              </button>
 
              <div className="relative">
-                <button 
-                  onClick={() => setShowReminderOptions(!showReminderOptions)}
-                  className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                  title="Set Reminder"
-                >
-                  <Icons.Clock />
-                </button>
-                {/* Reminder Options Popup Code... */}
-
-            
-            {showReminderOptions && (
-              <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Reminder Settings</h4>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Date & Time</label>
-                    <input 
-                      type="datetime-local"
-                      ref={reminderInputRef}
-                      value={reminderAt ? new Date(reminderAt).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setReminderAt(e.target.value)}
-                      className="w-full text-sm bg-slate-50 dark:bg-slate-700 dark:text-white border-none rounded-lg focus:ring-2 focus:ring-blue-500/20 py-2"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Repeat</label>
-                    <select
-                      value={reminderRepeat}
-                      onChange={(e) => setReminderRepeat(e.target.value as RepeatInterval)}
-                      className="w-full text-sm bg-slate-50 dark:bg-slate-700 dark:text-white border-none rounded-lg focus:ring-2 focus:ring-blue-500/20 py-2"
-                    >
-                      <option value="none">No Repeat</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                     <button
-                        onClick={() => {
-                            setShowReminderOptions(false);
-                        }}
-                        className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
-                     >
-                        Confirm
-                     </button>
-                     <button
-                        onClick={() => {
-                            setReminderAt('');
-                            setReminderRepeat('none');
-                            setShowReminderOptions(false);
-                        }}
-                        className="flex-1 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                     >
-                        Clear
-                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+                {/* Reminder Feature Removed as per user request */}
+             </div>
         </div>
         </div>
 

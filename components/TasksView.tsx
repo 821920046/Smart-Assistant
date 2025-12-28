@@ -3,7 +3,6 @@ import { Memo } from '../types';
 import { Icons } from '../constants';
 import MemoList from './MemoList';
 import KanbanView from './KanbanView';
-import CalendarView from './CalendarView';
 import MemoEditor from './MemoEditor';
 
 interface TasksViewProps {
@@ -14,7 +13,7 @@ interface TasksViewProps {
   onAdd: (memo: Partial<Memo>) => void;
 }
 
-type ViewType = 'today' | 'board' | 'upcoming';
+type ViewType = 'today' | 'board';
 
 const TasksView: React.FC<TasksViewProps> = ({ memos, searchQuery, onUpdate, onDelete, onAdd }) => {
   const [currentView, setCurrentView] = useState<ViewType>('today');
@@ -47,16 +46,6 @@ const TasksView: React.FC<TasksViewProps> = ({ memos, searchQuery, onUpdate, onD
           >
             Board
           </button>
-          <button
-            onClick={() => setCurrentView('upcoming')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              currentView === 'upcoming'
-                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-          >
-            Upcoming
-          </button>
         </div>
       </div>
 
@@ -80,9 +69,6 @@ const TasksView: React.FC<TasksViewProps> = ({ memos, searchQuery, onUpdate, onD
             onDelete={onDelete}
             onAdd={onAdd}
           />
-        )}
-        {currentView === 'upcoming' && (
-          <CalendarView memos={todoMemos} />
         )}
       </div>
     </div>
