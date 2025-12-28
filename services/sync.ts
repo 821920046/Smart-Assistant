@@ -421,13 +421,44 @@ export const syncService = {
     // PUT URL must not have query params for branch, branch is in body
     const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json`;
 
-    const putRes = await fetch(putUrl, {
+    let putRes = await fetch(putUrl, {
         method: 'PUT',
         headers,
         body: JSON.stringify(body)
     });
 
-    if (!putRes.ok) throw new Error(`GitHub Push Failed: ${putRes.status}`);
+    // 409 Conflict Retry Logic
+    if (putRes.status === 409) {
+        console.warn('PUT 409 Conflict. Retrying with fresh SHA...');
+        try {
+            // Fetch fresh SHA
+            const retryApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`;
+            const retryRes = await fetch(retryApiUrl, { headers });
+            if (retryRes.ok) {
+                const retryData = await retryRes.json();
+                console.log('Retrieved fresh SHA:', retryData.sha);
+                
+                // Update SHA in body
+                const newBody = { ...body, sha: retryData.sha };
+                
+                putRes = await fetch(putUrl, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(newBody)
+                });
+            }
+        } catch (e) {
+            console.error('Retry failed:', e);
+        }
+    }
+
+    if (!putRes.ok) {
+        let errorText = '';
+        try {
+            errorText = await putRes.text();
+        } catch (e) {}
+        throw new Error(`GitHub Push Failed: ${putRes.status} ${putRes.statusText} - ${errorText}`);
+    }
 
     syncService.setLastSyncTime(localMeta.updatedAt);
     
