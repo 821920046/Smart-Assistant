@@ -45,7 +45,7 @@ const MainContent: React.FC<MainContentProps> = ({
     );
   }
 
-  // Render Tasks (Merged Todo + Kanban + Calendar)
+  // Render Tasks (Merged Todo + Kanban)
   if (filter === 'tasks') {
     return (
       <TasksView 

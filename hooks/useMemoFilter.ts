@@ -20,7 +20,6 @@ export const useMemoFilter = (memos: Memo[], filter: string, searchQuery: string
       case 'dashboard':
       case 'tasks':
       case 'all':
-      case 'calendar':
       case 'kanban':
         // Show active memos (not archived)
         filtered = filtered.filter(m => !m.isArchived);
