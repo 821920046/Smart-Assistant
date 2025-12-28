@@ -34,9 +34,9 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Don't cache API calls or dynamic cross-origin assets from Google or ESM
+  // Don't cache API calls or dynamic cross-origin assets from Google or ESM or GitHub
   const url = event.request.url;
-  if (url.includes('google') || url.includes('esm.sh')) {
+  if (url.includes('google') || url.includes('esm.sh') || url.includes('api.github.com')) {
     return;
   }
 
