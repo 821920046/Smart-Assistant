@@ -13,14 +13,12 @@ import { storage } from './services/storage';
 import MobileNav from './components/MobileNav';
 
 const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
-const AuthModal = React.lazy(() => import('./components/AuthModal'));
 const ConflictResolver = React.lazy(() => import('./components/ConflictResolver'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [conflictError, setConflictError] = useState<SyncConflictError | null>(null);
 
@@ -201,12 +199,6 @@ const AppContent: React.FC = () => {
               onClose={() => setIsSyncSettingsOpen(false)} 
               onSyncComplete={() => performSync(memos, setMemos, false)}
             />
-          )}
-        </Suspense>
-
-        <Suspense fallback={null}>
-          {isAuthModalOpen && (
-            <AuthModal onClose={() => setIsAuthModalOpen(false)} />
           )}
         </Suspense>
 

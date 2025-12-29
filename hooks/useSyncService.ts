@@ -26,8 +26,7 @@ export const useSyncService = () => {
     setSyncError(null);
     try {
       let merged: Memo[] = currentMemos;
-      if (config.provider === 'supabase') merged = await syncService.syncWithSupabase(config, currentMemos);
-      else if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
+      if (config.provider === 'webdav') merged = await syncService.syncWithWebDAV(config, currentMemos);
       else if (config.provider === 'gist') merged = await syncService.syncWithGist(config, currentMemos);
       else if (config.provider === 'github_repo') merged = await syncService.syncWithGitHubRepo(config);
 

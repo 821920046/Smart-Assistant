@@ -216,7 +216,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           <section className="space-y-4">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
             <div className="grid grid-cols-2 gap-3">
-              {(['none', 'supabase', 'webdav', 'github_repo'] as SyncProvider[]).map(p => (
+              {(['none', 'webdav', 'github_repo'] as SyncProvider[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setConfig({ ...config, provider: p })}
@@ -231,23 +231,6 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
               ))}
             </div>
           </section>
-
-          {config.provider === 'supabase' && (
-            <div className="space-y-4 animate-card">
-              <input 
-                type="text" placeholder="Supabase Project URL (https://xyz.supabase.co)" 
-                value={config.settings.supabaseUrl || ''} 
-                onChange={e => updateSetting('supabaseUrl', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <input 
-                type="password" placeholder="Supabase Anon Key" 
-                value={config.settings.supabaseKey || ''} 
-                onChange={e => updateSetting('supabaseKey', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
-          )}
 
           {config.provider === 'github_repo' && (
             <div className="space-y-4 animate-card">

@@ -3,13 +3,11 @@ import { Memo, SyncSnapshot, SyncData } from '../types.js';
 import { storage } from './storage.js';
 import { encryption } from './encryption.js';
 
-export type SyncProvider = 'none' | 'supabase' | 'webdav' | 'gist' | 'github_repo';
+export type SyncProvider = 'none' | 'webdav' | 'gist' | 'github_repo';
 
 export interface SyncConfig {
   provider: SyncProvider;
   settings: {
-    supabaseUrl?: string;
-    supabaseKey?: string;
     webdavUrl?: string;
     webdavUser?: string;
     webdavPass?: string;
