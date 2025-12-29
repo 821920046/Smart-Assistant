@@ -9,6 +9,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
+import { storage } from './services/storage';
 import MobileNav from './components/MobileNav';
 
 const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
@@ -78,6 +79,42 @@ const AppContent: React.FC = () => {
   }, [performSync, memos, setMemos]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
+
+  const handleExport = async () => {
+    try {
+      const data = await storage.exportSnapshot();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `smart-assistant-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast('Data exported successfully', 'success');
+    } catch (error) {
+      console.error('Export failed:', error);
+      addToast('Failed to export data', 'error');
+    }
+  };
+
+  const handleImport = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await storage.restoreSnapshot(data);
+      
+      const newMemos = await storage.getMemos();
+      setMemos(newMemos);
+      addToast('Data imported successfully', 'success');
+      
+      await performSync(newMemos, setMemos, true);
+    } catch (error) {
+      console.error('Import failed:', error);
+      addToast('Failed to import data', 'error');
+    }
+  };
 
   return (
     <ErrorBoundary>
