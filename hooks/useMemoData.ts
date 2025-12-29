@@ -5,12 +5,13 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useSyncService } from './useSyncService';
 import { useNotificationScheduler } from './useNotificationScheduler';
+import { RETENTION_PERIOD_MS } from '../config/constants';
 
 export const useMemoData = () => {
   const [memos, setMemos] = useState<Memo[]>([]);
   const memosRef = useRef<Memo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const { addToast } = useToast();
   const { performSync, isSyncing, syncError } = useSyncService();
   const { user } = useAuth();
@@ -32,13 +33,13 @@ export const useMemoData = () => {
   const updateMemo = useCallback(async (updatedMemo: Memo) => {
     const currentMemos = memosRef.current;
     const upgraded = { ...updatedMemo, updatedAt: Date.now() };
-    
+
     // Update local state
     const newMemos = currentMemos.map(m => m.id === upgraded.id ? upgraded : m);
     setMemos(newMemos);
-    
+
     await storage.upsertMemo(upgraded);
-    
+
     // Use local state for sync instead of reading from storage
     await performSync(newMemos, setMemos, true); // Silent sync
   }, [performSync]);
@@ -53,10 +54,10 @@ export const useMemoData = () => {
         await storage.migrateFromLocalStorage();
         let storedMemos = await storage.getMemos();
 
-        // Auto-clean tasks completed > 2 days ago
-        const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
+        // Auto-clean tasks completed > RETENTION_PERIOD_DAYS ago
+        const retentionCutoff = Date.now() - RETENTION_PERIOD_MS;
         const memosToDelete = storedMemos.filter(m =>
-          m.isArchived && m.completedAt && m.completedAt < twoDaysAgo
+          m.isArchived && m.completedAt && m.completedAt < retentionCutoff
         );
 
         if (memosToDelete.length > 0) {
@@ -64,7 +65,7 @@ export const useMemoData = () => {
             await storage.upsertMemo({ ...memo, isDeleted: true, updatedAt: Date.now() });
           }
           storedMemos = storedMemos.filter(m =>
-            !(m.isArchived && m.completedAt && m.completedAt < twoDaysAgo)
+            !(m.isArchived && m.completedAt && m.completedAt < retentionCutoff)
           );
         }
 
@@ -99,13 +100,13 @@ export const useMemoData = () => {
       isFavorite: false,
       priority: memoData.priority || 'normal'
     };
-    
+
     // Optimistic update
     const newMemos = [newMemo, ...currentMemos];
     setMemos(newMemos);
     await storage.upsertMemo(newMemo);
     addToast("Task created successfully", "success");
-    
+
     await performSync(newMemos, setMemos, true);
   }, [addToast, performSync]);
 
@@ -118,7 +119,7 @@ export const useMemoData = () => {
       setMemos(newMemos);
       await storage.upsertMemo(deletedMemo);
       addToast("Task deleted", "info");
-      
+
       await performSync(newMemos, setMemos, true);
     }
   }, [addToast, performSync]);
@@ -134,7 +135,7 @@ export const useMemoData = () => {
     const newMemos = currentMemos.filter(m => !m.isArchived);
     setMemos(newMemos);
     addToast("History cleared", "info");
-    
+
     await performSync(newMemos, setMemos, true);
   }, [addToast, performSync]);
 

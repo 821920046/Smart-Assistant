@@ -19,27 +19,10 @@
             }
         })();
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => {
-                        console.log('✅ PWA: Service Worker registered!', reg.scope);
-
-                        // Check if the PWA is already installed
-                        if (window.matchMedia('(display-mode: standalone)').matches) {
-                            console.log('✅ PWA: Already running in standalone mode');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('❌ PWA: Service Worker registration failed:', err);
-                    });
-            });
-
-            // Helpful for debugging install prompt
-            window.addEventListener('beforeinstallprompt', (e) => {
-                console.log('🎯 PWA: beforeinstallprompt event fired');
-            });
-        }
+        // Helpful for debugging install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('🎯 PWA: beforeinstallprompt event fired');
+        });
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">

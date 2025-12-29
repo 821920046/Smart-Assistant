@@ -24,7 +24,7 @@ const AppContent: React.FC = () => {
   const [conflictError, setConflictError] = useState<SyncConflictError | null>(null);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const { 
+  const {
     memos, setMemos, isLoading, addMemo, updateMemo, deleteMemo, clearHistory, allTags, isSyncing, performSync, syncError
   } = useMemoData();
 
@@ -38,43 +38,53 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (syncError) {
       if (syncError.name === 'SyncConflictError') {
-          setConflictError(syncError as SyncConflictError);
+        setConflictError(syncError as SyncConflictError);
       }
       // 1. Auth Error (401)
       else if (syncError.message.includes('401') || syncError.message.includes('Key')) {
         addToast("Authentication failed. Please check your sync settings.", "error");
         setIsSyncSettingsOpen(true);
-      } 
+      }
       // 2. Conflict Error (409) - Supabase specific
       else if (syncError.message.includes('409')) {
         addToast("Sync conflict detected. Please retry manually.", "error");
       }
       // 3. Server Error (500)
       else if (syncError.message.includes('500') || syncError.message.includes('服务器错误')) {
-         addToast("Server error. Sync will be retried later.", "error");
+        addToast("Server error. Sync will be retried later.", "error");
       } else {
-         addToast(`Sync Error: ${syncError.message}`, "error");
+        addToast(`Sync Error: ${syncError.message}`, "error");
       }
     }
   }, [syncError, addToast]);
 
-  // Auto Sync Triggers
+  // Auto Sync Triggers with Smart Intervals
   useEffect(() => {
-      // 1. Timer (5 min)
-      const timer = setInterval(() => {
-          performSync(memos, setMemos, true);
-      }, 5 * 60 * 1000);
+    let lastSyncTime = Date.now();
+    const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    const SYNC_DEBOUNCE = 30 * 1000; // 30 seconds minimum between syncs
 
-      // 2. Window Blur
-      const handleBlur = () => {
-          performSync(memos, setMemos, true);
-      };
-      window.addEventListener('blur', handleBlur);
+    // Timer sync
+    const timer = setInterval(() => {
+      performSync(memos, setMemos, true);
+      lastSyncTime = Date.now();
+    }, SYNC_INTERVAL);
 
-      return () => {
-          clearInterval(timer);
-          window.removeEventListener('blur', handleBlur);
-      };
+    // Window blur sync with debounce
+    const handleBlur = () => {
+      const now = Date.now();
+      // Only sync if enough time has passed since last sync
+      if (now - lastSyncTime > SYNC_DEBOUNCE) {
+        performSync(memos, setMemos, true);
+        lastSyncTime = now;
+      }
+    };
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [performSync, memos, setMemos]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
@@ -103,11 +113,11 @@ const AppContent: React.FC = () => {
       const text = await file.text();
       const data = JSON.parse(text);
       await storage.restoreSnapshot(data);
-      
+
       const newMemos = await storage.getMemos();
       setMemos(newMemos);
       addToast('Data imported successfully', 'success');
-      
+
       await performSync(newMemos, setMemos, true);
     } catch (error) {
       console.error('Import failed:', error);
@@ -130,7 +140,7 @@ const AppContent: React.FC = () => {
           <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50">
             <div className="flex items-center gap-3">
               {/* Burger Menu for Drawer (Archive/History) */}
-              <button 
+              <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-800 rounded-lg transition-colors"
               >
@@ -145,7 +155,7 @@ const AppContent: React.FC = () => {
             </div>
             <div className="flex gap-2">
               {/* Keep dark mode toggle in mobile header for convenience */}
-              <button 
+              <button
                 onClick={toggleDarkMode}
                 className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
               >
@@ -173,7 +183,7 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          <MainContent 
+          <MainContent
             filter={filter}
             searchQuery={searchQuery}
             memos={memos}
@@ -182,7 +192,7 @@ const AppContent: React.FC = () => {
             onUpdate={updateMemo}
             onDelete={deleteMemo}
             onNavigate={(view) => setFilter(view)}
-            
+
             darkMode={darkMode}
             onToggleDarkMode={toggleDarkMode}
             isSyncing={isSyncing}
@@ -196,25 +206,25 @@ const AppContent: React.FC = () => {
 
         <Suspense fallback={null}>
           {isSyncSettingsOpen && (
-            <SyncSettings 
-              onClose={() => setIsSyncSettingsOpen(false)} 
+            <SyncSettings
+              onClose={() => setIsSyncSettingsOpen(false)}
               onSyncComplete={() => performSync(memos, setMemos, false)}
             />
           )}
         </Suspense>
 
         <Suspense fallback={null}>
-            {conflictError && (
-                <ConflictResolver 
-                    error={conflictError}
-                    onResolve={(resolvedMemos) => {
-                        setMemos(resolvedMemos);
-                        setConflictError(null);
-                        addToast('Sync conflict resolved.', 'success');
-                    }}
-                    onCancel={() => setConflictError(null)}
-                />
-            )}
+          {conflictError && (
+            <ConflictResolver
+              error={conflictError}
+              onResolve={(resolvedMemos) => {
+                setMemos(resolvedMemos);
+                setConflictError(null);
+                addToast('Sync conflict resolved.', 'success');
+              }}
+              onCancel={() => setConflictError(null)}
+            />
+          )}
         </Suspense>
 
         <MobileNav activeFilter={filter} setActiveFilter={setFilter} />

@@ -5,7 +5,9 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react)
-![Gemini](https://img.shields.io/badge/AI-Gemini%203-8E75B2.svg?logo=google)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg?logo=typescript)
+![PWA](https://img.shields.io/badge/PWA-Ready-orange.svg?logo=pwa)
+![Vitest](https://img.shields.io/badge/Testing-Vitest-yellow.svg?logo=vitest)
 ![LocalFirst](https://img.shields.io/badge/Data-Local_First-success.svg)
 
 ## 📖 简介
@@ -24,15 +26,16 @@
 *   **实时语音：** 使用 `gemini-2.5-flash-native-audio` 实现超低延迟语音转录和交互。
 *   **智能洞察：** AI 自动分析您的任务，提供每周摘要和生产力洞察。
 
-### 📊 可视化任务管理
-*   **交互式看板：** 在列（重要、普通、低）之间拖放任务，具有流畅的动画和类触觉视觉反馈。
+### 📱 PWA & 移动体验
+*   **安装即用：** 离线访问能力，可作为原生应用安装在手机或桌面。
 *   **统一 UI 系统：** 待办事项和笔记采用一致的设计语言，具有卡片式布局、精致的排版和清晰的语义颜色。
-*   **移动优先体验：** 针对移动设备进行了全面优化，支持触摸友好控制、滑动手势和快速访问悬浮操作按钮 (FAB)。
+*   **移动优先：** 针对移动设备进行了全面优化，支持触摸友好控制、滑动手势和快速访问悬浮操作按钮 (FAB)。
 
-### 📈 智能仪表盘与分析
-*   **今日进度：** 可视化仪表盘跟踪您的每日任务完成率，并将实时表现与昨日生产力进行对比。
-*   **工作负载压力：** 基于“重要”任务智能评估您当前的工作负载，将状态分类为“一切尽在掌握”、“需要注意”或“高压状态”。
-*   **语音笔记中心：** 集中式录音界面，具备快速录音功能和每日语音备忘录统计。
+### ⚡ 性能与可靠性
+*   **极速加载：** Tailwind CSS 本地化打包，减少网络请求，提升首屏速度。
+*   **毫秒级响应：** IndexedDB v4 索引优化，即便是面对海量笔记也能瞬间完成检索与排序。
+*   **强类型保障：** 严谨的 TypeScript 严格模式，将潜在 Bug 扼杀在编码阶段。
+*   **持续验证：** 集成 Vitest 自动化测试框架，确保同步与合并逻辑的绝对可靠。
 
 ### 💾 数据管理
 *   **导入与导出：** 完整的 JSON 数据导出/导入功能，便于轻松备份和迁移。
@@ -55,9 +58,11 @@
 ## 🛠️ 技术栈
 
 *   **前端：** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-*   **样式：** [Tailwind CSS 3](https://tailwindcss.com/)
+*   **样式：** [Tailwind CSS 3](https://tailwindcss.com/) (本地编译)
+*   **PWA：** [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+*   **测试：** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 *   **AI SDK：** [Google Generative AI SDK](https://www.npmjs.com/package/@google/genai)
-*   **存储：** 原生 [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
+*   **存储：** 原生 [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (v4 with Indexes)
 *   **加密：** Web Crypto API (AES-GCM 256-bit)
 
 ## 🚀 快速开始
