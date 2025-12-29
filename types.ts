@@ -11,6 +11,7 @@ export interface TodoItem {
 
 export interface Memo {
   id: string;
+  title?: string;
   content: string;
   type: 'memo' | 'todo' | 'sketch';
   todos?: TodoItem[];

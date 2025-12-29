@@ -108,6 +108,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
     return 'Weekly';
   };
 
+  const handleToggleMemo = () => {
+    onUpdate({
+        ...memo,
+        isArchived: !memo.isArchived,
+        completedAt: !memo.isArchived ? Date.now() : undefined
+    });
+  };
+
   const hasTodos = memo.todos && memo.todos.length > 0;
 
   return (
@@ -136,34 +144,55 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
       {/* Content */}
       <div className={compact ? "" : "space-y-4"}>
          {/* Main Content Title Style */}
-         <div className="cursor-pointer group/content" onClick={() => onUpdate(memo)}>
-            {/* Title */}
-            <div className={`break-words ${compact ? 'mb-1' : 'mb-2'}`}>
-                <SimpleMarkdown 
-                    content={memo.content.split('\n')[0] || ''} 
-                    className={`${
-                        compact 
-                        ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' 
-                        : hasTodos 
-                            ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
-                            : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
-                    }`} 
-                />
-            </div>
-            
-            {/* Description */}
-            {memo.content.includes('\n') && (
-                <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
+         <div className="flex gap-3 items-start group/content cursor-pointer" onClick={() => onUpdate(memo)}>
+            {/* Checkbox for Card */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleMemo();
+                }}
+                className={`mt-1 flex-shrink-0 transition-colors duration-200 ${
+                    memo.isArchived 
+                    ? 'text-slate-400 dark:text-slate-500' 
+                    : 'text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400'
+                }`}
+            >
+                {memo.isArchived ? (
+                    <Icons.CheckSquare className="w-5 h-5" />
+                ) : (
+                   <div className="w-5 h-5 border-2 border-current rounded-md" />
+                )}
+            </button>
+
+            <div className="flex-1 min-w-0">
+                {/* Title */}
+                <div className={`break-words ${compact ? 'mb-1' : 'mb-2'}`}>
                     <SimpleMarkdown 
-                        content={memo.content.split('\n').slice(1).join('\n')} 
+                        content={memo.title || memo.content.split('\n')[0] || ''} 
                         className={`${
                             compact 
-                            ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' 
-                            : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
-                        }`} 
+                            ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' 
+                            : hasTodos 
+                                ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
+                                : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
+                        } ${memo.isArchived ? 'line-through opacity-50' : ''}`} 
                     />
                 </div>
-            )}
+                
+                {/* Description */}
+                {(memo.title || memo.content.includes('\n')) && (
+                    <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
+                        <SimpleMarkdown 
+                            content={memo.title ? memo.content : memo.content.split('\n').slice(1).join('\n')} 
+                            className={`${
+                                compact 
+                                ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' 
+                                : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
+                            } ${memo.isArchived ? 'opacity-50' : ''}`} 
+                        />
+                    </div>
+                )}
+            </div>
          </div>
 
          {/* Audio Player */}

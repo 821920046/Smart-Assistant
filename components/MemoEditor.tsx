@@ -14,6 +14,7 @@ interface MemoEditorProps {
 }
 
 const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaultType = 'todo' }) => {
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [priority, setPriority] = useState<Priority>('normal');
@@ -90,7 +91,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
   };
 
   const localParseTasks = (text: string): TodoItem[] => {
-    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    // Only parse lines that start with -, *, or 1. as tasks
+    const lines = text.split('\n').filter(l => /^(?:[-*]|\d+\.)\s/.test(l.trim()));
     return lines.map(line => ({
       id: Math.random().toString(36).substr(2, 9),
       text: line.replace(/^[-*]\s+|\d+\.\s+/, '').trim(),
@@ -100,7 +102,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
   };
 
   const handleSave = async () => {
-    if (!content.trim() && !sketchData && !audioBlob) return;
+    if (!content.trim() && !title.trim() && !sketchData && !audioBlob) return;
     setIsProcessing(true);
     try {
       let todos: TodoItem[] = [];
@@ -112,19 +114,16 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
       }
 
       if (content.trim()) {
-        const results = await Promise.all([
-          extractTasks(content, true),
-          suggestTags(content)
-        ]);
-        todos = results[0].map(t => ({ ...t, priority: priority }));
-        tags = results[1];
-
-        if (todos.length === 0) {
-          todos = localParseTasks(content);
-        }
+        // Only use local parsing for tasks. AI extraction was too aggressive.
+        todos = localParseTasks(content);
+        
+        // If we want AI tags, we can still fetch them
+        const tagsResult = await suggestTags(content);
+        tags = tagsResult;
       }
 
       onSave({
+        title: title.trim() || undefined,
         content: content || (sketchData ? '[Sketch]' : '') || (audioBlob ? '[Audio Note]' : ''),
         todos,
         tags,
@@ -142,6 +141,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
       });
 
       setContent('');
+      setTitle('');
       setDueDate('');
       setReminderAt('');
       setReminderRepeat('none');
@@ -176,19 +176,28 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, defaultCategory, defaul
   return (
     <div className="memo-card p-4 md:p-6 mb-8 relative z-20">
       {/* Input Area */}
-      <div className="relative">
+      <div className="relative space-y-3">
         {isRecording && (
             <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-full text-xs font-bold shadow-lg animate-pulse z-30">
                 <div className="w-2 h-2 bg-white rounded-full" />
                 <span>Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
             </div>
         )}
+        
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title (optional)"
+          className="w-full bg-transparent border-none text-xl font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0"
+        />
+
         <textarea
           ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What's on your mind? Type here..."
-          className="w-full h-32 bg-transparent border-none resize-none text-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed"
+          placeholder="Description or details... Type here..."
+          className="w-full h-32 bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed"
         />
         
         {sketchData && (
