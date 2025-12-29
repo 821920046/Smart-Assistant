@@ -14,10 +14,33 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
   const [snapshots, setSnapshots] = useState<{id: number, date: string, data: any}[]>([]);
   const [lastSyncTime, setLastSyncTime] = useState<number>(0);
 
+  const [repoInfo, setRepoInfo] = useState<{size: number} | null>(null);
+
   useEffect(() => {
     loadSnapshots();
     setLastSyncTime(syncService.getLastSyncTime());
   }, []);
+
+  useEffect(() => {
+      if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
+          syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
+      } else {
+          setRepoInfo(null);
+      }
+  }, [config.provider, config.settings.githubToken, config.settings.githubRepo]);
+
+  const handleCleanupRemote = async () => {
+      if (!confirm('Are you sure you want to delete the remote sync file? This will not delete the repository history, but will remove the current data file. Local data will not be affected.')) return;
+      try {
+          await syncService.deleteRemoteData(config);
+          alert('Remote data deleted successfully.');
+          if (config.provider === 'github_repo') {
+              syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
+          }
+      } catch (e) {
+          alert('Cleanup failed: ' + (e as Error).message);
+      }
+  };
 
   const loadSnapshots = async () => {
     try {
@@ -262,6 +285,29 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
               <p className="text-[10px] text-slate-400 px-2">
                 数据将使用 AES-256 加密存储在您的私有仓库中。
               </p>
+
+                {repoInfo && (
+                    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-slate-500">Repository Storage</span>
+                            <span className={`font-mono ${repoInfo.size > 100000 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                                {(repoInfo.size / 1024).toFixed(2)} MB
+                            </span>
+                        </div>
+                        {repoInfo.size > 100000 && (
+                            <p className="text-red-500 mb-2">Warning: Repository size is large (>100MB). Consider creating a new repository to reset history.</p>
+                        )}
+                         <div className="text-slate-400 mb-2">
+                            GitHub saves history for every sync. Over time, the repository size will grow.
+                        </div>
+                        <button 
+                            onClick={handleCleanupRemote}
+                            className="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors"
+                        >
+                            Delete Remote Sync File
+                        </button>
+                    </div>
+                )}
             </div>
           )}
 

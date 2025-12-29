@@ -586,5 +586,50 @@ export const syncService = {
               encryptionPassword: json.encryptionPassword
           }
       };
+  },
+
+  getRepoDetails: async (config: SyncConfig) => {
+    const { githubToken, githubRepo } = config.settings;
+    if (!githubToken || !githubRepo) throw new Error('GitHub configuration missing');
+
+    const [owner, repo] = githubRepo.split('/');
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+        headers: { 
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    });
+    
+    if (!res.ok) throw new Error('Failed to fetch repo info');
+    return await res.json();
+  },
+
+  deleteRemoteData: async (config: SyncConfig) => {
+      const { githubToken, githubRepo } = config.settings;
+      if (!githubToken || !githubRepo) throw new Error('GitHub configuration missing');
+
+      const [owner, repo] = githubRepo.split('/');
+      const headers = { 
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+      };
+
+      // Get file SHA first
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}`, { headers });
+      if (!getRes.ok) return; // Already deleted or doesn't exist
+
+      const data = await getRes.json();
+      
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json`, {
+          method: 'DELETE',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              message: 'Delete sync data (Cleanup)',
+              sha: data.sha,
+              branch: DATA_BRANCH
+          })
+      });
+
+      if (!res.ok) throw new Error('Failed to delete remote data');
   }
 };
