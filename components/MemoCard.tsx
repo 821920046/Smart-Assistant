@@ -3,7 +3,7 @@ import { Memo, Priority } from '../types.js';
 import { Icons } from '../constants.js';
 import { generateSpeech } from '../services/gemini.js';
 import { storage } from '../services/storage.js';
-import SimpleMarkdown from './SimpleMarkdown.js';
+import SimpleMarkdown, { parseInline } from './SimpleMarkdown.js';
 
 interface MemoCardProps {
   memo: Memo;
@@ -166,17 +166,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
             <div className="flex-1 min-w-0">
                 {/* Title */}
-                <div className={`break-words ${compact ? 'mb-1' : 'mb-2'}`}>
-                    <SimpleMarkdown 
-                        content={memo.title || memo.content.split('\n')[0] || ''} 
-                        className={`${
-                            compact 
-                            ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' 
-                            : hasTodos 
-                                ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
-                                : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
-                        } ${memo.isArchived ? 'line-through opacity-50' : ''}`} 
-                    />
+                <div className={`break-words ${compact ? 'mb-1' : 'mb-2'} ${
+                    compact 
+                    ? 'text-sm font-semibold text-slate-900 dark:text-slate-100' 
+                    : hasTodos 
+                        ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
+                        : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
+                } ${memo.isArchived ? 'line-through opacity-50' : ''}`}>
+                    {parseInline(memo.title || memo.content.split('\n')[0] || '')}
                 </div>
                 
                 {/* Description */}
@@ -268,10 +265,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-700/50">
              <div className="flex items-center gap-2 text-xs text-slate-400">
                 <span>{new Date(memo.createdAt).toLocaleDateString()}</span>
-                {memo.reminderTime && (
+                {memo.reminderAt && (
                     <div className="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
                         <Icons.Bell className="w-3 h-3" />
-                        <span>{new Date(memo.reminderTime).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}</span>
+                        <span>{new Date(memo.reminderAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
                 )}
              </div>

@@ -1,5 +1,21 @@
 import React from 'react';
 
+export const parseInline = (text: string): React.ReactNode[] => {
+    const parts = text.split(/(\*\*.*?\*\*|_[^_]+_|`[^`]+`)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('_') && part.endsWith('_')) {
+            return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+        }
+        if (part.startsWith('`') && part.endsWith('`')) {
+            return <code key={i} className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-xs font-mono text-rose-500">{part.slice(1, -1)}</code>;
+        }
+        return part;
+    });
+};
+
 const SimpleMarkdown: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
@@ -73,22 +89,6 @@ const SimpleMarkdown: React.FC<{ content: string; className?: string }> = ({ con
   });
 
   return <div className={`leading-relaxed ${className || 'text-sm'}`}>{elements}</div>;
-};
-
-const parseInline = (text: string): React.ReactNode[] => {
-    const parts = text.split(/(\*\*.*?\*\*|_[^_]+_|`[^`]+`)/g);
-    return parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part.slice(2, -2)}</strong>;
-        }
-        if (part.startsWith('_') && part.endsWith('_')) {
-            return <em key={i} className="italic">{part.slice(1, -1)}</em>;
-        }
-        if (part.startsWith('`') && part.endsWith('`')) {
-            return <code key={i} className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-xs font-mono text-rose-500">{part.slice(1, -1)}</code>;
-        }
-        return part;
-    });
 };
 
 export default SimpleMarkdown;
