@@ -119,12 +119,12 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
   const hasTodos = memo.todos && memo.todos.length > 0;
 
   return (
-    <div className={`memo-card group relative bg-white dark:bg-slate-800 transition-all duration-200 ${
+    <div className={`memo-card group relative bg-white dark:bg-slate-800 transition-all duration-200 text-left ${
         compact 
         ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-[1px]' 
         : hasTodos 
-            ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md'
-            : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md max-w-2xl mx-auto'
+            ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
+            : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
     } ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
       
       {/* Header - Non-compact only */}
@@ -164,7 +164,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
                 )}
             </button>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
                 {/* Title */}
                 <div className={`break-words ${compact ? 'mb-1' : 'mb-2'} ${
                     compact 
@@ -173,14 +173,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
                         ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
                         : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
                 } ${memo.isArchived ? 'line-through opacity-50' : ''}`}>
-                    {parseInline(memo.title || memo.content.split('\n')[0] || '')}
+                    {parseInline(memo.title || (memo.content && memo.content.split('\n')[0]) || '')}
                 </div>
                 
                 {/* Description */}
-                {(memo.title || memo.content.includes('\n')) && (
+                {(memo.title || (memo.content && memo.content.includes('\n'))) && (
                     <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
                         <SimpleMarkdown 
-                            content={memo.title ? memo.content : memo.content.split('\n').slice(1).join('\n')} 
+                            content={memo.title ? (memo.content || '') : (memo.content ? memo.content.split('\n').slice(1).join('\n') : '')} 
                             className={`${
                                 compact 
                                 ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed' 
