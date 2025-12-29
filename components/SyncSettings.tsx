@@ -216,7 +216,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           <section className="space-y-4">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
             <div className="grid grid-cols-2 gap-3">
-              {(['none', 'webdav', 'github_repo'] as SyncProvider[]).map(p => (
+              {(['github_repo', 'none', 'webdav'] as SyncProvider[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setConfig({ ...config, provider: p })}
