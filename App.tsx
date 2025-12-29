@@ -152,8 +152,8 @@ const AppContent: React.FC = () => {
             isSyncing={isSyncing}
             syncError={syncError}
             onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
-            onExport={() => {}} // TODO: Implement export
-            onImport={() => {}} // TODO: Implement import
+            onExport={handleExport}
+            onImport={handleImport}
             onClearHistory={clearHistory}
           />
         </main>
