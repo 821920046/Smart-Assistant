@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Memo, Priority } from '../types.js';
-import MemoCard from './MemoCard.js';
-import { Icons } from '../constants.js';
+import KanbanColumn from './KanbanColumn.js';
 
 interface KanbanViewProps {
   memos: Memo[];
@@ -18,8 +17,6 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
     { id: 'completed', label: 'Completed', color: 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900', titleColor: 'text-emerald-700 dark:text-emerald-400' },
   ];
 
-  const [quickAddText, setQuickAddText] = useState<{ [key: string]: string }>({});
-
   const getColumnMemos = (columnId: string) => {
     if (columnId === 'completed') {
       return memos.filter(m => !!m.completedAt);
@@ -27,33 +24,17 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
     return memos.filter(m => !m.completedAt && (m.priority || 'normal') === columnId);
   };
 
-  const handleQuickAdd = (columnId: string) => {
-    const text = quickAddText[columnId];
-    if (!text?.trim()) return;
-
-    onAdd({
-      content: text,
-      priority: columnId as Priority,
-      type: 'todo'
-    });
-    setQuickAddText(prev => ({ ...prev, [columnId]: '' }));
-  };
-
   const handleDragStart = (e: React.DragEvent, memoId: string) => {
     e.dataTransfer.setData('text/plain', memoId);
     e.dataTransfer.effectAllowed = 'move';
-    // Add visual feedback class to dragged element
     if (e.currentTarget instanceof HTMLElement) {
-      // User request: Enhanced drag feedback
       e.currentTarget.classList.add('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
     }
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    // Remove visual feedback
     if (e.currentTarget instanceof HTMLElement) {
         e.currentTarget.classList.remove('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
-        // Add drop animation class
         e.currentTarget.classList.add('transition-transform', 'duration-300');
         setTimeout(() => e.currentTarget.classList.remove('transition-transform', 'duration-300'), 300);
     }
@@ -96,82 +77,25 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
         const isDragOver = dragOverColumn === col.id;
 
         return (
-          <div 
-            key={col.id} 
-            className={`w-[320px] flex-shrink-0 rounded-2xl border flex flex-col h-full snap-center transition-all duration-200 
-                ${isDragOver 
-                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700 ring-4 ring-indigo-200 dark:ring-indigo-900/30' 
-                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'
-                } p-3`}
-            onDragOver={(e) => handleDragOver(e, col.id)}
-            onDrop={(e) => handleDrop(e, col.id)}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
-                  {col.label}
-                </h3>
-                <span className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full text-xs font-mono font-bold text-slate-600 dark:text-slate-400">
-                  {colMemos.length}
-                </span>
-              </div>
-              
-              {!isCompletedCol && (
-                 <button 
-                    onClick={() => {
-                        const input = document.getElementById(`quick-add-${col.id}`);
-                        input?.focus();
-                    }}
-                    className="px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors"
-                 >
-                   + New
-                 </button>
-               )}
-            </div>
-            
-            {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pb-2">
-              {colMemos.map(memo => (
-                <div 
-                    key={memo.id} 
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, memo.id)}
-                    onDragEnd={handleDragEnd}
-                    className="transform transition-all duration-200 cursor-move active:cursor-grabbing touch-manipulation select-none"
-                >
-                  <MemoCard 
-                    memo={memo} 
-                    onUpdate={onUpdate} 
-                    onDelete={onDelete} 
-                    compact 
-                  />
-                </div>
-              ))}
-              {colMemos.length === 0 && (
-                <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 gap-1 opacity-60">
-                    <span className="text-xs font-medium">No tasks</span>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Add Footer (Simplified) */}
-            {!isCompletedCol && (
-              <div className="mt-2 relative group">
-                <input
-                    id={`quick-add-${col.id}`}
-                    type="text"
-                    value={quickAddText[col.id] || ''}
-                    onChange={(e) => setQuickAddText(prev => ({ ...prev, [col.id]: e.target.value }))}
-                    onKeyDown={(e) => {
-                         if (e.key === 'Enter') handleQuickAdd(col.id);
-                    }}
-                    placeholder="Add a card..."
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-2 text-sm shadow-sm dark:text-white placeholder-slate-400 transition-all outline-none"
-                />
-              </div>
-            )}
-          </div>
+          <KanbanColumn
+            key={col.id}
+            id={col.id}
+            label={col.label}
+            count={colMemos.length}
+            memos={colMemos}
+            isDragOver={isDragOver}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            onAdd={!isCompletedCol ? (text, priority) => onAdd({
+              content: text,
+              priority,
+              type: 'todo'
+            }) : undefined}
+          />
         );
       })}
     </div>
