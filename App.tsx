@@ -11,9 +11,10 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
 import { storage } from './services/storage';
 import MobileNav from './components/MobileNav';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-const SyncSettings = React.lazy(() => import('./components/SyncSettings'));
-const ConflictResolver = React.lazy(() => import('./components/ConflictResolver'));
+const SyncSettings = lazyWithRetry(() => import('./components/SyncSettings'));
+const ConflictResolver = lazyWithRetry(() => import('./components/ConflictResolver'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('dashboard');
