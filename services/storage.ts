@@ -5,7 +5,7 @@ const DB_NAME = 'MemoAI_DB';
 const STORE_NAME = 'memos';
 const SNAPSHOT_STORE_NAME = 'snapshots';
 const AUDIO_STORE_NAME = 'audio_notes';
-const DB_VERSION = 3;
+const DB_VERSION = 4; // Upgraded for index support
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -22,9 +22,31 @@ export const storage = {
       request.onsuccess = () => resolve(request.result);
       request.onupgradeneeded = (event) => {
         const db = request.result;
+        const oldVersion = event.oldVersion;
+
+        // Create object stores if they don't exist
+        let memosStore: IDBObjectStore;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          memosStore = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        } else {
+          // Get existing store from transaction
+          const transaction = (event.target as IDBOpenDBRequest).transaction;
+          memosStore = transaction!.objectStore(STORE_NAME);
         }
+
+        // Add indexes for better query performance (new in v4)
+        if (oldVersion < 4) {
+          if (!memosStore.indexNames.contains('updatedAt')) {
+            memosStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+          }
+          if (!memosStore.indexNames.contains('type')) {
+            memosStore.createIndex('type', 'type', { unique: false });
+          }
+          if (!memosStore.indexNames.contains('isArchived')) {
+            memosStore.createIndex('isArchived', 'isArchived', { unique: false });
+          }
+        }
+
         if (!db.objectStoreNames.contains(SNAPSHOT_STORE_NAME)) {
           db.createObjectStore(SNAPSHOT_STORE_NAME, { keyPath: 'id' });
         }
@@ -145,7 +167,7 @@ export const storage = {
     });
   },
 
-  getHistorySnapshots: async (): Promise<{id: number, date: string, data: SyncData}[]> => {
+  getHistorySnapshots: async (): Promise<{ id: number, date: string, data: SyncData }[]> => {
     const db = await storage.initDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(SNAPSHOT_STORE_NAME, 'readonly');

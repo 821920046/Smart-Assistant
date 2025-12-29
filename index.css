@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CSS Variables ===== */
+:root {
+  --bg-main: #f8fafc;
+  --sidebar-bg: rgba(255, 255, 255, 0.8);
+  --text-main: #0f172a;
+  --text-secondary: #64748b;
+  --card-border: rgba(226, 232, 240, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --card-bg: #ffffff;
+
+  /* New UI Tokens */
+  --ui-bg: 255 255 255;
+  --ui-card: 255 255 255;
+  --ui-border: 226 232 240;
+  --ui-text-main: 15 23 42;
+  --ui-text-sub: 100 116 139;
+  --ui-primary: 99 102 241;
+  --ui-danger: 239 68 68;
+
+  /* Radius */
+  --ui-radius: 14px;
+
+  /* Shadow */
+  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ui-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --bg-main: #0f172a;
+  --sidebar-bg: rgba(15, 23, 42, 0.8);
+  --text-main: #f8fafc;
+  --text-secondary: #94a3b8;
+  --card-border: rgba(51, 65, 85, 0.6);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --card-bg: #1e293b;
+}
+
+/* ===== Base Styles ===== */
+* {
+  -webkit-tap-highlight-color: transparent;
+  outline: none !important;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* ===== Component Styles ===== */
+.premium-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--card-border);
+}
+
+.memo-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 16px;
+}
+
+.memo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 768px) {
+  .memo-card:hover {
+    border-color: rgba(99, 102, 241, 0.2);
+    box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.1);
+    transform: translateY(-6px) scale(1.01);
+  }
+}
+
+.sidebar-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+}
+
+.sidebar-item:hover {
+  background: rgba(99, 102, 241, 0.05);
+  color: var(--accent-primary);
+}
+
+.active-sidebar-item {
+  background: #111827;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.assistant-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===== Animations ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.toast-enter {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.active-scale:active {
+  transform: scale(0.95);
+}

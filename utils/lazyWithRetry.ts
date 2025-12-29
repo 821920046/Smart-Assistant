@@ -13,7 +13,7 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
       // Chrome/Edge: "Failed to fetch dynamically imported module"
       // Firefox: "Importing a module script failed"
       // Safari: "Load failed" or similar network errors
-      const isChunkLoadError = 
+      const isChunkLoadError =
         error.message.includes('Failed to fetch dynamically imported module') ||
         error.message.includes('Importing a module script failed') ||
         error.name === 'ChunkLoadError';
@@ -29,7 +29,7 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
           // Force a reload from server to get fresh index.html
           window.location.reload();
           // Return a never-resolving promise to pause rendering until reload happens
-          return new Promise(() => {});
+          return new Promise<{ default: T }>(() => { });
         }
       }
 
