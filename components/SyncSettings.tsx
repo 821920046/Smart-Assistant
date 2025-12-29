@@ -295,7 +295,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                             </span>
                         </div>
                         {repoInfo.size > 100000 && (
-                            <p className="text-red-500 mb-2">Warning: Repository size is large (>100MB). Consider creating a new repository to reset history.</p>
+                            <p className="text-red-500 mb-2">Warning: Repository size is large (&gt;100MB). Consider creating a new repository to reset history.</p>
                         )}
                          <div className="text-slate-400 mb-2">
                             GitHub saves history for every sync. Over time, the repository size will grow.
