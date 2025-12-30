@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Memo, Priority } from '../../types';
 import { Icons } from '../../constants';
 import { generateSpeech } from '../../services/gemini';
 import SimpleMarkdown, { parseInline } from '../ui/SimpleMarkdown';
 import MemoEditor from './MemoEditor';
 import { storage } from '../../services/storage';
+import { useStore } from '../../services/store';
 
 interface MemoCardProps {
   memo: Memo;
-  onUpdate: (memo: Memo) => void;
-  onDelete: (id: string) => void;
-  onTagClick?: (tag: string) => void;
   compact?: boolean;
+  onTagClick?: (tag: string) => void;
 }
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
@@ -23,14 +23,14 @@ const PriorityTag = ({ priority }: { priority: Priority }) => {
   const labels = { important: 'Important', normal: 'Normal', secondary: 'Low' };
 
   return (
-    <span className={`px - 2.5 py - 1 rounded - lg text - [11px] font - bold ${styles[priority]} `}>
+    <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${styles[priority]}`}>
       {labels[priority]}
     </span>
   );
 };
 
-const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
+const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
+  const { updateMemo, deleteMemo } = useStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -52,9 +52,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
           const url = URL.createObjectURL(blob);
           currentUrl = url;
           setAudioUrl(url);
-        } else if (!blob) {
-          console.warn('Audio blob not found for ID:', id);
-          setAudioUrl(null);
         }
       } catch (error) {
         console.error('Failed to load audio:', error);
@@ -66,35 +63,30 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
     return () => {
       isCancelled = true;
-      if (currentUrl) {
-        URL.revokeObjectURL(currentUrl);
-      }
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
     };
-  }, [memo.audio?.id, memo.id]); // Added memo.id as a fallback dependency
+  }, [memo.audio?.id, memo.id]);
 
   const formatTime = (seconds?: number) => {
     if (seconds === undefined) return '';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')} `;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleToggleTodo = (todoId: string) => {
     const updatedTodos = memo.todos?.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
-
-    // Check if all tasks are completed
     const allCompleted = updatedTodos?.every(t => t.completed);
 
     if (allCompleted && updatedTodos && updatedTodos.length > 0) {
-      // All tasks completed, move to history
-      onUpdate({
+      updateMemo({
         ...memo,
         todos: updatedTodos,
         isArchived: true,
         completedAt: Date.now()
       });
     } else {
-      onUpdate({ ...memo, todos: updatedTodos });
+      updateMemo({ ...memo, todos: updatedTodos });
     }
   };
 
@@ -133,14 +125,8 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
     }
   };
 
-  const getRepeatLabel = () => {
-    if (!memo.reminderRepeat || memo.reminderRepeat === 'none') return 'Once';
-    if (memo.reminderRepeat === 'daily') return 'Daily';
-    return 'Weekly';
-  };
-
   const handleToggleMemo = () => {
-    onUpdate({
+    updateMemo({
       ...memo,
       isArchived: !memo.isArchived,
       completedAt: !memo.isArchived ? Date.now() : undefined
@@ -151,28 +137,39 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
   if (isEditing) {
     return (
-      <div className="mb-4">
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="mb-4"
+      >
         <MemoEditor
           initialMemo={memo}
           onSave={(updated) => {
-            onUpdate(updated as Memo);
+            updateMemo(updated as Memo);
             setIsEditing(false);
           }}
           onCancel={() => setIsEditing(false)}
         />
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className={`memo - card group relative bg - white dark: bg - slate - 800 transition - all duration - 200 text - left ${compact
-        ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-[1px]'
-        : hasTodos
-          ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
-          : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
-      } ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100'} `}>
-
-      {/* Header - Non-compact only */}
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      whileHover={{ y: -2 }}
+      className={`memo-card group relative bg-white dark:bg-slate-800 transition-shadow duration-200 text-left ${compact
+          ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md'
+          : hasTodos
+            ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
+            : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
+        }`}
+    >
+      {/* Header */}
       {!compact && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -188,18 +185,16 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
       {/* Content */}
       <div className={compact ? "" : "space-y-4"}>
-        {/* Main Content Title Style */}
-        <div className="flex gap-3 items-start group/content cursor-pointer" onClick={() => onUpdate(memo)}>
-          {/* Checkbox for Card */}
+        <div className="flex gap-3 items-start group/content cursor-pointer" onClick={() => !compact && handleToggleMemo()}>
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleToggleMemo();
             }}
-            className={`mt - 1 flex - shrink - 0 transition - colors duration - 200 ${memo.isArchived
+            className={`mt-1 flex-shrink-0 transition-colors duration-200 ${memo.isArchived
                 ? 'text-slate-400 dark:text-slate-500'
                 : 'text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400'
-              } `}
+              }`}
           >
             {memo.isArchived ? (
               <Icons.CheckSquare className="w-5 h-5" />
@@ -209,25 +204,23 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
           </button>
 
           <div className="flex-1 min-w-0 text-left">
-            {/* Title */}
             <div className={`break-words ${compact ? 'mb-1' : 'mb-2'} ${compact
                 ? 'text-sm font-semibold text-slate-900 dark:text-slate-100'
                 : hasTodos
                   ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
                   : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
-              } ${memo.isArchived ? 'line-through opacity-50' : ''} `}>
+              } ${memo.isArchived ? 'line-through opacity-50' : ''}`}>
               {parseInline(memo.title || (memo.content && memo.content.split('\n')[0]) || '')}
             </div>
 
-            {/* Description */}
             {(memo.title || (memo.content && memo.content.includes('\n'))) && (
-              <div className={`line - clamp - 3 opacity - 90 break-words ${compact ? 'mb-3' : 'mt-1'} `}>
+              <div className={`line-clamp-3 opacity-90 break-words ${compact ? 'mb-3' : 'mt-1'}`}>
                 <SimpleMarkdown
                   content={memo.title ? (memo.content || '') : (memo.content ? memo.content.split('\n').slice(1).join('\n') : '')}
                   className={`${compact
                       ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed'
                       : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
-                    } ${memo.isArchived ? 'opacity-50' : ''} `}
+                    } ${memo.isArchived ? 'opacity-50' : ''}`}
                 />
               </div>
             )}
@@ -236,7 +229,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
         {/* Audio Player */}
         {memo.audio && audioUrl && (
-          <div className={`flex items - center gap - 3 mt - 3 p - 2 bg - slate - 50 dark: bg - slate - 700 / 50 rounded - lg border border - slate - 100 dark: border - slate - 700 ${compact ? 'w-full' : 'w-fit'} `} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`flex items-center gap-3 mt-3 p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700 ${compact ? 'w-full' : 'w-fit'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
               <Icons.Mic className="w-4 h-4" />
             </div>
@@ -252,25 +248,28 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
         {/* Todos */}
         {memo.todos && memo.todos.length > 0 && (
-          <div className={`space - y - 2.5 ${compact ? 'mb-3' : 'pt-2'} `}>
+          <div className={`space-y-2.5 ${compact ? 'mb-3' : 'pt-2'}`}>
             {memo.todos.slice(0, compact ? 3 : undefined).map(todo => {
               const [title, ...desc] = todo.text.split('\n');
               return (
-                <div key={todo.id} className={`flex items - start gap - 3 group / todo transition - all duration - 200 ${compact
-                    ? 'p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30'
-                    : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
-                  } `}>
+                <div
+                  key={todo.id}
+                  className={`flex items-start gap-3 group/todo transition-all duration-200 ${compact
+                      ? 'p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                      : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
+                    }`}
+                >
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
-                    className={`mt - 1 w - 4 h - 4 rounded border flex items - center justify - center transition - all ${todo.completed
+                    className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-all ${todo.completed
                         ? 'bg-indigo-500 border-indigo-500 text-white'
                         : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
-                      } `}
+                      }`}
                   >
                     {todo.completed && <Icons.Check className="w-3 h-3" />}
                   </button>
                   <div className="flex-1">
-                    <p className={`text - sm font - medium leading - relaxed break-words ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-slate-200'} `}>
+                    <p className={`text-sm font-medium leading-relaxed break-words ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-slate-200'}`}>
                       {title}
                     </p>
                     {desc.length > 0 && !todo.completed && (
@@ -288,13 +287,13 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
           </div>
         )}
 
-        {/* Compact Footer Structure (User Requested) */}
+        {/* Compact Footer */}
         {compact && (
           <div className="flex items-center justify-between text-xs text-slate-400 mt-auto pt-2">
-            <span className={`px - 2 py - 0.5 rounded - md text - [10px] font - medium ${memo.priority === 'important' ? 'bg-rose-50 text-rose-600' :
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${memo.priority === 'important' ? 'bg-rose-50 text-rose-600' :
                 memo.priority === 'secondary' ? 'bg-slate-100 text-slate-500' :
                   'bg-indigo-50 text-indigo-600'
-              } `}>
+              }`}>
               {memo.priority === 'important' ? 'High' : memo.priority === 'secondary' ? 'Low' : 'Normal'}
             </span>
             <span>{new Date(memo.createdAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}</span>
@@ -302,7 +301,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
         )}
       </div>
 
-      {/* Footer Actions (Only show on hover or non-compact) */}
+      {/* Full Footer Actions */}
       {!compact && (
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-700/50">
           <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -317,25 +316,37 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
 
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {!memo.isArchived && (
-              <button onClick={() => setIsEditing(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-600 transition-colors" title="编辑">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
+                title="Edit"
+              >
                 <Icons.Edit className="w-4 h-4" />
               </button>
             )}
-            <button onClick={handlePlayTTS} className={`p - 2 hover: bg - slate - 100 dark: hover: bg - slate - 700 rounded - lg transition - colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400 hover:text-blue-600'} `}>
+            <button
+              onClick={(e) => { e.stopPropagation(); handlePlayTTS(); }}
+              className={`p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400 hover:text-blue-600'}`}
+              title="Speak"
+            >
               {isPlaying ? <Icons.Volume2 className="w-4 h-4" /> : <Icons.Volume1 className="w-4 h-4" />}
             </button>
-            <button onClick={() => {
-              if (confirm('Delete this memo?')) {
-                setIsDeleting(true);
-                setTimeout(() => onDelete(memo.id), 200);
-              }
-            }} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm('Delete this memo?')) {
+                  deleteMemo(memo.id);
+                }
+              }}
+              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
+              title="Delete"
+            >
               <Icons.Trash className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

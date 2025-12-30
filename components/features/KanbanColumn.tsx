@@ -13,8 +13,6 @@ interface KanbanColumnProps {
   onDrop: (e: React.DragEvent, columnId: string) => void;
   onDragStart: (e: React.DragEvent, memoId: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
-  onUpdate: (memo: Memo) => void;
-  onDelete: (id: string) => void;
   onAdd?: (text: string, priority: Priority) => void;
 }
 
@@ -28,8 +26,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDrop,
   onDragStart,
   onDragEnd,
-  onUpdate,
-  onDelete,
   onAdd
 }) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -46,9 +42,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
   return (
     <div
-      className={`flex-shrink-0 w-80 flex flex-col max-h-full rounded-2xl transition-colors duration-200 ${
-        isDragOver ? 'bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-400 ring-inset' : 'bg-slate-50/50 dark:bg-slate-900/20'
-      }`}
+      className={`flex-shrink-0 w-80 flex flex-col max-h-full rounded-2xl transition-colors duration-200 ${isDragOver ? 'bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-400 ring-inset' : 'bg-slate-50/50 dark:bg-slate-900/20'
+        }`}
       onDragOver={(e) => onDragOver(e, id)}
       onDrop={(e) => onDrop(e, id)}
     >
@@ -115,14 +110,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             onDragEnd={onDragEnd}
             className="cursor-grab active:cursor-grabbing"
           >
-            <MemoCard memo={memo} onUpdate={onUpdate} onDelete={onDelete} compact />
+            <MemoCard memo={memo} compact={true} />
           </div>
         ))}
-        
+
         {memos.length === 0 && !isAdding && (
-           <div className="h-32 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-              <p className="text-xs font-medium">No tasks</p>
-           </div>
+          <div className="h-32 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+            <p className="text-xs font-medium">No tasks</p>
+          </div>
         )}
       </div>
     </div>

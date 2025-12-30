@@ -1,29 +1,12 @@
 import React from 'react';
 import { Icons } from '../../constants';
-import { Memo } from '../../types';
+import { useStore } from '../../services/store';
 
-interface SidebarProps {
-  activeFilter: string;
-  setActiveFilter: (filter: string) => void;
-  isOpen: boolean;
-  onClose: () => void;
-  // Kept for compatibility if passed, but ignored
-  tags?: string[];
-  onExport?: () => void;
-  onImport?: (file: File) => void;
-  onOpenSyncSettings?: () => void;
-  onOpenAuth?: () => void;
-  isSyncing?: boolean;
-  syncError?: Error | null;
-  memos?: Memo[];
-  onClearHistory?: () => void;
-  darkMode?: boolean;
-  onToggleDarkMode?: () => void;
-}
+const Sidebar: React.FC = () => {
+  const { filter: activeFilter, setFilter: setActiveFilter, isSidebarOpen: isOpen, setSidebarOpen: setOpen } = useStore();
 
-const Sidebar: React.FC<SidebarProps> = ({
-  activeFilter, setActiveFilter, isOpen, onClose
-}) => {
+  const onClose = () => setOpen(false);
+
   const menuItems = [
     { id: 'dashboard', icon: Icons.Home, label: 'Dashboard' },
     { id: 'notes', icon: Icons.FileText, label: 'Notes' },
@@ -43,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
           onClick={onClose}
         />
@@ -58,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-full flex flex-col p-6 overflow-y-auto no-scrollbar">
           {/* Mobile Close Button */}
           <div className="md:hidden absolute right-4 top-4">
-            <button 
+            <button
               onClick={onClose}
               className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
             >
@@ -81,11 +64,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleFilterClick(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  activeFilter === item.id 
-                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${activeFilter === item.id
+                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
               >
                 <item.icon />
                 {item.label}
@@ -93,9 +75,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
           </nav>
 
-          {/* Bottom attribution or minimal info if needed */}
           <div className="text-center pb-4">
-             <p className="text-[10px] text-slate-300 dark:text-slate-700">v2.7.0</p>
+            <p className="text-[10px] text-slate-300 dark:text-slate-700">v2.7.2</p>
           </div>
         </div>
       </aside>

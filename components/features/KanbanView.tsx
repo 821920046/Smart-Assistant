@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Memo, Priority } from '../../types';
 import KanbanColumn from './KanbanColumn';
+import { useStore } from '../../services/store';
 
 interface KanbanViewProps {
   memos: Memo[];
-  onUpdate: (memo: Memo) => void;
-  onDelete: (id: string) => void;
-  onAdd: (memo: Partial<Memo>) => void;
 }
 
-const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAdd }) => {
+const KanbanView: React.FC<KanbanViewProps> = ({ memos }) => {
+  const { updateMemo, addMemo } = useStore();
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
   const columns = [
     { id: 'important', label: 'Important', color: 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900', titleColor: 'text-rose-700 dark:text-rose-400' },
     { id: 'normal', label: 'Normal', color: 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900', titleColor: 'text-blue-700 dark:text-blue-400' },
@@ -34,9 +35,9 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
 
   const handleDragEnd = (e: React.DragEvent) => {
     if (e.currentTarget instanceof HTMLElement) {
-        e.currentTarget.classList.remove('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
-        e.currentTarget.classList.add('transition-transform', 'duration-300');
-        setTimeout(() => e.currentTarget.classList.remove('transition-transform', 'duration-300'), 300);
+      e.currentTarget.classList.remove('scale-[1.02]', 'shadow-lg', 'ring-2', 'ring-indigo-400', 'bg-white', 'dark:bg-slate-800', 'z-50', 'rotate-1', 'cursor-grabbing');
+      e.currentTarget.classList.add('transition-transform', 'duration-300');
+      setTimeout(() => e.currentTarget.classList.remove('transition-transform', 'duration-300'), 300);
     }
     setDragOverColumn(null);
   };
@@ -44,7 +45,7 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     if (dragOverColumn !== columnId) {
-        setDragOverColumn(columnId);
+      setDragOverColumn(columnId);
     }
   };
 
@@ -53,21 +54,20 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
     setDragOverColumn(null);
     const memoId = e.dataTransfer.getData('text/plain');
     const memo = memos.find(m => m.id === memoId);
-    
+
     if (memo) {
       if (columnId === 'completed') {
-        onUpdate({ ...memo, completedAt: Date.now() });
+        updateMemo({ ...memo, completedAt: Date.now(), isArchived: true });
       } else {
-        onUpdate({ 
-          ...memo, 
+        updateMemo({
+          ...memo,
           priority: columnId as Priority,
-          completedAt: undefined 
+          completedAt: undefined,
+          isArchived: false
         });
       }
     }
   };
-
-  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-8 h-[calc(100vh-140px)] items-start snap-x snap-mandatory md:snap-none px-4 md:px-0">
@@ -88,9 +88,7 @@ const KanbanView: React.FC<KanbanViewProps> = ({ memos, onUpdate, onDelete, onAd
             onDrop={handleDrop}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            onUpdate={onUpdate}
-            onDelete={onDelete}
-            onAdd={!isCompletedCol ? (text, priority) => onAdd({
+            onAdd={!isCompletedCol ? (text, priority) => addMemo({
               content: text,
               priority,
               type: 'todo'

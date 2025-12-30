@@ -1,23 +1,14 @@
-import React, { useEffect } from 'react';
-import { Memo } from '../../types';
+import React, { useEffect, useState } from 'react';
 import { Icons } from '../../constants';
 import { Gauge } from '../ui/Gauge';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
+import { useStore } from '../../services/store';
 
-interface DashboardViewProps {
-    memos: Memo[];
-    onUpdate: (memo: Memo) => void;
-    onDelete: (id: string) => void;
-    onAdd: (memo: Partial<Memo>) => void;
-    onNavigate: (view: string) => void;
-    isSyncing?: boolean;
-}
-
-const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete, onAdd, onNavigate, isSyncing }) => {
+const DashboardView: React.FC = () => {
+    const { memos, addMemo, setFilter: onNavigate, isSyncing } = useStore();
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
 
     const {
         isRecording,
@@ -27,17 +18,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
         stopRecording,
         resetRecording
     } = useAudioRecorder();
-    const [lastRecordingDuration, setLastRecordingDuration] = React.useState<number | null>(null);
 
     useEffect(() => {
         const saveVoiceNote = async () => {
             if (audioBlob) {
                 try {
                     const audioId = await storage.saveAudio(audioBlob);
-                    setLastRecordingDuration(recordingTime);
-                    onAdd({
+                    addMemo({
                         content: 'Voice Note',
                         type: 'memo',
+                        // @ts-ignore - source is a custom field for tracking
                         source: 'voice',
                         audio: {
                             id: audioId,
@@ -51,7 +41,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
             }
         };
         saveVoiceNote();
-    }, [audioBlob, onAdd, recordingTime, resetRecording]);
+    }, [audioBlob, addMemo, recordingTime, resetRecording]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);

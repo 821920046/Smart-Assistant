@@ -1,12 +1,10 @@
 import React from 'react';
 import { Icons } from '../../constants';
+import { useStore } from '../../services/store';
 
-interface MobileNavProps {
-  activeFilter: string;
-  setActiveFilter: (filter: string) => void;
-}
+const MobileNav: React.FC = () => {
+  const { filter: activeFilter, setFilter: setActiveFilter } = useStore();
 
-const MobileNav: React.FC<MobileNavProps> = ({ activeFilter, setActiveFilter }) => {
   const navItems = [
     { id: 'dashboard', icon: Icons.Home, label: 'Home' },
     { id: 'notes', icon: Icons.FileText, label: 'Notes' },
@@ -26,11 +24,10 @@ const MobileNav: React.FC<MobileNavProps> = ({ activeFilter, setActiveFilter }) 
                 if (navigator.vibrate) navigator.vibrate(10);
                 setActiveFilter(item.id);
               }}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 min-w-[64px] ${
-                isActive 
-                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 min-w-[64px] ${isActive
+                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
             >
               <item.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-[10px] font-medium">{item.label}</span>

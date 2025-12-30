@@ -1,83 +1,72 @@
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useEffect, Suspense, useCallback } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import { Icons } from './constants';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
-import { useMemoData } from './hooks/useMemoData';
-import { useDarkMode } from './hooks/useDarkMode';
-import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { SyncConflictError } from './services/sync';
 import { storage } from './services/storage';
 import MobileNav from '@/components/layout/MobileNav';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { syncService } from './services/sync';
 import { Memo } from './types';
+import { useStore } from './services/store';
+import { useMemoFilter } from './hooks/useMemoFilter';
 
 const SyncSettings = lazyWithRetry(() => import('@/components/features/SyncSettings'));
 const ConflictResolver = lazyWithRetry(() => import('@/components/features/ConflictResolver'));
 
 const AppContent: React.FC = () => {
-  const [filter, setFilter] = useState('dashboard');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [conflictError, setConflictError] = useState<SyncConflictError | null>(null);
-
-  const { darkMode, toggleDarkMode } = useDarkMode();
   const {
-    memos, setMemos, isLoading, addMemo, updateMemo, deleteMemo, clearHistory, allTags, isSyncing, performSync, syncError
-  } = useMemoData();
+    memos, isLoading, init, filter, setFilter, searchQuery, setSearchQuery,
+    isSyncSettingsOpen, setSyncSettingsOpen, isSidebarOpen, setSidebarOpen,
+    conflictError, setConflictError, darkMode, toggleDarkMode,
+    isSyncing, syncError, performSync, setMemos, clearHistory, addMemo, updateMemo, deleteMemo
+  } = useStore();
 
   const filteredMemos = useMemoFilter(memos, filter, searchQuery);
-
-  const { user } = useAuth();
-
   const { addToast } = useToast();
 
-  // Handle Sync Error (Task D)
+  // Initialize Store
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  // Handle Sync Error
   useEffect(() => {
     if (syncError) {
       if (syncError.name === 'SyncConflictError') {
-        setConflictError(syncError as SyncConflictError);
-      }
-      // 1. Auth Error (401)
-      else if (syncError.message.includes('401') || syncError.message.includes('Key')) {
+        // Handled via conflictError in store
+      } else if (syncError.message.includes('401') || syncError.message.includes('Key')) {
         addToast("Authentication failed. Please check your sync settings.", "error");
-        setIsSyncSettingsOpen(true);
-      }
-      // 2. Conflict Error (409) - Supabase specific
-      else if (syncError.message.includes('409')) {
+        setSyncSettingsOpen(true);
+      } else if (syncError.message.includes('409')) {
         addToast("Sync conflict detected. Please retry manually.", "error");
-      }
-      // 3. Server Error (500)
-      else if (syncError.message.includes('500') || syncError.message.includes('服务器错误')) {
+      } else if (syncError.message.includes('500') || syncError.message.includes('服务器错误')) {
         addToast("Server error. Sync will be retried later.", "error");
       } else {
         addToast(`Sync Error: ${syncError.message}`, "error");
       }
     }
-  }, [syncError, addToast]);
+  }, [syncError, addToast, setSyncSettingsOpen]);
 
-  // Auto Sync Triggers with Smart Intervals
+  // Auto Sync Triggers
   useEffect(() => {
-    let lastSyncTime = Date.now();
-    const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
-    const SYNC_DEBOUNCE = 30 * 1000; // 30 seconds minimum between syncs
+    if (isLoading) return;
 
-    // Timer sync
+    const SYNC_INTERVAL = 5 * 60 * 1000;
+    const SYNC_DEBOUNCE = 30 * 1000;
+    let lastSyncTime = Date.now();
+
     const timer = setInterval(() => {
-      performSync(memos, setMemos, true);
+      performSync(true);
       lastSyncTime = Date.now();
     }, SYNC_INTERVAL);
 
-    // Window blur sync with debounce
     const handleBlur = () => {
       const now = Date.now();
-      // Only sync if enough time has passed since last sync
       if (now - lastSyncTime > SYNC_DEBOUNCE) {
-        performSync(memos, setMemos, true);
+        performSync(true);
         lastSyncTime = now;
       }
     };
@@ -87,9 +76,15 @@ const AppContent: React.FC = () => {
       clearInterval(timer);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [performSync, memos, setMemos]);
+  }, [performSync, isLoading]);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" /></div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="w-10 h-10 border-t-blue-600 border-4 border-slate-200 dark:border-slate-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleExport = async () => {
     try {
@@ -115,12 +110,8 @@ const AppContent: React.FC = () => {
       const text = await file.text();
       const data = JSON.parse(text);
       await storage.restoreSnapshot(data);
-
-      const newMemos = await storage.getMemos();
-      setMemos(newMemos);
+      init(); // Re-init to load new data
       addToast('Data imported successfully', 'success');
-
-      await performSync(newMemos, setMemos, true);
     } catch (error) {
       console.error('Import failed:', error);
       addToast('Failed to import data', 'error');
@@ -130,20 +121,14 @@ const AppContent: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col md:flex-row">
-        <Sidebar
-          activeFilter={filter}
-          setActiveFilter={setFilter}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        <Sidebar />
 
         <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full pb-24 md:pb-8">
           {/* Mobile Header */}
           <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50">
             <div className="flex items-center gap-3">
-              {/* Burger Menu for Drawer (Archive/History) */}
               <button
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => setSidebarOpen(true)}
                 className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-800 rounded-lg transition-colors"
               >
                 <Icons.Menu />
@@ -156,7 +141,6 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              {/* Keep dark mode toggle in mobile header for convenience */}
               <button
                 onClick={toggleDarkMode}
                 className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
@@ -166,12 +150,6 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          {/* Search Bar - Hide in Settings/Dashboard? Or keep? 
-              User says "Notes: Search priority > Category".
-              Dashboard: "Overview".
-              Maybe keep it globally or hide in Dashboard/Settings.
-              I'll keep it for now.
-          */}
           <div className="sticky top-20 md:top-0 z-30 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-2 md:py-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none transition-all">
             <div className="relative group">
               <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -185,32 +163,14 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          <MainContent
-            filter={filter}
-            searchQuery={searchQuery}
-            memos={memos}
-            filteredMemos={filteredMemos}
-            onAdd={addMemo}
-            onUpdate={updateMemo}
-            onDelete={deleteMemo}
-            onNavigate={(view) => setFilter(view)}
-
-            darkMode={darkMode}
-            onToggleDarkMode={toggleDarkMode}
-            isSyncing={isSyncing}
-            syncError={syncError}
-            onOpenSyncSettings={() => setIsSyncSettingsOpen(true)}
-            onExport={handleExport}
-            onImport={handleImport}
-            onClearHistory={clearHistory}
-          />
+          <MainContent />
         </main>
 
         <Suspense fallback={null}>
           {isSyncSettingsOpen && (
             <SyncSettings
-              onClose={() => setIsSyncSettingsOpen(false)}
-              onSyncComplete={() => performSync(memos, setMemos, false)}
+              onClose={() => setSyncSettingsOpen(false)}
+              onSyncComplete={() => performSync(false)}
             />
           )}
         </Suspense>
@@ -230,7 +190,7 @@ const AppContent: React.FC = () => {
           )}
         </Suspense>
 
-        <MobileNav activeFilter={filter} setActiveFilter={setFilter} />
+        <MobileNav />
       </div>
     </ErrorBoundary>
   );

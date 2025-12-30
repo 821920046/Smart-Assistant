@@ -2,31 +2,25 @@ import React, { useState } from 'react';
 import { Icons } from '../../constants';
 import { Memo } from '../../types';
 import { SketchCanvas } from './SketchCanvas';
+import { useStore } from '../../services/store';
 
-interface WhiteboardProps {
-    memos: Memo[];
-    onUpdate: (memo: Memo) => void;
-    onAdd: (memo: Partial<Memo>) => void;
-    onDelete: (id: string) => void;
-}
-
-const Whiteboard: React.FC<WhiteboardProps> = ({ memos, onUpdate, onAdd, onDelete }) => {
+const Whiteboard: React.FC = () => {
+    const { memos: allMemos, updateMemo, addMemo, deleteMemo } = useStore();
     const [editingMemo, setEditingMemo] = useState<Memo | 'new' | null>(null);
+
+    const memos = allMemos.filter(m => m.type === 'sketch');
 
     const handleSave = (dataUrl: string) => {
         if (editingMemo === 'new') {
-            onAdd({
+            addMemo({
                 type: 'sketch',
                 content: 'Sketch',
-                sketchData: dataUrl,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
+                sketchData: dataUrl
             });
         } else if (editingMemo) {
-            onUpdate({
+            updateMemo({
                 ...editingMemo,
-                sketchData: dataUrl,
-                updatedAt: Date.now()
+                sketchData: dataUrl
             });
         }
         setEditingMemo(null);
@@ -58,7 +52,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ memos, onUpdate, onAdd, onDelet
                             <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">{new Date(memo.createdAt).toLocaleDateString()}</span>
                             <div className="flex gap-2">
                                 <button onClick={() => setEditingMemo(memo)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><Icons.Edit className="w-4 h-4" /></button>
-                                <button onClick={() => onDelete(memo.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><Icons.Trash className="w-4 h-4" /></button>
+                                <button onClick={() => deleteMemo(memo.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><Icons.Trash className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
