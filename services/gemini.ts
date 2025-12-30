@@ -2,8 +2,13 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { TodoItem, Priority } from "../types.js";
 
+import { useStore } from './store';
+
 const getAI = () => {
-  const apiKey = process.env.API_KEY;
+  const storeApiKey = useStore.getState().geminiApiKey;
+  const envApiKey = process.env.API_KEY;
+  const apiKey = storeApiKey || envApiKey;
+
   if (!apiKey) {
     return null;
   }

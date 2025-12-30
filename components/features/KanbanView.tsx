@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Memo, Priority } from '../../types';
+import { Priority } from '../../types';
 import KanbanColumn from './KanbanColumn';
 import { useStore } from '../../services/store';
 
-interface KanbanViewProps {
-  memos: Memo[];
-}
-
-const KanbanView: React.FC<KanbanViewProps> = ({ memos }) => {
-  const { updateMemo, addMemo } = useStore();
+const KanbanView: React.FC = () => {
+  const { memos: allMemos, updateMemo, addMemo } = useStore();
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+  // Only show non-archived memos in Kanban
+  const memos = allMemos.filter(m => !m.isArchived);
 
   const columns = [
     { id: 'important', label: 'Important', color: 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900', titleColor: 'text-rose-700 dark:text-rose-400' },

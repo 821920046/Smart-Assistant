@@ -18,6 +18,7 @@ interface AppState {
     isSidebarOpen: boolean;
     conflictError: SyncConflictError | null;
     darkMode: boolean;
+    geminiApiKey: string;
 
     // Actions
     init: () => Promise<void>;
@@ -34,6 +35,7 @@ interface AppState {
     setConflictError: (error: SyncConflictError | null) => void;
     setDarkMode: (dark: boolean) => void;
     toggleDarkMode: () => void;
+    setGeminiApiKey: (key: string) => void;
 
     performSync: (silent?: boolean) => Promise<void>;
 }
@@ -53,6 +55,7 @@ export const useStore = create<AppState>((set, get) => ({
     conflictError: null,
     darkMode: localStorage.getItem('theme') === 'dark' ||
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    geminiApiKey: localStorage.getItem('gemini_api_key') || '',
 
     // Initialize
     init: async () => {
@@ -147,6 +150,11 @@ export const useStore = create<AppState>((set, get) => ({
     toggleDarkMode: () => {
         const newMode = !get().darkMode;
         get().setDarkMode(newMode);
+    },
+
+    setGeminiApiKey: (key: string) => {
+        set({ geminiApiKey: key });
+        localStorage.setItem('gemini_api_key', key);
     },
 
     performSync: async (silent = false) => {

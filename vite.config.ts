@@ -41,33 +41,26 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           runtimeCaching: [
             {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'google-fonts-cache',
+                cacheName: 'google-fonts',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-                },
-                cacheableResponse: {
-                  statuses: [0, 200]
+                  maxAgeSeconds: 60 * 60 * 24 * 365
                 }
               }
             },
             {
-              urlPattern: /^https:\/\/esm\.sh\/.*/i,
-              handler: 'CacheFirst',
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+              handler: 'StaleWhileRevalidate',
               options: {
-                cacheName: 'esm-modules-cache',
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-                },
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
+                cacheName: 'images'
               }
             }
           ]

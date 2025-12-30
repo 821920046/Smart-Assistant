@@ -118,6 +118,13 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // Listen for custom export events from subcomponents
+  useEffect(() => {
+    const handleExportEvent = () => handleExport();
+    window.addEventListener('app-export', handleExportEvent);
+    return () => window.removeEventListener('app-export', handleExportEvent);
+  }, []);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col md:flex-row">

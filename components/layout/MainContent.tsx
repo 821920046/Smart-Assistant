@@ -9,107 +9,29 @@ import { useStore } from '../../services/store';
 import { useMemoFilter } from '../../hooks/useMemoFilter';
 
 const MainContent: React.FC = () => {
-    const {
-        filter, searchQuery, memos, updateMemo, deleteMemo, addMemo, setFilter,
-        clearHistory, isSyncing, darkMode, toggleDarkMode, setSyncSettingsOpen, performSync
-    } = useStore();
-
+    const { filter, searchQuery, memos } = useStore();
     const filteredMemos = useMemoFilter(memos, filter, searchQuery);
 
     const renderContent = () => {
         switch (filter) {
             case 'dashboard':
-                return (
-                    <DashboardView
-                        memos={memos}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                        onNavigate={setFilter}
-                        isSyncing={isSyncing}
-                    />
-                );
+                return <DashboardView />;
             case 'tasks':
-                return (
-                    <TasksView
-                        memos={filteredMemos}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                        searchQuery={searchQuery}
-                        title="Active Tasks"
-                    />
-                );
+                return <TasksView memos={filteredMemos} title="Active Tasks" />;
             case 'notes':
-                return (
-                    <TasksView
-                        memos={filteredMemos}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                        searchQuery={searchQuery}
-                        title="All Notes"
-                    />
-                );
+                return <TasksView memos={filteredMemos} title="All Notes" />;
             case 'archive':
-                return (
-                    <TasksView
-                        memos={filteredMemos}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                        searchQuery={searchQuery}
-                        title="Archived Items"
-                        onClearAll={clearHistory}
-                    />
-                );
+                return <TasksView memos={filteredMemos} title="Archived Items" />;
             case 'favorites':
-                return (
-                    <TasksView
-                        memos={filteredMemos}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                        searchQuery={searchQuery}
-                        title="Favorite Notes"
-                    />
-                );
+                return <TasksView memos={filteredMemos} title="Favorite Notes" />;
             case 'kanban':
-                return (
-                    <KanbanView
-                        memos={memos.filter(m => !m.isArchived)}
-                        onUpdate={updateMemo}
-                        onDelete={deleteMemo}
-                        onAdd={addMemo}
-                    />
-                );
+                return <KanbanView />;
             case 'whiteboard':
-                return (
-                    <Whiteboard
-                        memos={memos.filter(m => m.type === 'sketch')}
-                        onUpdate={updateMemo}
-                        onAdd={addMemo}
-                        onDelete={deleteMemo}
-                    />
-                );
+                return <Whiteboard />;
             case 'settings':
-                return (
-                    <SettingsView
-                        darkMode={darkMode}
-                        onToggleDarkMode={toggleDarkMode}
-                        isSyncing={isSyncing}
-                        onOpenSyncSettings={() => setSyncSettingsOpen(true)}
-                        onExport={async () => {
-                            // Trigger export via window event or other means if needed, 
-                            // but easier to just move export logic to store or keep it here.
-                            // For now, these are usually triggered from Sidebar or App.
-                        }}
-                        onImport={() => { }}
-                        onClearHistory={clearHistory}
-                    />
-                );
+                return <SettingsView />;
             default:
-                return <DashboardView memos={memos} onUpdate={updateMemo} onDelete={deleteMemo} onAdd={addMemo} onNavigate={setFilter} />;
+                return <DashboardView />;
         }
     };
 

@@ -72,9 +72,7 @@ const TasksView: React.FC<TasksViewProps> = ({
           </div>
         )}
         {currentView === 'board' && (
-          <KanbanView
-            memos={todoMemos}
-          />
+          <KanbanView />
         )}
       </div>
     </div>
