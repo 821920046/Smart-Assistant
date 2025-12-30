@@ -12,7 +12,7 @@ export const useAudioRecorder = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
-      
+
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunks.current.push(e.data);

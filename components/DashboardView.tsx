@@ -26,6 +26,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
     stopRecording,
     resetRecording
   } = useAudioRecorder();
+  const [lastRecordingDuration, setLastRecordingDuration] = React.useState<number | null>(null);
 
   // Handle Audio Save
   useEffect(() => {
@@ -33,6 +34,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
       if (audioBlob) {
         try {
           const audioId = await storage.saveAudio(audioBlob);
+          setLastRecordingDuration(recordingTime);
           onAdd({
             content: 'Voice Note',
             type: 'memo',
@@ -84,10 +86,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
   }
 
   // --- 3. Trend Data ---
-  const completedYesterday = memos.filter(m => 
+  const completedYesterday = memos.filter(m =>
     m.type === 'todo' && m.isArchived && m.completedAt && m.completedAt >= yesterdayStart && m.completedAt < todayStart
   ).length;
-  
+
   const trendDiff = completedToday - completedYesterday;
   const trendDirection = trendDiff > 0 ? 'up' : trendDiff < 0 ? 'down' : 'neutral';
 
@@ -95,8 +97,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
   const audioMemos = memos.filter(m => (m.audio || m.source === 'voice') && !m.isDeleted);
   const voiceTodayCount = audioMemos.filter(m => m.createdAt >= todayStart).length;
   const voiceTotalCount = audioMemos.length;
-  
-  const lastVoiceMemo = audioMemos.length > 0 
+
+  const lastVoiceMemo = audioMemos.length > 0
     ? audioMemos.reduce((prev, current) => (prev.createdAt > current.createdAt) ? prev : current)
     : null;
 
@@ -129,14 +131,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
         </div>
 
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => onNavigate('tasks')}
             className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold transition-all shadow-md shadow-indigo-200 dark:shadow-none active:scale-95"
           >
             <Icons.Plus className="w-5 h-5" />
             <span>New Task</span>
           </button>
-          <button 
+          <button
             onClick={() => onNavigate('notes')}
             className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-2xl font-semibold transition-all active:scale-95"
           >
@@ -148,13 +150,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
 
       {/* Dashboard Grid */}
       <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
-        
+
         {/* 1. Task Completion Gauge */}
-        <Gauge 
+        <Gauge
           className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
-          title="Today's Progress"  
-          value={completedToday} 
-          max={totalToday || 1} 
+          title="Today's Progress"
+          value={completedToday}
+          max={totalToday || 1}
           color="#6366F1" // Indigo
           centerContent={
             <div className="text-center">
@@ -171,10 +173,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 {completedToday} / {totalToday} Tasks
               </span>
-              <div className={`flex items-center text-xs font-bold ${
-                trendDirection === 'up' ? 'text-green-500' : 
-                trendDirection === 'down' ? 'text-red-500' : 'text-slate-400'
-              }`}>
+              <div className={`flex items-center text-xs font-bold ${trendDirection === 'up' ? 'text-green-500' :
+                  trendDirection === 'down' ? 'text-red-500' : 'text-slate-400'
+                }`}>
                 {trendDirection === 'up' && <Icons.ChevronUp className="w-3 h-3 mr-0.5" />}
                 {trendDirection === 'down' && <Icons.ChevronDown className="w-3 h-3 mr-0.5" />}
                 vs Yesterday
@@ -184,10 +185,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
         />
 
         {/* 2. Pressure Gauge */}
-        <Gauge 
+        <Gauge
           className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
-          title="Workload Pressure"  
-          value={importantCount} 
+          title="Workload Pressure"
+          value={importantCount}
           max={10} // Visual max
           color={pressureStatus.color}
           centerContent={
@@ -210,11 +211,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
         />
 
         {/* 3. Voice Notes Stats & Input */}
-        <Gauge 
+        <Gauge
           className="min-w-[85%] sm:min-w-[300px] md:min-w-0 flex-shrink-0 snap-center"
           title={isRecording ? "Recording..." : "Voice Notes"}
-          value={isRecording ? recordingTime : voiceTodayCount} 
-          max={isRecording ? 60 : Math.max(voiceTodayCount * 1.5, 10)} 
+          value={isRecording ? recordingTime : voiceTodayCount}
+          max={isRecording ? 60 : Math.max(voiceTodayCount * 1.5, 10)}
           color={isRecording ? "#EF4444" : "#F43F5E"} // Red when recording
           centerContent={
             <div className="text-center">
@@ -235,6 +236,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
                   <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                     TODAY
                   </div>
+                  {lastRecordingDuration !== null && (
+                    <div className="text-[10px] text-indigo-500 font-bold mt-1">
+                      Last: {formatTime(lastRecordingDuration)}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -244,23 +250,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({ memos, onUpdate, onDelete
               {!isRecording && (
                 <div className="w-full flex justify-between px-2 text-sm text-slate-600 dark:text-slate-300">
                   <div className="flex flex-col items-start">
-                     <span className="text-xs text-slate-400">Total</span>
-                     <span className="font-bold">{voiceTotalCount}</span>
+                    <span className="text-xs text-slate-400">Total</span>
+                    <span className="font-bold">{voiceTotalCount}</span>
                   </div>
                   <div className="flex flex-col items-end">
-                     <span className="text-xs text-slate-400">Last</span>
-                     <span className="text-xs">{lastVoiceMemo ? getTimeAgo(lastVoiceMemo.createdAt) : '-'}</span>
+                    <span className="text-xs text-slate-400">Last</span>
+                    <span className="text-xs">{lastVoiceMemo ? getTimeAgo(lastVoiceMemo.createdAt) : '-'}</span>
                   </div>
                 </div>
               )}
-              
+
               <button
                 onClick={handleVoiceClick}
-                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${
-                  isRecording 
+                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${isRecording
                     ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400'
                     : 'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-slate-700/50 dark:text-slate-300 dark:hover:bg-slate-700'
-                }`}
+                  }`}
               >
                 {isRecording ? (
                   <>
