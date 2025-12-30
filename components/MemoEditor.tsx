@@ -138,7 +138,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       onSave({
         ...initialMemo,
         title: title.trim() || undefined,
-        content: content || (sketchData ? '[Sketch]' : '') || (audioId ? '[Audio Note]' : ''),
+        content: content || (sketchData ? '[Sketch]' : '') || (audioId ? `[音频笔记 (${Math.floor(finalDuration / 60)}:${(finalDuration % 60).toString().padStart(2, '0')})]` : ''),
         todos,
         tags,
         sketchData: sketchData || undefined,
@@ -226,28 +226,30 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
           </div>
         )}
 
-        {audioBlob && (
+        {(isRecording || audioBlob) && (
           <div className="relative mt-4 group w-full md:w-fit flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isRecording ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}>
               <Icons.Mic className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Audio Note</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{isRecording ? 'Recording...' : 'Audio Note'}</span>
               <span className="text-[10px] text-slate-500 dark:text-slate-400">{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
             </div>
-            {audioUrl && (
+            {audioUrl && !isRecording && (
               <audio src={audioUrl} controls className="h-8 w-32 md:w-48 ml-2" />
             )}
-            <button
-              onClick={() => {
-                if (confirm('Are you sure you want to discard this recording?')) {
-                  resetRecording();
-                }
-              }}
-              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1"
-            >
-              <Icons.X className="w-4 h-4" />
-            </button>
+            {!isRecording && (
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to discard this recording?')) {
+                    resetRecording();
+                  }
+                }}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1"
+              >
+                <Icons.X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -384,7 +386,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={(!content.trim() && !sketchData) || isProcessing}
+          disabled={(!content.trim() && !sketchData && !audioBlob && !initialMemo?.audio) || isProcessing}
           className="w-full md:w-auto px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-blue-900/30 hover:bg-blue-600 hover:shadow-blue-200 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
         >
           {isProcessing ? (

@@ -6,7 +6,7 @@ export const useAudioRecorder = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const chunks = useRef<Blob[]>([]);
-  const timerRef = useRef<number | null>(null);
+  // timerRef is removed as timer management moves to useEffect
 
   const startRecording = useCallback(async () => {
     try {
@@ -32,9 +32,7 @@ export const useAudioRecorder = () => {
       setRecordingTime(0);
       setAudioBlob(null);
 
-      timerRef.current = window.setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+      // Timer logic moved to useEffect
 
     } catch (err) {
       console.error('Error accessing microphone:', err);
@@ -47,21 +45,32 @@ export const useAudioRecorder = () => {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
       setIsRecording(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      // Timer stop logic moved to useEffect
     }
   }, [mediaRecorder]);
+
+  useEffect(() => {
+    let interval: number | null = null;
+    if (isRecording) {
+      interval = window.setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else if (interval) {
+      clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRecording]);
 
   const resetRecording = useCallback(() => {
     setAudioBlob(null);
     setRecordingTime(0);
+    setIsRecording(false);
   }, []);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stream.getTracks().forEach(track => track.stop());
       }
