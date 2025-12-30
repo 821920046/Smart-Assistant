@@ -5,7 +5,7 @@ import { Memo, TodoItem, Priority, RepeatInterval } from '../../types';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
 
-const Whiteboard = React.lazy(() => import('./Whiteboard'));
+const SketchCanvas = React.lazy(() => import('@/components/features/SketchCanvas').then(m => ({ default: m.SketchCanvas })));
 
 interface MemoEditorProps {
   onSave: (memo: Partial<Memo>) => void;
@@ -408,9 +408,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
 
       {showWhiteboard && (
         <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div></div>}>
-          <Whiteboard
+          <SketchCanvas
             initialData={sketchData || undefined}
-            onSave={(data) => {
+            onSave={(data: string) => {
               setSketchData(data);
               setShowWhiteboard(false);
             }}

@@ -1,369 +1,363 @@
-
 import React, { useState, useEffect } from 'react';
-import { syncService, SyncConfig, SyncProvider } from '../services/sync.js';
-import { storage } from '../services/storage.js';
+import { syncService, SyncConfig, SyncProvider } from '../../services/sync';
+import { storage } from '../../services/storage';
 
 interface SyncSettingsProps {
-  onClose: () => void;
-  onSyncComplete: () => void;
+    onClose: () => void;
+    onSyncComplete: () => void;
 }
 
 const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) => {
-  const [config, setConfig] = useState<SyncConfig>(syncService.getConfig());
-  const [isTesting, setIsTesting] = useState(false);
-  const [snapshots, setSnapshots] = useState<{id: number, date: string, data: any}[]>([]);
-  const [lastSyncTime, setLastSyncTime] = useState<number>(0);
+    const [config, setConfig] = useState<SyncConfig>(syncService.getConfig());
+    const [isTesting, setIsTesting] = useState(false);
+    const [snapshots, setSnapshots] = useState<{ id: number, date: string, data: any }[]>([]);
+    const [lastSyncTime, setLastSyncTime] = useState<number>(0);
 
-  const [repoInfo, setRepoInfo] = useState<{size: number} | null>(null);
+    const [repoInfo, setRepoInfo] = useState<{ size: number } | null>(null);
 
-  useEffect(() => {
-    loadSnapshots();
-    setLastSyncTime(syncService.getLastSyncTime());
-  }, []);
-
-  useEffect(() => {
-      if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
-          syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
-      } else {
-          setRepoInfo(null);
-      }
-  }, [config.provider, config.settings.githubToken, config.settings.githubRepo]);
-
-  const handleCleanupRemote = async () => {
-      if (!confirm('Are you sure you want to delete the remote sync file? This will not delete the repository history, but will remove the current data file. Local data will not be affected.')) return;
-      try {
-          await syncService.deleteRemoteData(config);
-          alert('Remote data deleted successfully.');
-          if (config.provider === 'github_repo') {
-              syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
-          }
-      } catch (e) {
-          alert('Cleanup failed: ' + (e as Error).message);
-      }
-  };
-
-  const loadSnapshots = async () => {
-    try {
-      const list = await storage.getHistorySnapshots();
-      setSnapshots(list);
-    } catch (e) {
-      console.error('Failed to load snapshots', e);
-    }
-  };
-
-  const handleRestore = async (snapshot: any) => {
-    if (!confirm(`Restore snapshot from ${new Date(snapshot.date).toLocaleString()}? Current data will be replaced.`)) return;
-    try {
-        await storage.restoreSnapshot(snapshot.data);
-        alert('Restored successfully! Page will reload.');
-        window.location.reload();
-    } catch(e) {
-        alert('Restore failed: ' + (e as Error).message);
-    }
-  };
-
-  const handleDeleteSnapshot = async (id: number) => {
-    if (!confirm('Delete this snapshot?')) return;
-    try {
-        await storage.deleteHistorySnapshot(id);
+    useEffect(() => {
         loadSnapshots();
-    } catch(e) {
-        alert('Delete failed: ' + (e as Error).message);
-    }
-  };
+        setLastSyncTime(syncService.getLastSyncTime());
+    }, []);
 
-  const handleCreateSnapshot = async () => {
-    try {
-      await storage.saveHistorySnapshot();
-      await loadSnapshots();
-      alert('Backup created successfully!');
-    } catch (e) {
-      alert('Backup failed: ' + (e as Error).message);
-    }
-  };
-
-  const saveAndSync = async () => {
-    setIsTesting(true);
-    try {
-      syncService.saveConfig(config);
-      
-      // Auto-upload config to GitHub if provider is github_repo
-      if (config.provider === 'github_repo') {
-          try {
-              await syncService.uploadSyncConfigToGithub(config);
-          } catch (e) {
-              console.warn('Failed to upload sync config to GitHub:', e);
-              // Non-blocking, just warn
-          }
-      }
-
-      // 这里�?App.tsx 处理实际同步，此处仅关闭
-      if (typeof onSyncComplete === 'function') {
-        try {
-          onSyncComplete();
-        } catch (innerErr) {
-          console.warn('onSyncComplete failed:', innerErr);
-        }
-      }
-      if (typeof onClose === 'function') {
-        onClose();
-      }
-    } catch (e) {
-      alert('配置有误: ' + (e as Error).message);
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const handleCloudRestore = async () => {
-      const token = config.settings.githubToken;
-      if (!token) {
-          alert('Please enter your GitHub Token first.');
-          return;
-      }
-      
-      if (!confirm('This will search your GitHub repositories for a sync config and overwrite current settings. Continue?')) return;
-
-      setIsTesting(true);
-      try {
-          const restoredConfig = await syncService.restoreConfigFromGithub(token);
-          if (restoredConfig) {
-              setConfig(restoredConfig);
-              alert('Config found and restored! Click "Save & Sync" to apply.');
-          } else {
-              alert('No config file (.sync-config.json) found in your repositories.');
-          }
-      } catch (e) {
-          alert('Restore failed: ' + (e as Error).message);
-      } finally {
-          setIsTesting(false);
-      }
-  };
-
-  const updateSetting = (key: string, value: string) => {
-    setConfig(prev => ({
-      ...prev,
-      settings: { ...prev.settings, [key]: value }
-    }));
-  };
-
-  const handleExportConfig = () => {
-    const dataStr = JSON.stringify(config, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `smart-assistant-config-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const importedConfig = JSON.parse(event.target?.result as string);
-        if (importedConfig && importedConfig.provider) {
-          setConfig(importedConfig);
-          alert('Config imported successfully!');
+    useEffect(() => {
+        if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
+            syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
         } else {
-          alert('Invalid config file.');
+            setRepoInfo(null);
         }
-      } catch (err) {
-        alert('Failed to parse config file.');
-      }
+    }, [config.provider, config.settings.githubToken, config.settings.githubRepo]);
+
+    const handleCleanupRemote = async () => {
+        if (!confirm('Are you sure you want to delete the remote sync file? This will not delete the repository history, but will remove the current data file. Local data will not be affected.')) return;
+        try {
+            await syncService.deleteRemoteData(config);
+            alert('Remote data deleted successfully.');
+            if (config.provider === 'github_repo') {
+                syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
+            }
+        } catch (e) {
+            alert('Cleanup failed: ' + (e as Error).message);
+        }
     };
-    reader.readAsText(file);
-    // Reset input
-    e.target.value = '';
-  };
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
-      <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-card">
-        <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">同步设置</h2>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
-                {lastSyncTime ? `Last Sync: ${new Date(lastSyncTime).toLocaleString()}` : 'Not synced yet'}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleExportConfig}
-              title="Export Config"
-              className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </button>
-            <label 
-              title="Import Config"
-              className="p-2 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </label>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-900 text-2xl ml-2">&times;</button>
-          </div>
-        </header>
+    const loadSnapshots = async () => {
+        try {
+            const list = await storage.getHistorySnapshots();
+            setSnapshots(list);
+        } catch (e) {
+            console.error('Failed to load snapshots', e);
+        }
+    };
 
-        <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto no-scrollbar">
-          <section className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
-            <div className="grid grid-cols-2 gap-3">
-              {(['github_repo', 'none', 'webdav'] as SyncProvider[]).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setConfig({ ...config, provider: p })}
-                  className={`py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${
-                    config.provider === p 
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
-                    : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
-                  }`}
-                >
-                  {p === 'none' ? '仅本�? : p === 'github_repo' ? 'GitHub Repo' : p}
-                </button>
-              ))}
-            </div>
-          </section>
+    const handleRestore = async (snapshot: any) => {
+        if (!confirm(`Restore snapshot from ${new Date(snapshot.date).toLocaleString()}? Current data will be replaced.`)) return;
+        try {
+            await storage.restoreSnapshot(snapshot.data);
+            alert('Restored successfully! Page will reload.');
+            window.location.reload();
+        } catch (e) {
+            alert('Restore failed: ' + (e as Error).message);
+        }
+    };
 
-          {config.provider === 'github_repo' && (
-            <div className="space-y-4 animate-card">
-               <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
-                核心原则：Local-First / 云端仅备�?/ 单人使用 / 冲突可控
-              </div>
-              <div className="relative">
-                <input 
-                    type="password" placeholder="GitHub Personal Access Token (Repo Scope)" 
-                    value={config.settings.githubToken || ''} 
-                    onChange={e => updateSetting('githubToken', e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 pr-32"
-                />
-                {config.settings.githubToken && !config.settings.githubRepo && (
-                    <button 
-                        onClick={handleCloudRestore}
-                        className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
-                    >
-                        从云端恢复配�?
-                    </button>
-                )}
-              </div>
-              <input 
-                type="text" placeholder="Repository (username/repo)" 
-                value={config.settings.githubRepo || ''} 
-                onChange={e => updateSetting('githubRepo', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <input 
-                type="password" placeholder="Sync Password (Encryption)" 
-                value={config.settings.encryptionPassword || ''} 
-                onChange={e => updateSetting('encryptionPassword', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <p className="text-[10px] text-slate-400 px-2">
-                数据将使�?AES-256 加密存储在您的私有仓库中�?
-              </p>
+    const handleDeleteSnapshot = async (id: number) => {
+        if (!confirm('Delete this snapshot?')) return;
+        try {
+            await storage.deleteHistorySnapshot(id);
+            loadSnapshots();
+        } catch (e) {
+            alert('Delete failed: ' + (e as Error).message);
+        }
+    };
 
-                {repoInfo && (
-                    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="font-bold text-slate-500">Repository Storage</span>
-                            <span className={`font-mono ${repoInfo.size > 100000 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                                {(repoInfo.size / 1024).toFixed(2)} MB
-                            </span>
-                        </div>
-                        {repoInfo.size > 100000 && (
-                            <p className="text-red-500 mb-2">Warning: Repository size is large (&gt;100MB). Consider creating a new repository to reset history.</p>
-                        )}
-                         <div className="text-slate-400 mb-2">
-                            GitHub saves history for every sync. Over time, the repository size will grow.
-                        </div>
-                        <button 
-                            onClick={handleCleanupRemote}
-                            className="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors"
+    const handleCreateSnapshot = async () => {
+        try {
+            await storage.saveHistorySnapshot();
+            await loadSnapshots();
+            alert('Backup created successfully!');
+        } catch (e) {
+            alert('Backup failed: ' + (e as Error).message);
+        }
+    };
+
+    const saveAndSync = async () => {
+        setIsTesting(true);
+        try {
+            syncService.saveConfig(config);
+
+            if (config.provider === 'github_repo') {
+                try {
+                    await syncService.uploadSyncConfigToGithub(config);
+                } catch (e) {
+                    console.warn('Failed to upload sync config to GitHub:', e);
+                }
+            }
+
+            if (typeof onSyncComplete === 'function') {
+                try {
+                    onSyncComplete();
+                } catch (innerErr) {
+                    console.warn('onSyncComplete failed:', innerErr);
+                }
+            }
+            if (typeof onClose === 'function') {
+                onClose();
+            }
+        } catch (e) {
+            alert('配置有误: ' + (e as Error).message);
+        } finally {
+            setIsTesting(false);
+        }
+    };
+
+    const handleCloudRestore = async () => {
+        const token = config.settings.githubToken;
+        if (!token) {
+            alert('Please enter your GitHub Token first.');
+            return;
+        }
+
+        if (!confirm('This will search your GitHub repositories for a sync config and overwrite current settings. Continue?')) return;
+
+        setIsTesting(true);
+        try {
+            const restoredConfig = await syncService.restoreConfigFromGithub(token);
+            if (restoredConfig) {
+                setConfig(restoredConfig);
+                alert('Config found and restored! Click "Save & Sync" to apply.');
+            } else {
+                alert('No config file (.sync-config.json) found in your repositories.');
+            }
+        } catch (e) {
+            alert('Restore failed: ' + (e as Error).message);
+        } finally {
+            setIsTesting(false);
+        }
+    };
+
+    const updateSetting = (key: string, value: string) => {
+        setConfig(prev => ({
+            ...prev,
+            settings: { ...prev.settings, [key]: value }
+        }));
+    };
+
+    const handleExportConfig = () => {
+        const dataStr = JSON.stringify(config, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `smart-assistant-config-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const importedConfig = JSON.parse(event.target?.result as string);
+                if (importedConfig && importedConfig.provider) {
+                    setConfig(importedConfig);
+                    alert('Config imported successfully!');
+                } else {
+                    alert('Invalid config file.');
+                }
+            } catch (err) {
+                alert('Failed to parse config file.');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
+    return (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+            <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-card">
+                <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">同步设置</h2>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                            {lastSyncTime ? `Last Sync: ${new Date(lastSyncTime).toLocaleString()}` : 'Not synced yet'}
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExportConfig}
+                            title="Export Config"
+                            className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
                         >
-                            Delete Remote Sync File
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                         </button>
+                        <label
+                            title="Import Config"
+                            className="p-2 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                        >
+                            <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                        </label>
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-900 text-2xl ml-2">&times;</button>
                     </div>
-                )}
-            </div>
-          )}
+                </header>
 
-          {config.provider === 'webdav' && (
-            <div className="space-y-4 animate-card">
-              <input 
-                type="text" placeholder="WebDAV URL (如坚果云 dav.jianguoyun.com/dav/)" 
-                value={config.settings.webdavUrl || ''} 
-                onChange={e => updateSetting('webdavUrl', e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input 
-                  type="text" placeholder="用户�? 
-                  value={config.settings.webdavUser || ''} 
-                  onChange={e => updateSetting('webdavUser', e.target.value)}
-                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-                <input 
-                  type="password" placeholder="应用密码" 
-                  value={config.settings.webdavPass || ''} 
-                  onChange={e => updateSetting('webdavPass', e.target.value)}
-                  className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-            </div>
-          )}
+                <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto no-scrollbar">
+                    <section className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            {(['github_repo', 'none', 'webdav'] as SyncProvider[]).map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => setConfig({ ...config, provider: p })}
+                                    className={`py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${config.provider === p
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                                            : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
+                                        }`}
+                                >
+                                    {p === 'none' ? '仅本地' : p === 'github_repo' ? 'GitHub Repo' : p}
+                                </button>
+                            ))}
+                        </div>
+                    </section>
 
-          <section className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">本地历史快照 (Auto Backup)</label>
-                <div className="flex gap-2">
-                    <button onClick={handleCreateSnapshot} className="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-lg">NEW BACKUP</button>
-                    <button onClick={loadSnapshots} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-2 py-1">REFRESH</button>
+                    {config.provider === 'github_repo' && (
+                        <div className="space-y-4 animate-card">
+                            <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
+                                核心原则：Local-First / 云端仅备份 / 单人使用 / 冲突可控
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="password" placeholder="GitHub Personal Access Token (Repo Scope)"
+                                    value={config.settings.githubToken || ''}
+                                    onChange={e => updateSetting('githubToken', e.target.value)}
+                                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 pr-32"
+                                />
+                                {config.settings.githubToken && !config.settings.githubRepo && (
+                                    <button
+                                        onClick={handleCloudRestore}
+                                        className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
+                                    >
+                                        从云端恢复配置
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                type="text" placeholder="Repository (username/repo)"
+                                value={config.settings.githubRepo || ''}
+                                onChange={e => updateSetting('githubRepo', e.target.value)}
+                                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                            <input
+                                type="password" placeholder="Sync Password (Encryption)"
+                                value={config.settings.encryptionPassword || ''}
+                                onChange={e => updateSetting('encryptionPassword', e.target.value)}
+                                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                            <p className="text-[10px] text-slate-400 px-2">
+                                数据将使用 AES-256 加密存储在您的私有仓库中。
+                            </p>
+
+                            {repoInfo && (
+                                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-bold text-slate-500">Repository Storage</span>
+                                        <span className={`font-mono ${repoInfo.size > 100000 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                                            {(repoInfo.size / 1024).toFixed(2)} MB
+                                        </span>
+                                    </div>
+                                    {repoInfo.size > 100000 && (
+                                        <p className="text-red-500 mb-2">Warning: Repository size is large (&gt;100MB). Consider creating a new repository to reset history.</p>
+                                    )}
+                                    <div className="text-slate-400 mb-2">
+                                        GitHub saves history for every sync. Over time, the repository size will grow.
+                                    </div>
+                                    <button
+                                        onClick={handleCleanupRemote}
+                                        className="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors"
+                                    >
+                                        Delete Remote Sync File
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {config.provider === 'webdav' && (
+                        <div className="space-y-4 animate-card">
+                            <input
+                                type="text" placeholder="WebDAV URL (如坚果云 dav.jianguoyun.com/dav/)"
+                                value={config.settings.webdavUrl || ''}
+                                onChange={e => updateSetting('webdavUrl', e.target.value)}
+                                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    type="text" placeholder="用户名"
+                                    value={config.settings.webdavUser || ''}
+                                    onChange={e => updateSetting('webdavUser', e.target.value)}
+                                    className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                                />
+                                <input
+                                    type="password" placeholder="应用密码"
+                                    value={config.settings.webdavPass || ''}
+                                    onChange={e => updateSetting('webdavPass', e.target.value)}
+                                    className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <section className="space-y-4 pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">本地历史快照 (Auto Backup)</label>
+                            <div className="flex gap-2">
+                                <button onClick={handleCreateSnapshot} className="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-lg">NEW BACKUP</button>
+                                <button onClick={loadSnapshots} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-2 py-1">REFRESH</button>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-2xl p-2 max-h-40 overflow-y-auto space-y-2">
+                            {snapshots.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No snapshots found.</div>}
+                            {snapshots.map(s => (
+                                <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-slate-700">{new Date(s.date).toLocaleString()}</span>
+                                        <span className="text-[10px] text-slate-400">{s.data.memos?.length || 0} items</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleRestore(s)} className="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-200">RESTORE</button>
+                                        <button onClick={() => handleDeleteSnapshot(s.id)} className="text-[10px] font-black text-slate-300 hover:text-red-500 px-2">×</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 </div>
-            </div>
-            
-            <div className="bg-slate-50 rounded-2xl p-2 max-h-40 overflow-y-auto space-y-2">
-                {snapshots.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No snapshots found.</div>}
-                {snapshots.map(s => (
-                    <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-700">{new Date(s.date).toLocaleString()}</span>
-                            <span className="text-[10px] text-slate-400">{s.data.memos.length + s.data.todos.length + s.data.whiteboards.length} items</span>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => handleRestore(s)} className="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-200">RESTORE</button>
-                            <button onClick={() => handleDeleteSnapshot(s.id)} className="text-[10px] font-black text-slate-300 hover:text-red-500 px-2">×</button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-          </section>
-        </div>
 
-        <footer className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
-          <button 
-            onClick={onClose}
-            className="flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
-          >
-            取消
-          </button>
-          <button 
-            onClick={saveAndSync}
-            disabled={isTesting}
-            className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all"
-          >
-            {isTesting ? '正在验证...' : '保存并开始同�?}
-          </button>
-        </footer>
-      </div>
-    </div>
-  );
+                <footer className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={saveAndSync}
+                        disabled={isTesting}
+                        className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all"
+                    >
+                        {isTesting ? '正在验证...' : '保存并开始同步'}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
 };
 
 export default SyncSettings;

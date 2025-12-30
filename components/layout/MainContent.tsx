@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
-import DashboardView from '../features/DashboardView';
-import TasksView from '../features/TasksView';
-import KanbanView from '../features/KanbanView';
-import SettingsView from '../features/SettingsView';
-import Whiteboard from '../features/Whiteboard';
+import DashboardView from '@/components/features/DashboardView';
+import TasksView from '@/components/features/TasksView';
+import KanbanView from '@/components/features/KanbanView';
+import SettingsView from '@/components/features/SettingsView';
+import Whiteboard from '@/components/features/Whiteboard';
 import { Memo } from '../../types';
 
 interface MainContentProps {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import Sidebar from './components/layout/Sidebar';
-import MainContent from './components/layout/MainContent';
+import Sidebar from '@/components/layout/Sidebar';
+import MainContent from '@/components/layout/MainContent';
 import { Icons } from './constants';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
@@ -10,11 +10,13 @@ import { useMemoFilter } from './hooks/useMemoFilter';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
 import { storage } from './services/storage';
-import MobileNav from './components/layout/MobileNav';
+import MobileNav from '@/components/layout/MobileNav';
 import { lazyWithRetry } from './utils/lazyWithRetry';
+import { syncService } from './services/sync';
+import { Memo } from './types';
 
-const SyncSettings = lazyWithRetry(() => import('./components/features/SyncSettings'));
-const ConflictResolver = lazyWithRetry(() => import('./components/features/ConflictResolver'));
+const SyncSettings = lazyWithRetry(() => import('@/components/features/SyncSettings'));
+const ConflictResolver = lazyWithRetry(() => import('@/components/features/ConflictResolver'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('dashboard');
@@ -217,7 +219,8 @@ const AppContent: React.FC = () => {
           {conflictError && (
             <ConflictResolver
               error={conflictError}
-              onResolve={(resolvedMemos) => {
+              config={syncService.getConfig()}
+              onResolve={(resolvedMemos: Memo[]) => {
                 setMemos(resolvedMemos);
                 setConflictError(null);
                 addToast('Sync conflict resolved.', 'success');
