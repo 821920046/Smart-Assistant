@@ -13,8 +13,8 @@ import { Memo } from './types';
 import { useStore } from './services/store';
 import { useMemoFilter } from './hooks/useMemoFilter';
 
-const SyncSettings = lazyWithRetry(() => import('@/components/features/SyncSettings'));
-const ConflictResolver = lazyWithRetry(() => import('@/components/features/ConflictResolver'));
+import SyncSettings from '@/components/features/SyncSettings';
+import ConflictResolver from '@/components/features/ConflictResolver';
 
 const AppContent: React.FC = () => {
   const {
@@ -173,29 +173,25 @@ const AppContent: React.FC = () => {
           <MainContent />
         </main>
 
-        <Suspense fallback={null}>
-          {isSyncSettingsOpen && (
-            <SyncSettings
-              onClose={() => setSyncSettingsOpen(false)}
-              onSyncComplete={() => performSync(false)}
-            />
-          )}
-        </Suspense>
+        {isSyncSettingsOpen && (
+          <SyncSettings
+            onClose={() => setSyncSettingsOpen(false)}
+            onSyncComplete={() => performSync(false)}
+          />
+        )}
 
-        <Suspense fallback={null}>
-          {conflictError && (
-            <ConflictResolver
-              error={conflictError}
-              config={syncService.getConfig()}
-              onResolve={(resolvedMemos: Memo[]) => {
-                setMemos(resolvedMemos);
-                setConflictError(null);
-                addToast('Sync conflict resolved.', 'success');
-              }}
-              onCancel={() => setConflictError(null)}
-            />
-          )}
-        </Suspense>
+        {conflictError && (
+          <ConflictResolver
+            error={conflictError}
+            config={syncService.getConfig()}
+            onResolve={(resolvedMemos: Memo[]) => {
+              setMemos(resolvedMemos);
+              setConflictError(null);
+              addToast('Sync conflict resolved.', 'success');
+            }}
+            onCancel={() => setConflictError(null)}
+          />
+        )}
 
         <MobileNav />
       </div>
