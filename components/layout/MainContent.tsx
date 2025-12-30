@@ -19,7 +19,7 @@ const MainContent: React.FC = () => {
             case 'tasks':
                 return <TasksView memos={filteredMemos} title="Active Tasks" defaultType="todo" />;
             case 'notes':
-                return <TasksView memos={filteredMemos} title="All Notes" defaultType="memo" />;
+                return <TasksView memos={filteredMemos} title="All Notes" defaultType="memo" hideViewSwitcher hideSelectors />;
             case 'archive':
                 return (
                     <TasksView
@@ -27,10 +27,12 @@ const MainContent: React.FC = () => {
                         title="Archived Items"
                         onClearAll={clearHistory}
                         defaultType="memo"
+                        hideViewSwitcher
+                        hideSelectors
                     />
                 );
             case 'favorites':
-                return <TasksView memos={filteredMemos} title="Favorite Notes" />;
+                return <TasksView memos={filteredMemos} title="Favorite Notes" hideViewSwitcher hideSelectors />;
             case 'kanban':
                 return <KanbanView />;
             case 'whiteboard':

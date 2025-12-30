@@ -12,10 +12,11 @@ interface MemoEditorProps {
   onCancel?: () => void;
   initialMemo?: Memo;
   defaultCategory?: string;
-  defaultType?: 'todo' | 'memo';
+  defaultType?: 'todo' | 'memo' | 'sketch';
+  hideSelectors?: boolean;
 }
 
-const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, defaultCategory, defaultType = 'todo' }) => {
+const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, defaultCategory, defaultType = 'todo', hideSelectors = false }) => {
   const [title, setTitle] = useState(initialMemo?.title || '');
   const [content, setContent] = useState(initialMemo?.content || '');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -253,49 +254,52 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 gap-4">
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Category Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowCategoryOptions(!showCategoryOptions)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors border border-slate-100 dark:border-slate-700 min-h-[36px]"
-            >
-              <Icons.Folder className="w-3.5 h-3.5" />
-              <span>{category}</span>
-              <Icons.ChevronDown className="w-3 h-3" />
-            </button>
-            {showCategoryOptions && (
-              <div className="absolute bottom-full left-0 mb-2 w-32 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 p-1 z-50">
-                {CATEGORIES.map(cat => (
+          {/* Category & Priority Selectors - Conditionally hidden */}
+          {!hideSelectors && (
+            <>
+              <div className="relative">
+                <button
+                  onClick={() => setShowCategoryOptions(!showCategoryOptions)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors border border-slate-100 dark:border-slate-700 min-h-[36px]"
+                >
+                  <Icons.Folder className="w-3.5 h-3.5" />
+                  <span>{category}</span>
+                  <Icons.ChevronDown className="w-3 h-3" />
+                </button>
+                {showCategoryOptions && (
+                  <div className="absolute bottom-full left-0 mb-2 w-32 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 p-1 z-50">
+                    {CATEGORIES.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => { setCategory(cat); setShowCategoryOptions(false); }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${category === cat
+                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                          }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px]">
+                {(Object.keys(priorityConfig) as Priority[]).map((p) => (
                   <button
-                    key={cat}
-                    onClick={() => { setCategory(cat); setShowCategoryOptions(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${category === cat
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
                       }`}
                   >
-                    {cat}
+                    {priorityConfig[p].label}
                   </button>
                 ))}
               </div>
-            )}
-          </div>
 
-          {/* Priority Selector */}
-          <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px]">
-            {(Object.keys(priorityConfig) as Priority[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPriority(p)}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
-                  }`}
-              >
-                {priorityConfig[p].label}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
+              <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
+            </>
+          )}
 
           {/* Editor Toolbar */}
           <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 overflow-x-auto no-scrollbar max-w-[200px] md:max-w-full min-h-[36px]">
@@ -392,7 +396,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
           ) : (
             <>
               {isEditing ? <Icons.Check /> : <Icons.Plus />}
-              <span>{isEditing ? 'Update Task' : 'Create Task'}</span>
+              <span>
+                {isEditing
+                  ? (initialMemo.type === 'todo' || defaultType === 'todo' ? 'Update Task' : 'Update Note')
+                  : (defaultType === 'todo' ? 'Create Task' : 'Create Note')
+                }
+              </span>
             </>
           )}
         </button>
