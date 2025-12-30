@@ -9,6 +9,7 @@ interface TasksViewProps {
   memos: Memo[];
   title?: string;
   onClearAll?: () => void;
+  defaultType?: 'todo' | 'memo' | 'sketch';
 }
 
 type ViewType = 'today' | 'board';
@@ -16,13 +17,11 @@ type ViewType = 'today' | 'board';
 const TasksView: React.FC<TasksViewProps> = ({
   memos,
   title,
-  onClearAll
+  onClearAll,
+  defaultType = 'todo'
 }) => {
   const { searchQuery, addMemo } = useStore();
   const [currentView, setCurrentView] = useState<ViewType>('today');
-
-  // Ensure we only show Todos in this view
-  const todoMemos = memos.filter(m => m.type === 'todo');
 
   return (
     <div className="space-y-6">
@@ -64,9 +63,9 @@ const TasksView: React.FC<TasksViewProps> = ({
       <div className="min-h-[500px]">
         {currentView === 'today' && (
           <div className="space-y-6">
-            <MemoEditor onSave={addMemo} defaultType="todo" />
+            <MemoEditor onSave={addMemo} defaultType={defaultType} />
             <MemoList
-              memos={todoMemos}
+              memos={memos}
               searchQuery={searchQuery}
             />
           </div>

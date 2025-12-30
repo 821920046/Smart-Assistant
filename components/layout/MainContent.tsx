@@ -9,7 +9,7 @@ import { useStore } from '../../services/store';
 import { useMemoFilter } from '../../hooks/useMemoFilter';
 
 const MainContent: React.FC = () => {
-    const { filter, searchQuery, memos } = useStore();
+    const { filter, searchQuery, memos, clearHistory } = useStore();
     const filteredMemos = useMemoFilter(memos, filter, searchQuery);
 
     const renderContent = () => {
@@ -17,11 +17,18 @@ const MainContent: React.FC = () => {
             case 'dashboard':
                 return <DashboardView />;
             case 'tasks':
-                return <TasksView memos={filteredMemos} title="Active Tasks" />;
+                return <TasksView memos={filteredMemos} title="Active Tasks" defaultType="todo" />;
             case 'notes':
-                return <TasksView memos={filteredMemos} title="All Notes" />;
+                return <TasksView memos={filteredMemos} title="All Notes" defaultType="memo" />;
             case 'archive':
-                return <TasksView memos={filteredMemos} title="Archived Items" />;
+                return (
+                    <TasksView
+                        memos={filteredMemos}
+                        title="Archived Items"
+                        onClearAll={clearHistory}
+                        defaultType="memo"
+                    />
+                );
             case 'favorites':
                 return <TasksView memos={filteredMemos} title="Favorite Notes" />;
             case 'kanban':
