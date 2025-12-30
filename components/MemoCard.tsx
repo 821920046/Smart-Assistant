@@ -39,20 +39,38 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, onUpdate, onDelete, compact }
     let currentUrl: string | null = null;
     let isCancelled = false;
 
-    if (memo.audio?.id) {
-      storage.getAudio(memo.audio.id).then(blob => {
+    const loadAudio = async () => {
+      const id = memo.audio?.id;
+      if (!id) {
+        setAudioUrl(null);
+        return;
+      }
+
+      try {
+        const blob = await storage.getAudio(id);
         if (blob && !isCancelled) {
-          currentUrl = URL.createObjectURL(blob);
-          setAudioUrl(currentUrl);
+          const url = URL.createObjectURL(blob);
+          currentUrl = url;
+          setAudioUrl(url);
+        } else if (!blob) {
+          console.warn('Audio blob not found for ID:', id);
+          setAudioUrl(null);
         }
-      });
-    }
+      } catch (error) {
+        console.error('Failed to load audio:', error);
+        setAudioUrl(null);
+      }
+    };
+
+    loadAudio();
 
     return () => {
       isCancelled = true;
-      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
     };
-  }, [memo.audio?.id]);
+  }, [memo.audio?.id, memo.id]); // Added memo.id as a fallback dependency
 
   const formatTime = (seconds?: number) => {
     if (seconds === undefined) return '';
