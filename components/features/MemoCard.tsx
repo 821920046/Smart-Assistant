@@ -163,10 +163,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
       whileHover={{ y: -2 }}
       className={`memo-card group relative bg-white dark:bg-slate-800 transition-shadow duration-200 text-left ${compact
-          ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md'
-          : hasTodos
-            ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
-            : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
+        ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md'
+        : hasTodos
+          ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
+          : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
         }`}
     >
       {/* Header */}
@@ -192,8 +192,8 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
               handleToggleMemo();
             }}
             className={`mt-1 flex-shrink-0 transition-colors duration-200 ${memo.isArchived
-                ? 'text-slate-400 dark:text-slate-500'
-                : 'text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400'
+              ? 'text-slate-400 dark:text-slate-500'
+              : 'text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400'
               }`}
           >
             {memo.isArchived ? (
@@ -205,10 +205,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
 
           <div className="flex-1 min-w-0 text-left">
             <div className={`break-words ${compact ? 'mb-1' : 'mb-2'} ${compact
-                ? 'text-sm font-semibold text-slate-900 dark:text-slate-100'
-                : hasTodos
-                  ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
-                  : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
+              ? 'text-sm font-semibold text-slate-900 dark:text-slate-100'
+              : hasTodos
+                ? 'text-xl font-bold leading-normal text-slate-900 dark:text-slate-100'
+                : 'text-lg font-semibold text-slate-900 dark:text-slate-100'
               } ${memo.isArchived ? 'line-through opacity-50' : ''}`}>
               {parseInline(memo.title || (memo.content && memo.content.split('\n')[0]) || '')}
             </div>
@@ -218,10 +218,16 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
                 <SimpleMarkdown
                   content={memo.title ? (memo.content || '') : (memo.content ? memo.content.split('\n').slice(1).join('\n') : '')}
                   className={`${compact
-                      ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed'
-                      : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
+                    ? 'text-xs text-slate-500 dark:text-slate-400 leading-relaxed'
+                    : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-4'
                     } ${memo.isArchived ? 'opacity-50' : ''}`}
                 />
+              </div>
+            )}
+
+            {memo.sketchData && (
+              <div className={`relative mt-2 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900/50 ${compact ? 'w-full h-24' : 'w-full max-w-sm h-48'}`}>
+                <img src={memo.sketchData} alt="Sketch" className="w-full h-full object-contain" />
               </div>
             )}
           </div>
@@ -255,15 +261,15 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
                 <div
                   key={todo.id}
                   className={`flex items-start gap-3 group/todo transition-all duration-200 ${compact
-                      ? 'p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30'
-                      : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
+                    ? 'p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                    : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
                     }`}
                 >
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
                     className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-all ${todo.completed
-                        ? 'bg-indigo-500 border-indigo-500 text-white'
-                        : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
+                      ? 'bg-indigo-500 border-indigo-500 text-white'
+                      : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
                       }`}
                   >
                     {todo.completed && <Icons.Check className="w-3 h-3" />}
@@ -291,8 +297,8 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         {compact && (
           <div className="flex items-center justify-between text-xs text-slate-400 mt-auto pt-2">
             <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${memo.priority === 'important' ? 'bg-rose-50 text-rose-600' :
-                memo.priority === 'secondary' ? 'bg-slate-100 text-slate-500' :
-                  'bg-indigo-50 text-indigo-600'
+              memo.priority === 'secondary' ? 'bg-slate-100 text-slate-500' :
+                'bg-indigo-50 text-indigo-600'
               }`}>
               {memo.priority === 'important' ? 'High' : memo.priority === 'secondary' ? 'Low' : 'Normal'}
             </span>
