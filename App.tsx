@@ -27,6 +27,38 @@ const AppContent: React.FC = () => {
   const filteredMemos = useMemoFilter(memos, filter, searchQuery);
   const { addToast } = useToast();
 
+  const handleExport = useCallback(async () => {
+    try {
+      const data = await storage.exportSnapshot();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `smart-assistant-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast('Data exported successfully', 'success');
+    } catch (error) {
+      console.error('Export failed:', error);
+      addToast('Failed to export data', 'error');
+    }
+  }, [addToast]);
+
+  const handleImport = useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await storage.restoreSnapshot(data);
+      init(); // Re-init to load new data
+      addToast('Data imported successfully', 'success');
+    } catch (error) {
+      console.error('Import failed:', error);
+      addToast('Failed to import data', 'error');
+    }
+  }, [init, addToast]);
+
   // Initialize Store
   useEffect(() => {
     init();
@@ -78,6 +110,13 @@ const AppContent: React.FC = () => {
     };
   }, [performSync, isLoading]);
 
+  // Listen for custom export events from subcomponents
+  useEffect(() => {
+    const handleExportEvent = () => handleExport();
+    window.addEventListener('app-export', handleExportEvent);
+    return () => window.removeEventListener('app-export', handleExportEvent);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -85,45 +124,6 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
-
-  const handleExport = async () => {
-    try {
-      const data = await storage.exportSnapshot();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `smart-assistant-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      addToast('Data exported successfully', 'success');
-    } catch (error) {
-      console.error('Export failed:', error);
-      addToast('Failed to export data', 'error');
-    }
-  };
-
-  const handleImport = async (file: File) => {
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      await storage.restoreSnapshot(data);
-      init(); // Re-init to load new data
-      addToast('Data imported successfully', 'success');
-    } catch (error) {
-      console.error('Import failed:', error);
-      addToast('Failed to import data', 'error');
-    }
-  };
-
-  // Listen for custom export events from subcomponents
-  useEffect(() => {
-    const handleExportEvent = () => handleExport();
-    window.addEventListener('app-export', handleExportEvent);
-    return () => window.removeEventListener('app-export', handleExportEvent);
-  }, []);
 
   return (
     <ErrorBoundary>
