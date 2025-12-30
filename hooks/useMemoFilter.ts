@@ -38,7 +38,7 @@ export const useMemoFilter = (memos: Memo[], filter: string, searchQuery: string
       case 'important':
         filtered = filtered.filter(m => !m.isArchived && m.priority === 'important');
         break;
-      case 'archived':
+      case 'archive':
         filtered = filtered.filter(m => m.isArchived);
         break;
       default:

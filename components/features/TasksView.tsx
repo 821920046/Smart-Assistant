@@ -12,6 +12,7 @@ interface TasksViewProps {
   defaultType?: 'todo' | 'memo' | 'sketch';
   hideViewSwitcher?: boolean;
   hideSelectors?: boolean;
+  hideEditor?: boolean;
 }
 
 type ViewType = 'today' | 'board';
@@ -22,7 +23,8 @@ const TasksView: React.FC<TasksViewProps> = ({
   onClearAll,
   defaultType = 'todo',
   hideViewSwitcher = false,
-  hideSelectors = false
+  hideSelectors = false,
+  hideEditor = false
 }) => {
   const { searchQuery, addMemo } = useStore();
   const [currentView, setCurrentView] = useState<ViewType>('today');
@@ -70,7 +72,7 @@ const TasksView: React.FC<TasksViewProps> = ({
       <div className="min-h-[500px]">
         {currentView === 'today' && (
           <div className="space-y-6">
-            <MemoEditor onSave={addMemo} defaultType={defaultType} hideSelectors={hideSelectors} />
+            {!hideEditor && <MemoEditor onSave={addMemo} defaultType={defaultType} hideSelectors={hideSelectors} />}
             <MemoList
               memos={memos}
               searchQuery={searchQuery}

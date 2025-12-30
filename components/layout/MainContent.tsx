@@ -29,6 +29,7 @@ const MainContent: React.FC = () => {
                         defaultType="memo"
                         hideViewSwitcher
                         hideSelectors
+                        hideEditor
                     />
                 );
             case 'favorites':
