@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icons } from '../constants';
+import { Icons } from '../../constants';
 
 interface MobileNavProps {
   activeFilter: string;

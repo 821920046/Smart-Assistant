@@ -10,68 +10,74 @@ const getAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export async function extractTasks(content: string, forceTodo: boolean = false): Promise<TodoItem[]> {
+export async function analyzeNote(content: string): Promise<{ todos: TodoItem[], tags: string[] }> {
   try {
     const ai = getAI();
-    if (!ai) return [];
-
-    const systemPrompt = forceTodo 
-      ? "The user wants to create a checklist. Extract every meaningful line as a separate actionable todo item."
-      : "Extract actionable todo items from this note content. Assign priorities based on the content's urgency.";
+    if (!ai) return { todos: [], tags: [] };
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `${systemPrompt} Use these priority labels: 'important', 'normal', 'secondary'. Output in JSON.
+      model: "gemini-1.5-flash-latest",
+      contents: `Perform a deep analysis of this personal note content.
+      1. Extract actionable todo items.
+      2. Suggest 2-3 relevant tags.
+      
+      Output in JSON format with keys "todos" and "tags".
+      For "todos", each item should have "text" and "priority" (important/normal/secondary).
+      
       Content: "${content}"`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              text: { type: Type.STRING },
-              priority: { type: Type.STRING, enum: ['important', 'normal', 'secondary'] }
+          type: Type.OBJECT,
+          properties: {
+            todos: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  text: { type: Type.STRING },
+                  priority: { type: Type.STRING, enum: ['important', 'normal', 'secondary'] }
+                },
+                required: ["text", "priority"]
+              }
             },
-            required: ["text", "priority"]
-          }
+            tags: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ["todos", "tags"]
         }
       }
     });
 
-    const text = response.text || "[]";
+    const text = response.text || "{\"todos\":[],\"tags\":[]}";
     const data = JSON.parse(text);
-    return data.map((item: any) => ({
+
+    const todos = data.todos.map((item: any) => ({
       id: Math.random().toString(36).substr(2, 9),
       text: item.text,
       completed: false,
       priority: item.priority as Priority
     }));
+
+    const tags = data.tags.map((tag: string) => tag.replace(/^#/, ''));
+
+    return { todos, tags };
   } catch (e) {
-    console.error("extractTasks failed:", e);
-    return [];
+    console.error("analyzeNote failed:", e);
+    return { todos: [], tags: [] };
   }
 }
 
+export async function extractTasks(content: string, forceTodo: boolean = false): Promise<TodoItem[]> {
+  const result = await analyzeNote(content);
+  return result.todos;
+}
+
 export async function suggestTags(content: string): Promise<string[]> {
-  try {
-    const ai = getAI();
-    if (!ai) return [];
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Suggest 1-3 tags for this note. Output JSON array. Content: "${content}"`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
-      }
-    });
-    const text = response.text || "[]";
-    const tags = JSON.parse(text);
-    return tags.map((tag: string) => tag.replace(/^#/, ''));
-  } catch (e) {
-    console.error("suggestTags failed:", e);
-    return [];
-  }
+  const result = await analyzeNote(content);
+  return result.tags;
 }
 
 export async function askAssistant(query: string, contextMemos: string[]): Promise<string> {

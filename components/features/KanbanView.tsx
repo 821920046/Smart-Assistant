@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Memo, Priority } from '../types';
+import { Memo, Priority } from '../../types';
 import KanbanColumn from './KanbanColumn';
 
 interface KanbanViewProps {

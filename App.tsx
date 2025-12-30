@@ -1,20 +1,20 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import Sidebar from './components/Sidebar';
-import MainContent from './components/MainContent';
+import Sidebar from './components/layout/Sidebar';
+import MainContent from './components/layout/MainContent';
 import { Icons } from './constants';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
 import { useMemoData } from './hooks/useMemoData';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useMemoFilter } from './hooks/useMemoFilter';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { SyncConflictError } from './services/sync';
 import { storage } from './services/storage';
-import MobileNav from './components/MobileNav';
+import MobileNav from './components/layout/MobileNav';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
-const SyncSettings = lazyWithRetry(() => import('./components/SyncSettings'));
-const ConflictResolver = lazyWithRetry(() => import('./components/ConflictResolver'));
+const SyncSettings = lazyWithRetry(() => import('./components/features/SyncSettings'));
+const ConflictResolver = lazyWithRetry(() => import('./components/features/ConflictResolver'));
 
 const AppContent: React.FC = () => {
   const [filter, setFilter] = useState('dashboard');

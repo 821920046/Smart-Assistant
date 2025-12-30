@@ -1,9 +1,9 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react';
-import { Icons, CATEGORIES } from '../constants';
-import { extractTasks, suggestTags } from '../services/gemini';
-import { Memo, TodoItem, Priority, RepeatInterval } from '../types';
-import { useAudioRecorder } from '../hooks/useAudioRecorder';
-import { storage } from '../services/storage';
+import { Icons, CATEGORIES } from '../../constants';
+import { analyzeNote } from '../../services/gemini';
+import { Memo, TodoItem, Priority, RepeatInterval } from '../../types';
+import { useAudioRecorder } from '../../hooks/useAudioRecorder';
+import { storage } from '../../services/storage';
 
 const Whiteboard = React.lazy(() => import('./Whiteboard'));
 
@@ -122,17 +122,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
 
       if (content.trim() && content !== initialMemo?.content) {
         // Only re-parse if content changed
-        const newTodos = localParseTasks(content);
+        const { todos: newTodos, tags: newTags } = await analyzeNote(content);
+
         if (newTodos.length > 0) {
-          // Merge or replace? For simplicity, if editing and new tasks found, replace list.
-          // But usually we don't want to lose completion status.
-          // Here we'll just use new ones if it's a new note, or keep old ones if editing unless content changed significantly.
-          // Actually, for editing, we might just want to update the text.
           todos = newTodos;
         }
-
-        const tagsResult = await suggestTags(content);
-        tags = tagsResult;
+        tags = newTags;
       }
 
       onSave({

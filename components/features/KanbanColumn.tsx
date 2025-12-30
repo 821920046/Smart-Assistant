@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Memo, Priority } from '../types';
+import { Memo, Priority } from '../../types';
 import MemoCard from './MemoCard';
-import { Icons } from '../constants';
+import { Icons } from '../../constants';
 
 interface KanbanColumnProps {
   id: string;

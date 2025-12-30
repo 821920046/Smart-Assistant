@@ -1,6 +1,6 @@
 import React from 'react';
-import { Icons } from '../constants';
-import { Memo } from '../types';
+import { Icons } from '../../constants';
+import { Memo } from '../../types';
 
 interface SidebarProps {
   activeFilter: string;

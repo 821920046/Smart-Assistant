@@ -1,6 +1,6 @@
 import React from 'react';
-import { Memo } from '../types';
-import { Icons } from '../constants';
+import { Memo } from '../../types';
+import { Icons } from '../../constants';
 import MemoCard from './MemoCard';
 
 interface MemoListProps {

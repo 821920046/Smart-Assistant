@@ -97,7 +97,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           }
       }
 
-      // 这里由 App.tsx 处理实际同步，此处仅关闭
+      // 这里�?App.tsx 处理实际同步，此处仅关闭
       if (typeof onSyncComplete === 'function') {
         try {
           onSyncComplete();
@@ -226,7 +226,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                     : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
                   }`}
                 >
-                  {p === 'none' ? '仅本地' : p === 'github_repo' ? 'GitHub Repo' : p}
+                  {p === 'none' ? '仅本�? : p === 'github_repo' ? 'GitHub Repo' : p}
                 </button>
               ))}
             </div>
@@ -235,7 +235,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
           {config.provider === 'github_repo' && (
             <div className="space-y-4 animate-card">
                <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
-                核心原则：Local-First / 云端仅备份 / 单人使用 / 冲突可控
+                核心原则：Local-First / 云端仅备�?/ 单人使用 / 冲突可控
               </div>
               <div className="relative">
                 <input 
@@ -249,7 +249,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                         onClick={handleCloudRestore}
                         className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
                     >
-                        从云端恢复配置
+                        从云端恢复配�?
                     </button>
                 )}
               </div>
@@ -266,7 +266,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <p className="text-[10px] text-slate-400 px-2">
-                数据将使用 AES-256 加密存储在您的私有仓库中。
+                数据将使�?AES-256 加密存储在您的私有仓库中�?
               </p>
 
                 {repoInfo && (
@@ -304,7 +304,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
               />
               <div className="grid grid-cols-2 gap-3">
                 <input 
-                  type="text" placeholder="用户名" 
+                  type="text" placeholder="用户�? 
                   value={config.settings.webdavUser || ''} 
                   onChange={e => updateSetting('webdavUser', e.target.value)}
                   className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -358,7 +358,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
             disabled={isTesting}
             className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all"
           >
-            {isTesting ? '正在验证...' : '保存并开始同步'}
+            {isTesting ? '正在验证...' : '保存并开始同�?}
           </button>
         </footer>
       </div>
