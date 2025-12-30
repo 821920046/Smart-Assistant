@@ -73,7 +73,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
         } else if (!contextRef.current) {
             contextRef.current = canvas.getContext('2d', { willReadFrequently: true });
         }
-    }, [initialData]); // Only re-run if initialData changes physically
+    }, [initialData]);
 
     // Update Stroke Settings without clearing canvas
     useEffect(() => {
@@ -181,7 +181,6 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
         const ctx = contextRef.current;
         if (!canvas || !ctx) return;
 
-        // Draw all text objects onto canvas before saving
         textObjects.forEach(obj => {
             ctx.font = `bold ${obj.fontSize}px sans-serif`;
             ctx.fillStyle = obj.color;
@@ -193,7 +192,8 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
 
     return (
         <div className="fixed inset-0 z-[500] bg-white flex flex-col overflow-hidden animate-in fade-in duration-300">
-            <header className="h-16 border-b flex items-center justify-between px-4 md:px-6 bg-white shrink-0">
+            {/* Header */}
+            <header className="h-16 border-b flex items-center justify-between px-4 md:px-6 bg-white shrink-0 z-10">
                 <button
                     onClick={onCancel}
                     className="px-4 py-2 text-slate-500 hover:text-slate-900 font-bold text-xs tracking-widest transition-colors"
@@ -214,7 +214,8 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
                 </div>
             </header>
 
-            <div ref={containerRef} className="flex-1 relative bg-slate-50 overflow-hidden cursor-crosshair touch-none">
+            {/* Drawing Area */}
+            <main ref={containerRef} className="flex-1 relative bg-slate-50 overflow-hidden cursor-crosshair touch-none">
                 <canvas
                     ref={canvasRef}
                     onMouseDown={startDrawing}
@@ -234,7 +235,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
                         onChange={e => setTextInput({ ...textInput, value: e.target.value })}
                         onBlur={finalizeText}
                         onKeyDown={e => e.key === 'Enter' && finalizeText()}
-                        placeholder="Type color..."
+                        placeholder="Type..."
                         className="absolute p-2 bg-white/90 backdrop-blur-sm border-2 border-indigo-500 rounded-lg text-lg font-bold shadow-2xl outline-none"
                         style={{
                             left: textInput.x,
@@ -261,10 +262,12 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
                         {obj.text}
                     </div>
                 ))}
+            </main>
 
-                {/* Mobile-Friendly Toolbar */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-lg px-4 bg-white/95 backdrop-blur-xl p-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/20 flex flex-col gap-4 animate-in slide-in-from-bottom-5 duration-500">
-                    <div className="flex justify-between items-center gap-4">
+            {/* Non-overlapping Bottom Toolbar */}
+            <footer className="shrink-0 bg-white border-t border-slate-100 p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] z-10">
+                <div className="max-w-3xl mx-auto flex flex-col gap-4">
+                    <div className="flex justify-between items-center gap-6">
                         <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
                             <button
                                 onClick={() => setTool('pen')}
@@ -285,22 +288,26 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
                                 <Icons.Eraser className="w-5 h-5" />
                             </button>
                         </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="40"
-                            value={brushSize}
-                            onChange={e => setBrushSize(parseInt(e.target.value))}
-                            className="flex-1 accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                        />
+                        <div className="flex-1 flex items-center gap-3">
+                            <Icons.Pen className="w-3 h-3 text-slate-300" />
+                            <input
+                                type="range"
+                                min="1"
+                                max="40"
+                                value={brushSize}
+                                onChange={e => setBrushSize(parseInt(e.target.value))}
+                                className="flex-1 accent-indigo-600 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="w-3 h-3 bg-slate-300 rounded-full" style={{ width: brushSize, height: brushSize, maxWidth: 20, maxHeight: 20 }} />
+                        </div>
                     </div>
 
-                    <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 px-1">
+                    <div className="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar py-1 px-1">
                         {COLOR_PALETTE.map(c => (
                             <button
                                 key={c}
                                 onClick={() => setColor(c)}
-                                className={`w-8 h-8 rounded-full shrink-0 border-2 transition-transform active:scale-90 ${color === c ? 'scale-110 shadow-lg' : 'hover:scale-105'}`}
+                                className={`w-8 h-8 md:w-9 md:h-9 rounded-full shrink-0 border-2 transition-transform active:scale-90 ${color === c ? 'scale-110 shadow-lg ring-2 ring-indigo-100' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
                                 style={{
                                     backgroundColor: c,
                                     borderColor: color === c ? '#6366f1' : 'rgba(0,0,0,0.05)'
@@ -309,7 +316,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
                         ))}
                     </div>
                 </div>
-            </div>
+            </footer>
         </div>
     );
 };
