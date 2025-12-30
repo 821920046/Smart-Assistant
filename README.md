@@ -22,9 +22,10 @@
 ## ✨ 核心功能
 
 ### 🤖 AI 原生工作流
-*   **Gemini 3 驱动：** 基于 `gemini-3-flash-preview` 和 `gemini-3-pro-preview`，提供深度推理和上下文理解。
-*   **实时语音：** 使用 `gemini-2.5-flash-native-audio` 实现超低延迟语音转录和交互。
-*   **智能洞察：** AI 自动分析您的任务，提供每周摘要和生产力洞察。
+*   **Gemini 3 驱动：** 基于 `gemini-3-flash-latest` 等模型，提供深度推理和上下文理解。
+*   **BYOK 模式：** 支持“自带密钥”，用户可在设置中自由配置私有 API Key，数据主权完全归属于用户。
+*   **实时语音：** 超低延迟语音转录与交互。
+*   **智能洞察：** AI 自动分析任务，提供每周摘要和生产力洞察。
 
 ### 📱 PWA & 移动体验
 *   **安装即用：** 离线访问能力，可作为原生应用安装在手机或桌面。
@@ -32,10 +33,10 @@
 *   **移动优先：** 针对移动设备进行了全面优化，支持触摸友好控制、滑动手势和快速访问悬浮操作按钮 (FAB)。
 
 ### ⚡ 性能与可靠性
-*   **极速加载：** Tailwind CSS 本地化打包，减少网络请求，提升首屏速度。
-*   **毫秒级响应：** IndexedDB v4 索引优化，即便是面对海量笔记也能瞬间完成检索与排序。
-*   **强类型保障：** 严谨的 TypeScript 严格模式，将潜在 Bug 扼杀在编码阶段。
-*   **持续验证：** 集成 Vitest 自动化测试框架，确保同步与合并逻辑的绝对可靠。
+*   **极速加载：** 全面优化 Service Worker 缓存策略，实现真正的离线优先。
+*   **毫秒级响应：** 引入 **Zustand** 管理全局状态，彻底消除 Props Drilling，大幅提升重渲染性能。
+*   **海量内容承载：** `MemoList` 支持 **延迟加载渲染 (Lazy Rendering)**，即使处理 500+ 组件也能保持 60fps 的滑动体验。
+*   **精致动效：** 集成 **Framer Motion**，为视图切换和卡片操作提供电影级的流畅反馈。
 
 ### 💾 数据管理
 *   **导入与导出：** 完整的 JSON 数据导出/导入功能，便于轻松备份和迁移。
@@ -58,10 +59,10 @@
 ## 🛠️ 技术栈
 
 *   **前端：** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-*   **样式：** [Tailwind CSS 3](https://tailwindcss.com/) (本地编译)
-*   **PWA：** [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
-*   **测试：** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-*   **AI SDK：** [Google Generative AI SDK](https://www.npmjs.com/package/@google/genai)
+*   **状态管理：** [Zustand](https://zustand-demo.pmnd.rs/) (高性能、轻量级状态中枢)
+*   **交互动效：** [Framer Motion](https://www.framer.com/motion/)
+*   **样式：** [Tailwind CSS 3](https://tailwindcss.com/)
+*   **PWA：** [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (高级 Workbox 缓存配置)
 *   **存储：** 原生 [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (v4 with Indexes)
 *   **加密：** Web Crypto API (AES-GCM 256-bit)
 
