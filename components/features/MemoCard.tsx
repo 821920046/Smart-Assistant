@@ -34,6 +34,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
     let currentUrl: string | null = null;
@@ -162,11 +163,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
       whileHover={{ y: -2 }}
+      onClick={() => {
+        if (!isEditing) setIsDetailOpen(true);
+      }}
       className={`memo-card group relative bg-white dark:bg-slate-800 transition-shadow duration-200 text-left ${compact
         ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md'
         : hasTodos
-          ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full'
-          : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto'
+          ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full cursor-pointer'
+          : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto cursor-pointer'
         }`}
     >
       {/* Header */}
@@ -185,7 +189,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
 
       {/* Content */}
       <div className={compact ? "" : "space-y-4"}>
-        <div className="flex gap-3 items-start group/content cursor-pointer" onClick={() => !compact && handleToggleMemo()}>
+        <div className="flex gap-3 items-start group/content">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -352,6 +356,177 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
           </div>
         </div>
       )}
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {isDetailOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDetailOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                    {memo.type === 'todo' ? <Icons.CheckSquare className="w-5 h-5" /> : <Icons.FileText className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 dark:text-white">Detail View</h3>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{memo.type}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsDetailOpen(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-400 transition-colors"
+                >
+                  <Icons.X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-8">
+                {/* Title & Priority */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <PriorityTag priority={memo.priority || 'normal'} />
+                    {memo.tags?.map(tag => (
+                      <span key={tag} className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+                    {parseInline(memo.title || (memo.content && memo.content.split('\n')[0]) || 'Untitled')}
+                  </h1>
+                </div>
+
+                {/* Main Content */}
+                {(memo.content && (memo.title || memo.content.includes('\n'))) && (
+                  <div className="prose prose-slate dark:prose-invert max-w-none">
+                    <SimpleMarkdown
+                      content={memo.title ? (memo.content || '') : (memo.content ? memo.content.split('\n').slice(1).join('\n') : '')}
+                      className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-medium space-y-4"
+                    />
+                  </div>
+                )}
+
+                {/* Sketch */}
+                {memo.sketchData && (
+                  <div className="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                    <img src={memo.sketchData} alt="Sketch" className="w-full max-h-[400px] object-contain" />
+                  </div>
+                )}
+
+                {/* Audio */}
+                {memo.audio && audioUrl && (
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                      <Icons.Mic className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Audio Recording</span>
+                        <span className="text-xs font-mono text-slate-400">{formatTime(memo.audio.duration)}</span>
+                      </div>
+                      <audio src={audioUrl} controls className="h-8 w-full" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Full Todo List */}
+                {memo.todos && memo.todos.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Icons.List className="w-4 h-4" /> Tasks
+                    </h3>
+                    <div className="space-y-3">
+                      {memo.todos.map(todo => {
+                        const [title, ...desc] = todo.text.split('\n');
+                        return (
+                          <div
+                            key={todo.id}
+                            className={`flex items-start gap-4 p-4 rounded-2xl transition-all duration-200 border ${todo.completed
+                              ? 'bg-slate-50/50 dark:bg-slate-900/20 border-transparent'
+                              : 'bg-white dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 shadow-sm'
+                              }`}
+                          >
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleTodo(todo.id); }}
+                              className={`mt-1 w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${todo.completed
+                                ? 'bg-indigo-500 border-indigo-500 text-white'
+                                : 'border-slate-300 hover:border-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600'
+                                }`}
+                            >
+                              {todo.completed && <Icons.Check className="w-3.5 h-3.5" />}
+                            </button>
+                            <div className="flex-1">
+                              <p className={`text-base font-semibold leading-relaxed ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-slate-200'}`}>
+                                {title}
+                              </p>
+                              {desc.length > 0 && !todo.completed && (
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                  {desc.join('\n')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="sticky bottom-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-t border-slate-100 dark:border-slate-700 p-6 flex items-center justify-between">
+                <div className="text-xs text-slate-400 font-medium">
+                  {new Date(memo.createdAt).toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditing(true);
+                      setIsDetailOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 font-bold text-sm transition-colors"
+                  >
+                    <Icons.Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this memo?')) {
+                        deleteMemo(memo.id);
+                        setIsDetailOpen(false);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm transition-colors"
+                  >
+                    <Icons.Trash className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
