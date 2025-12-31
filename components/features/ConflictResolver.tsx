@@ -9,7 +9,7 @@ interface ConflictResolverProps {
     onCancel: () => void;
 }
 
-const ConflictResolver: React.FC<ConflictResolverProps> = ({ error, config, onResolve, onCancel }) => {
+export default function ConflictResolver({ error, config, onResolve, onCancel }: ConflictResolverProps) {
     const handleResolve = async (resolution: 'use_local' | 'use_cloud') => {
         try {
             const merged = await syncService.resolveConflict(resolution, error.localSnapshot, error.cloudSnapshot, config);
@@ -18,6 +18,10 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ error, config, onRe
             alert('Failed to resolve conflict: ' + (err as Error).message);
         }
     };
+
+    if (!error || !error.localSnapshot || !error.cloudSnapshot) {
+        return null;
+    }
 
     const localDate = new Date(error.localSnapshot.meta.updatedAt).toLocaleString();
     const cloudDate = new Date(error.cloudSnapshot.meta.updatedAt).toLocaleString();
@@ -71,6 +75,4 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ error, config, onRe
             </div>
         </div>
     );
-};
-
-export default ConflictResolver;
+}

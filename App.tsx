@@ -14,7 +14,7 @@ import { useStore } from './services/store';
 import { useMemoFilter } from './hooks/useMemoFilter';
 
 import SyncSettings from '@/components/features/SyncSettings';
-import ConflictResolver from '@/components/features/ConflictResolver';
+import ConflictResolver from './components/features/ConflictResolver';
 
 const AppContent: React.FC = () => {
   const {
