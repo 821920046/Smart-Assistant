@@ -613,8 +613,13 @@ export const syncService = {
       };
 
       // Get file SHA first
-      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}`, { headers });
-      if (!getRes.ok) return; // Already deleted or doesn't exist
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { 
+          headers,
+          cache: 'no-store'
+      });
+      
+      if (getRes.status === 404) return; // Already deleted
+      if (!getRes.ok) throw new Error(`Failed to check remote file: ${getRes.status}`);
 
       const data = await getRes.json();
       
@@ -628,6 +633,11 @@ export const syncService = {
           })
       });
 
-      if (!res.ok) throw new Error('Failed to delete remote data');
+      if (res.status === 404) return; // Already deleted during process
+      if (res.status === 409) throw new Error('Conflict detected. Please try again.');
+      if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Failed to delete remote data: ${res.status} ${errText}`);
+      }
   }
 };
