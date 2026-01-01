@@ -16,15 +16,42 @@ interface MemoCardProps {
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
   const styles = {
-    important: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-    normal: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    important: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
+    normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
     secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
   };
-  const labels = { important: 'Important', normal: 'Normal', secondary: 'Low' };
+
+  const renderStars = () => {
+    switch (priority) {
+      case 'important':
+        return (
+          <div className="flex gap-0.5" title="High Priority">
+            <Icons.Star className="w-3 h-3 fill-current" />
+            <Icons.Star className="w-3 h-3 fill-current" />
+            <Icons.Star className="w-3 h-3 fill-current" />
+          </div>
+        );
+      case 'normal':
+        return (
+          <div className="flex gap-0.5" title="Normal Priority">
+            <Icons.Star className="w-3 h-3 fill-current" />
+            <Icons.Star className="w-3 h-3 fill-current" />
+          </div>
+        );
+      case 'secondary':
+        return (
+          <div className="flex gap-0.5" title="Low Priority">
+            <Icons.Star className="w-3 h-3 fill-current" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${styles[priority]}`}>
-      {labels[priority]}
+    <span className={`px-1.5 py-1 rounded-md ${styles[priority]}`}>
+      {renderStars()}
     </span>
   );
 };
@@ -273,12 +300,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         {/* Compact Footer */}
         {compact && (
           <div className="flex items-center justify-between text-xs text-slate-400 mt-auto pt-2">
-            <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${memo.priority === 'important' ? 'bg-rose-50 text-rose-600' :
-              memo.priority === 'secondary' ? 'bg-slate-100 text-slate-500' :
-                'bg-indigo-50 text-indigo-600'
-              }`}>
-              {memo.priority === 'important' ? 'High' : memo.priority === 'secondary' ? 'Low' : 'Normal'}
-            </span>
+            <PriorityTag priority={memo.priority || 'normal'} />
             <span>{new Date(memo.createdAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}</span>
           </div>
         )}

@@ -160,19 +160,37 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
 
   const priorityConfig = {
     important: {
-      label: 'Important',
-      active: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 ring-2 ring-rose-500 ring-offset-1 dark:ring-offset-slate-800',
-      inactive: 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600'
+      label: 'High',
+      icon: (
+        <div className="flex gap-0.5">
+          <Icons.Star className="w-3 h-3 fill-current" />
+          <Icons.Star className="w-3 h-3 fill-current" />
+          <Icons.Star className="w-3 h-3 fill-current" />
+        </div>
+      ),
+      active: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 ring-2 ring-rose-500 ring-offset-1 dark:ring-offset-slate-800',
+      inactive: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500'
     },
     normal: {
       label: 'Normal',
-      active: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-800',
-      inactive: 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600'
+      icon: (
+        <div className="flex gap-0.5">
+          <Icons.Star className="w-3 h-3 fill-current" />
+          <Icons.Star className="w-3 h-3 fill-current" />
+        </div>
+      ),
+      active: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-800',
+      inactive: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-500'
     },
     secondary: {
       label: 'Low',
-      active: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 ring-2 ring-slate-500 ring-offset-1 dark:ring-offset-slate-800',
-      inactive: 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700'
+      icon: (
+        <div className="flex gap-0.5">
+          <Icons.Star className="w-3 h-3 fill-current" />
+        </div>
+      ),
+      active: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 ring-2 ring-slate-500 ring-offset-1 dark:ring-offset-slate-800',
+      inactive: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600'
     }
   };
 
@@ -282,10 +300,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
                   <button
                     key={p}
                     onClick={() => setPriority(p)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
+                    className={`px-2 py-1.5 rounded-md transition-all ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
                       }`}
+                    title={priorityConfig[p].label}
                   >
-                    {priorityConfig[p].label}
+                    {priorityConfig[p].icon}
                   </button>
                 ))}
               </div>
