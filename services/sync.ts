@@ -602,6 +602,33 @@ export const syncService = {
     return await res.json();
   },
 
+  getRemoteFileStatus: async (config: SyncConfig): Promise<{ exists: boolean, size?: number, sha?: string }> => {
+      const { githubToken, githubRepo } = config.settings;
+      if (!githubToken || !githubRepo) return { exists: false };
+
+      const [owner, repo] = githubRepo.split('/');
+      const headers = { 
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+      };
+
+      try {
+          const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { 
+              headers,
+              cache: 'no-store'
+          });
+          
+          if (res.status === 404) return { exists: false };
+          if (!res.ok) throw new Error(`Failed to check remote file: ${res.status}`);
+
+          const data = await res.json();
+          return { exists: true, size: data.size, sha: data.sha };
+      } catch (e) {
+          console.warn('Failed to get remote file status:', e);
+          return { exists: false };
+      }
+  },
+
   deleteRemoteData: async (config: SyncConfig) => {
       const { githubToken, githubRepo } = config.settings;
       if (!githubToken || !githubRepo) throw new Error('GitHub configuration missing');

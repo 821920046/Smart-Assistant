@@ -14,6 +14,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     const [lastSyncTime, setLastSyncTime] = useState<number>(0);
 
     const [repoInfo, setRepoInfo] = useState<{ size: number } | null>(null);
+    const [syncFileStatus, setSyncFileStatus] = useState<{ exists: boolean, size?: number } | null>(null);
 
     useEffect(() => {
         loadSnapshots();
@@ -23,8 +24,10 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     useEffect(() => {
         if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
             syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
+            syncService.getRemoteFileStatus(config).then(setSyncFileStatus).catch(() => setSyncFileStatus(null));
         } else {
             setRepoInfo(null);
+            setSyncFileStatus(null);
         }
     }, [config.provider, config.settings.githubToken, config.settings.githubRepo]);
 
@@ -35,6 +38,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
             alert('Remote data deleted successfully.');
             if (config.provider === 'github_repo') {
                 syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
+                syncService.getRemoteFileStatus(config).then(setSyncFileStatus).catch(() => setSyncFileStatus(null));
             }
         } catch (e) {
             alert('Cleanup failed: ' + (e as Error).message);
@@ -264,17 +268,23 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                             </p>
 
                             {repoInfo && (
-                                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="font-bold text-slate-500">Repository Storage</span>
-                                        <span className={`font-mono ${repoInfo.size > 100000 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                                            {(repoInfo.size / 1024).toFixed(2)} MB
+                                <div className="bg-slate-50 p-4 rounded-2xl text-xs space-y-2 border border-slate-100">
+                                    <div className="flex justify-between font-bold text-slate-700">
+                                        <span>Repository Size (incl. history):</span>
+                                        <span>{(repoInfo.size / 1024).toFixed(2)} MB</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-slate-700 border-t border-slate-200 pt-2 mt-2">
+                                        <span>Sync Data File Size:</span>
+                                        <span className={syncFileStatus?.exists ? 'text-blue-600' : 'text-slate-400'}>
+                                            {syncFileStatus?.exists 
+                                                ? `${((syncFileStatus.size || 0) / 1024).toFixed(2)} KB` 
+                                                : 'Not Found (Empty)'}
                                         </span>
                                     </div>
                                     {repoInfo.size > 100000 && (
-                                        <p className="text-red-500 mb-2">Warning: Repository size is large (&gt;100MB). Consider creating a new repository to reset history.</p>
+                                        <p className="text-red-500 mb-2 mt-2">Warning: Repository size is large (&gt;100MB). Consider creating a new repository to reset history.</p>
                                     )}
-                                    <div className="text-slate-400 mb-2">
+                                    <div className="text-slate-400 mb-2 mt-2">
                                         GitHub saves history for every sync. Over time, the repository size will grow.
                                     </div>
                                     <button
