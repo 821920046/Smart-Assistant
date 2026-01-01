@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Memo, Priority } from '../../types';
 import { Icons } from '../../constants';
-import { generateSpeech } from '../../services/gemini';
 import SimpleMarkdown, { parseInline } from '../ui/SimpleMarkdown';
 import MemoEditor from './MemoEditor';
 import MemoDetailModal from './MemoDetailModal';
@@ -89,41 +88,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
       });
     } else {
       updateMemo({ ...memo, todos: updatedTodos });
-    }
-  };
-
-  const handlePlayTTS = async () => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    try {
-      const base64Audio = await generateSpeech(memo.content);
-      if (!base64Audio) return;
-
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const binaryString = atob(base64Audio);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      const dataInt16 = new Int16Array(bytes.buffer);
-      const audioBuffer = audioContext.createBuffer(1, dataInt16.length, 24000);
-      const channelData = audioBuffer.getChannelData(0);
-      for (let i = 0; i < dataInt16.length; i++) {
-        channelData[i] = dataInt16[i] / 32768.0;
-      }
-
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
-      source.onended = () => {
-        setIsPlaying(false);
-        audioContext.close();
-      };
-      source.start();
-    } catch (e) {
-      console.error(e);
-      setIsPlaying(false);
     }
   };
 
@@ -343,13 +307,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
                 <Icons.Edit className="w-4 h-4" />
               </button>
             )}
-            <button
-              onClick={(e) => { e.stopPropagation(); handlePlayTTS(); }}
-              className={`p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors ${isPlaying ? 'text-blue-500 animate-pulse' : 'text-slate-400 hover:text-blue-600'}`}
-              title="Speak"
-            >
-              {isPlaying ? <Icons.Volume2 className="w-4 h-4" /> : <Icons.Volume1 className="w-4 h-4" />}
-            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();

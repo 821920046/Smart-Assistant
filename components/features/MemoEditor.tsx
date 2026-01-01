@@ -1,6 +1,5 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Icons, CATEGORIES } from '../../constants';
-import { analyzeNote } from '../../services/gemini';
 import { Memo, TodoItem, Priority, RepeatInterval } from '../../types';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
@@ -122,13 +121,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       }
 
       if (content.trim() && content !== initialMemo?.content) {
-        // Only re-parse if content changed
-        const { todos: newTodos, tags: newTags } = await analyzeNote(content);
-
-        if (newTodos.length > 0) {
-          todos = newTodos;
-        }
-        tags = newTags;
+        // AI analysis removed
       }
 
       onSave({

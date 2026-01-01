@@ -5,7 +5,7 @@ import { useStore } from '../../services/store';
 const SettingsView: React.FC = () => {
   const {
     darkMode, toggleDarkMode, isSyncing, syncError, setSyncSettingsOpen,
-    clearHistory, geminiApiKey, setGeminiApiKey
+    clearHistory
   } = useStore();
 
   const [showKey, setShowKey] = useState(false);
@@ -31,41 +31,6 @@ const SettingsView: React.FC = () => {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h2>
         <p className="text-slate-500 dark:text-slate-400">Manage your preferences and data</p>
       </div>
-
-      {/* AI Configuration (BYOK) */}
-      <section className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icons.Sparkles className="w-5 h-5 text-indigo-500" />
-          AI Laboratory
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Gemini API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showKey ? "text" : "password"}
-                value={geminiApiKey}
-                onChange={(e) => setGeminiApiKey(e.target.value)}
-                placeholder="Paste your API Key here..."
-                className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"
-              />
-              <button
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              >
-                {showKey ? <Icons.X className="w-4 h-4" /> : <Icons.Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <p className="mt-2 text-[11px] text-slate-500 leading-relaxed">
-              Your key is stored locally in your browser.
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="ml-1 text-indigo-500 hover:underline">Get a free key here →</a>
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Appearance */}
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
