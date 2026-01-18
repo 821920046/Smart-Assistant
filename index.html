@@ -1,206 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Assistant - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Smart Assistant | Second Brain</title>
+    <meta name="theme-color" content="#6366f1">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            500: '#6366f1', // Indigo/Purple
-                            600: '#4f46e5',
-                        }
-                    },
-                    boxShadow: {
-                        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'glow': '0 0 15px rgba(99, 102, 241, 0.3)',
-                    }
-                }
+        (function () {
+            const shim = { env: { API_KEY: '' } };
+            if (typeof window.process === 'undefined') {
+                window.process = shim;
+            } else {
+                window.process.env = window.process.env || shim.env;
             }
-        }
+        })();
+
+        // Helpful for debugging install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('🎯 PWA: beforeinstallprompt event fired');
+        });
     </script>
-    <style>
-        body {
-            background-color: #f8fafc; /* Very light slate background */
-        }
-        .nav-item.active {
-            background-color: #e0e7ff; /* Indigo 100 */
-            color: #4338ca; /* Indigo 700 */
-        }
-        .nav-item:hover:not(.active) {
-            background-color: #f1f5f9;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
+    "@google/genai": "https://esm.sh/@google/genai@1.34.0",
+    "react/": "https://esm.sh/react@19.0.0/",
+    "react-dom/": "https://esm.sh/react-dom@19.0.0/"
+  }
+}
+</script>
 </head>
-<body class="text-slate-600 flex h-screen overflow-hidden">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-slate-100 flex flex-col p-6 space-y-8 z-20">
-        <!-- Logo -->
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-glow">
-                <span class="font-bold text-lg">A</span>
-            </div>
-            <div>
-                <h1 class="font-bold text-slate-900 text-lg leading-tight">Smart Assistant</h1>
-                <p class="text-xs text-slate-400 font-medium">Second Brain</p>
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 space-y-2">
-            <a href="#" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary-600">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                <span class="font-semibold text-sm">Dashboard</span>
-            </a>
-
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                <span class="font-medium text-sm">Notes</span>
-            </a>
-
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 11 12 14 22 4"></polyline>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
-                <span class="font-medium text-sm">Tasks</span>
-            </a>
-
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                    <rect x="1" y="3" width="22" height="5"></rect>
-                    <line x1="10" y1="12" x2="14" y2="12"></line>
-                </svg>
-                <span class="font-medium text-sm">Archive</span>
-            </a>
-
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-                <span class="font-medium text-sm">Settings</span>
-            </a>
-        </nav>
-
-        <div class="text-xs text-slate-300 font-medium">v2.7.2</div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <!-- Top Bar -->
-        <header class="h-20 flex items-center px-10 pt-6">
-            <div class="relative w-full max-w-2xl">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                <input type="text" 
-                    class="w-full pl-11 pr-4 py-3 bg-white border border-transparent focus:border-primary-500/20 focus:ring-4 focus:ring-primary-500/10 rounded-2xl text-sm font-medium shadow-sm transition-all placeholder-slate-400" 
-                    placeholder="Search tasks & notes...">
-            </div>
-        </header>
-
-        <!-- Dashboard Content -->
-        <div class="flex-1 overflow-y-auto px-10 py-8">
-            
-            <!-- Header Section -->
-            <div class="flex items-end justify-between mb-10">
-                <div>
-                    <h1 class="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
-                    <p class="text-slate-500 font-medium">Capture, Organize, and Achieve.</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button class="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-glow shadow-primary-500/30 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        New Task
-                    </button>
-                    <button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-xl font-semibold text-sm shadow-sm flex items-center gap-2 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        New Note
-                    </button>
-                </div>
-            </div>
-
-            <!-- Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <!-- Card 1: Today's Progress -->
-                <div class="bg-white rounded-3xl p-8 shadow-card flex flex-col items-center justify-center text-center h-64 hover:shadow-lg transition-shadow">
-                    <h3 class="text-sm font-bold text-slate-700 mb-6">Today's Progress</h3>
-                    <div class="relative w-32 h-32 flex items-center justify-center">
-                        <!-- Circular Progress SVG -->
-                        <svg class="w-full h-full transform -rotate-90">
-                            <!-- Background Circle -->
-                            <circle cx="64" cy="64" r="56" stroke="#f1f5f9" stroke-width="12" fill="none"></circle>
-                            <!-- Progress Circle (0%) -->
-                            <circle cx="64" cy="64" r="56" stroke="#6366f1" stroke-width="12" fill="none" stroke-dasharray="351.86" stroke-dashoffset="351.86" stroke-linecap="round"></circle>
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-3xl font-bold text-slate-900">0%</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Done</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 2: Tasks Pressure -->
-                <div class="bg-white rounded-3xl p-8 shadow-card flex flex-col items-center justify-center text-center h-64 hover:shadow-lg transition-shadow">
-                    <h3 class="text-sm font-bold text-slate-700 mb-6">Tasks Pressure</h3>
-                    <div class="relative w-40 h-24 flex items-end justify-center overflow-hidden">
-                        <!-- Gauge Chart SVG -->
-                        <svg class="w-40 h-40 transform translate-y-8">
-                             <!-- Background Arc -->
-                             <path d="M 20 100 A 60 60 0 0 1 140 100" stroke="#f1f5f9" stroke-width="12" fill="none" stroke-linecap="round"></path>
-                             <!-- Value Arc (Red segment for High Pressure) -->
-                             <path d="M 110 48 A 60 60 0 0 1 140 100" stroke="#ef4444" stroke-width="12" fill="none" stroke-linecap="round"></path>
-                        </svg>
-                        <div class="absolute bottom-0 flex flex-col items-center justify-center pb-2">
-                            <span class="text-3xl font-bold text-red-500">4</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">High Priority</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 3: Voice Center -->
-                <div class="bg-white rounded-3xl p-8 shadow-card flex flex-col items-center justify-center text-center h-64 hover:shadow-lg transition-shadow group cursor-pointer">
-                    <h3 class="text-sm font-bold text-slate-700 mb-6">Voice Center</h3>
-                    <div class="w-24 h-24 rounded-full border-4 border-slate-50 flex items-center justify-center group-hover:border-primary-50 group-hover:bg-primary-50/50 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300 group-hover:text-primary-500 transition-colors" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
+<body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
 </body>
+
 </html>
