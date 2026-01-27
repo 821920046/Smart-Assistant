@@ -7,6 +7,8 @@ import MemoEditor from './MemoEditor';
 import MemoDetailModal from './MemoDetailModal';
 import { storage } from '../../services/storage';
 import { useStore } from '../../services/store';
+import { useHaptic } from '../../hooks/useHaptic';
+import { cn } from '../../utils/cn';
 
 interface MemoCardProps {
   memo: Memo;
@@ -15,53 +17,67 @@ interface MemoCardProps {
 }
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
-  const styles = {
-    important: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
-    normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-    secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+  const colors = {
+    important: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800',
+    normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+    secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
   };
 
   const renderStars = () => {
-    switch (priority) {
-      case 'important':
-        return (
-          <div className="flex gap-0.5" title="High Priority">
-            <Icons.Star className="w-3 h-3 fill-current" />
-            <Icons.Star className="w-3 h-3 fill-current" />
-            <Icons.Star className="w-3 h-3 fill-current" />
-          </div>
-        );
-      case 'normal':
-        return (
-          <div className="flex gap-0.5" title="Normal Priority">
-            <Icons.Star className="w-3 h-3 fill-current" />
-            <Icons.Star className="w-3 h-3 fill-current" />
-          </div>
-        );
-      case 'secondary':
-        return (
-          <div className="flex gap-0.5" title="Low Priority">
-            <Icons.Star className="w-3 h-3 fill-current" />
-          </div>
-        );
-      default:
-        return null;
-    }
+    const starCount = priority === 'important' ? 3 : priority === 'normal' ? 2 : 1;
+    
+    return (
+      <div className="flex gap-0.5" title={`${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`}>
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ 
+              scale: i < starCount ? 1 : 0.3, 
+              rotate: 0,
+              opacity: i < starCount ? 1 : 0.3
+            }}
+            transition={{ 
+              delay: i * 0.1, 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 20 
+            }}
+          >
+            <Icons.Star 
+              className={cn(
+                "w-3 h-3 transition-all duration-200",
+                i < starCount ? "fill-current" : "opacity-30"
+              )} 
+            />
+          </motion.div>
+        ))}
+      </div>
+    );
   };
 
   return (
-    <span className={`px-1.5 py-1 rounded-md ${styles[priority]}`}>
+    <motion.span 
+      className={cn(
+        "px-2 py-1 rounded-lg border text-xs font-medium",
+        colors[priority]
+      )}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
       {renderStars()}
-    </span>
+    </motion.span>
   );
 };
 
 const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
   const { updateMemo, deleteMemo } = useStore();
+  const { hapticFeedback } = useHaptic();
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     let currentUrl: string | null = null;
@@ -113,8 +129,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         isArchived: true,
         completedAt: Date.now()
       });
+      hapticFeedback('success');
     } else {
       updateMemo({ ...memo, todos: updatedTodos });
+      hapticFeedback('selection');
     }
   };
 
@@ -124,9 +142,60 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
       isArchived: !memo.isArchived,
       completedAt: !memo.isArchived ? Date.now() : undefined
     });
+    hapticFeedback('selection');
+  };
+
+  const handleCardClick = () => {
+    if (!isEditing) {
+      setIsDetailOpen(true);
+      hapticFeedback('light');
+    }
   };
 
   const hasTodos = memo.todos && memo.todos.length > 0;
+
+  // Enhanced card variants
+  const cardVariants = {
+    initial: { 
+      opacity: 0, 
+      scale: 0.95, 
+      y: 20,
+      rotateX: 10
+    },
+    animate: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      rotateX: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }
+    },
+    hover: { 
+      scale: compact ? 1.02 : 1.03,
+      y: compact ? -2 : -4,
+      rotateX: 0,
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 25
+      }
+    },
+    tap: { 
+      scale: 0.98,
+      y: 0,
+      transition: { duration: 0.1 }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.95, 
+      y: -20,
+      rotateX: -10,
+      transition: { duration: 0.2 }
+    }
+  };
 
   if (isEditing) {
     return (
@@ -141,6 +210,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
           onSave={(updated) => {
             updateMemo(updated as Memo);
             setIsEditing(false);
+            hapticFeedback('success');
           }}
           onCancel={() => setIsEditing(false)}
         />
@@ -151,33 +221,70 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      whileHover={{ y: -2 }}
-      onClick={() => {
-        if (!isEditing) setIsDetailOpen(true);
-      }}
-      className={`memo-card group relative bg-white dark:bg-slate-800 transition-shadow duration-200 text-left ${compact
-        ? 'p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm cursor-pointer hover:shadow-md'
-        : hasTodos
-          ? 'p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full cursor-pointer'
-          : 'p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-md w-full max-w-2xl mx-auto cursor-pointer'
-        }`}
-    >
-      {/* Header */}
-      {!compact && (
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <PriorityTag priority={memo.priority || 'normal'} />
-            {memo.tags?.map(tag => (
-              <span key={tag} className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </div>
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      whileHover="hover"
+      whileTap="tap"
+      onClick={handleCardClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={cn(
+        "memo-card group relative cursor-pointer overflow-hidden",
+        "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
+        "shadow-sm hover:shadow-lg transition-all duration-300",
+        compact 
+          ? "p-4 rounded-xl" 
+          : hasTodos 
+            ? "p-6 rounded-xl" 
+            : "p-6 rounded-2xl max-w-2xl mx-auto"
       )}
+style={{
+        willChange: 'transform, box-shadow'
+      }}
+    >
+      {/* Enhanced hover gradient overlay */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 rounded-xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isHovered ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+      />
+
+      {/* Priority indicator line */}
+      {memo.priority === 'important' && (
+        <motion.div
+          className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500"
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+        />
+      )}
+
+      <div className="relative z-10">
+        {/* Header */}
+        {!compact && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <PriorityTag priority={memo.priority || 'normal'} />
+              {memo.tags?.map((tag, tagIndex) => (
+                <motion.span
+                  key={tag}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    transition: { delay: 0.3 + tagIndex * 0.05 }
+                  }}
+                  className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600"
+                >
+                  #{tag}
+                </motion.span>
+              ))}
+            </div>
+          </div>
+        )}
 
       {/* Content */}
       <div className={compact ? "" : "space-y-4"}>
@@ -345,7 +452,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         </div>
       )}
 
-      {/* Detail Modal */}
+{/* Detail Modal */}
       <MemoDetailModal
         memo={memo}
         isOpen={isDetailOpen}
@@ -356,6 +463,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         audioUrl={audioUrl}
         formatTime={formatTime}
       />
+      </div>
     </motion.div>
   );
 };
