@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useSyncService } from './useSyncService';
 import { useNotificationScheduler } from './useNotificationScheduler';
+import { useStore } from '../services/store';
 import { RETENTION_PERIOD_MS } from '../config/constants';
 
 export const useMemoData = () => {
@@ -44,8 +45,9 @@ export const useMemoData = () => {
     await performSync(newMemos, setMemos, true); // Silent sync
   }, [performSync]);
 
+  const { notificationConfig } = useStore();
   // Notification Scheduler
-  useNotificationScheduler(memos, updateMemo);
+  useNotificationScheduler(memos, updateMemo, notificationConfig);
 
   // Initialize App Data
   useEffect(() => {

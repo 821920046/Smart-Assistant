@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Memo } from '../types';
+import { Memo, NotificationConfig } from '../types';
 import { storage } from './storage';
 import { syncService, SyncConflictError } from './sync';
 
