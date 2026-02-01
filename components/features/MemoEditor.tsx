@@ -34,6 +34,27 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { addToast } = useToast();
 
+  const reminderRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicking outside to close reminder options
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (reminderRef.current && !reminderRef.current.contains(event.target as Node)) {
+        setShowReminderOptions(false);
+      }
+    };
+
+    if (showReminderOptions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReminderOptions]);
+
   const isEditing = !!initialMemo;
 
   useEffect(() => {
@@ -395,7 +416,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
               <Icons.Pen />
             </button>
 
-            <div className="relative">
+            <div className="relative" ref={reminderRef}>
               <button
                 onClick={() => setShowReminderOptions(!showReminderOptions)}
                 className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
