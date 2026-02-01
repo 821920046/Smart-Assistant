@@ -1,14 +1,44 @@
 import React, { useState } from 'react';
 import { Icons } from '../../constants';
 import { useStore } from '../../services/store';
+import { useToast } from '../../context/ToastContext';
+import { notificationService } from '../../services/notificationService';
 
 const SettingsView: React.FC = () => {
   const {
     darkMode, toggleDarkMode, isSyncing, syncError, setSyncSettingsOpen,
     clearHistory, notificationConfig, setNotificationConfig
   } = useStore();
+  const { addToast } = useToast();
 
-  const [showKey, setShowKey] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "default"
+  );
+
+  const requestPermission = async () => {
+    if (!("Notification" in window)) return;
+    const result = await Notification.requestPermission();
+    setPermission(result);
+    if (result === 'granted') {
+      addToast('Notification permission granted!', 'success');
+    }
+  };
+
+  const handleTestNotification = async (channel?: string) => {
+    addToast('Sending test notification...', 'info');
+    const results = await notificationService.send(
+      "Test Notification",
+      "This is a test to verify your reminder settings are working correctly.",
+      notificationConfig
+    );
+
+    const mainResult = results.find(r => !channel || r.channel === channel);
+    if (mainResult?.success) {
+      addToast(`Test successful on ${mainResult.channel}!`, 'success');
+    } else if (mainResult) {
+      addToast(`Test failed on ${mainResult.channel}: ${mainResult.error || 'Unknown error'}`, 'error');
+    }
+  };
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
@@ -94,15 +124,33 @@ const SettingsView: React.FC = () => {
               <p className="font-medium text-slate-700 dark:text-slate-200">Browser Notifications</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Show desktop alerts in the browser</p>
             </div>
-            <button
-              onClick={() => setNotificationConfig({
-                ...notificationConfig,
-                channels: { ...notificationConfig.channels, browser: !notificationConfig.channels.browser }
-              })}
-              className={`w-12 h-6 rounded-full p-1 transition-colors ${notificationConfig.channels.browser ? 'bg-indigo-600' : 'bg-slate-200'}`}
-            >
-              <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${notificationConfig.channels.browser ? 'translate-x-6' : 'translate-x-0'}`} />
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                onClick={() => setNotificationConfig({
+                  ...notificationConfig,
+                  channels: { ...notificationConfig.channels, browser: !notificationConfig.channels.browser }
+                })}
+                className={`w-12 h-6 rounded-full p-1 transition-colors ${notificationConfig.channels.browser ? 'bg-indigo-600' : 'bg-slate-200'}`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${notificationConfig.channels.browser ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+              {notificationConfig.channels.browser && permission !== 'granted' && (
+                <button
+                  onClick={requestPermission}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Request Permission
+                </button>
+              )}
+              {notificationConfig.channels.browser && permission === 'granted' && (
+                <button
+                  onClick={() => handleTestNotification('browser')}
+                  className="text-xs text-slate-500 hover:text-indigo-600 font-medium"
+                >
+                  Send Test
+                </button>
+              )}
+            </div>
           </div>
 
           <hr className="border-slate-100 dark:border-slate-700" />
@@ -159,6 +207,12 @@ const SettingsView: React.FC = () => {
                   })}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
                 />
+                <button
+                  onClick={() => handleTestNotification('weNotify')}
+                  className="text-xs text-left text-indigo-600 hover:text-indigo-700 font-medium mt-1"
+                >
+                  Test Connection
+                </button>
               </div>
             )}
           </div>
@@ -203,6 +257,12 @@ const SettingsView: React.FC = () => {
                   })}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
                 />
+                <button
+                  onClick={() => handleTestNotification('wechat')}
+                  className="text-xs text-left text-indigo-600 hover:text-indigo-700 font-medium mt-1"
+                >
+                  Test Webhook
+                </button>
               </div>
             )}
           </div>
@@ -261,6 +321,12 @@ const SettingsView: React.FC = () => {
                   })}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
                 />
+                <button
+                  onClick={() => handleTestNotification('email')}
+                  className="text-xs text-left text-indigo-600 hover:text-indigo-700 font-medium mt-1"
+                >
+                  Test Email
+                </button>
               </div>
             )}
           </div>

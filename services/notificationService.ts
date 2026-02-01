@@ -1,18 +1,25 @@
 import { NotificationConfig } from '../types';
 
 export const notificationService = {
-    async send(title: string, body: string, config: NotificationConfig) {
+    async send(title: string, body: string, config: NotificationConfig, trackId?: string) {
         const { channels } = config;
-        const promises: Promise<any>[] = [];
+        const results: { channel: string; success: boolean; error?: any }[] = [];
 
         // 1. Browser Notification
-        if (channels.browser && "Notification" in window && Notification.permission === "granted") {
-            try {
-                new Notification(title, { body, icon: '/favicon.ico' });
-            } catch (e) {
-                console.warn("Browser notification failed", e);
+        if (channels.browser && "Notification" in window) {
+            if (Notification.permission === "granted") {
+                try {
+                    new Notification(title, { body, icon: '/favicon.ico' });
+                    results.push({ channel: 'browser', success: true });
+                } catch (e) {
+                    results.push({ channel: 'browser', success: false, error: e });
+                }
+            } else {
+                results.push({ channel: 'browser', success: false, error: 'Permission not granted' });
             }
         }
+
+        const promises: Promise<any>[] = [];
 
         // 2. WeNotify Edge
         if (channels.weNotify?.enabled && channels.weNotify.endpoint) {
@@ -24,7 +31,8 @@ export const notificationService = {
                         ...(channels.weNotify.apiKey ? { 'Authorization': `Bearer ${channels.weNotify.apiKey}` } : {})
                     },
                     body: JSON.stringify({ title, body, timestamp: Date.now() })
-                }).catch(e => console.error("WeNotify failed", e))
+                }).then(() => results.push({ channel: 'weNotify', success: true }))
+                    .catch(e => results.push({ channel: 'weNotify', success: false, error: e }))
             );
         }
 
@@ -38,7 +46,8 @@ export const notificationService = {
                         msgtype: 'text',
                         text: { content: `${title}\n\n${body}` }
                     })
-                }).catch(e => console.error("WeChat failed", e))
+                }).then(() => results.push({ channel: 'wechat', success: true }))
+                    .catch(e => results.push({ channel: 'wechat', success: false, error: e }))
             );
         }
 
@@ -57,10 +66,12 @@ export const notificationService = {
                         subject: title,
                         text: body
                     })
-                }).catch(e => console.error("Resend failed", e))
+                }).then(() => results.push({ channel: 'email', success: true }))
+                    .catch(e => results.push({ channel: 'email', success: false, error: e }))
             );
         }
 
         await Promise.allSettled(promises);
+        return results;
     }
 };

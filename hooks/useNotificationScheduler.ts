@@ -56,11 +56,12 @@ export const useNotificationScheduler = (
               const body = `You created this task ${notificationConfig.autoReminder.afterMinutes} minutes ago: ${memo.title || memo.content}`;
 
               notificationService.send(title, body, notificationConfig);
+              addToast(`Reminder: ${memo.title || 'Task'} is still unfinished`, 'warning');
             }
           }
         }
       });
-    }, 10000); // Check every 10 seconds
+    }, 5000); // Check every 5 seconds
 
     return () => clearInterval(interval);
   }, [memos, updateMemo, addToast, notificationConfig]);
