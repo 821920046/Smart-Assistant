@@ -36,6 +36,10 @@ interface AppState {
     toggleDarkMode: () => void;
 
     performSync: (silent?: boolean) => Promise<void>;
+
+    // Notification Actions
+    notificationConfig: NotificationConfig;
+    setNotificationConfig: (config: NotificationConfig) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -182,5 +186,15 @@ export const useStore = create<AppState>((set, get) => ({
                 set({ conflictError: error });
             }
         }
+    },
+
+    notificationConfig: JSON.parse(localStorage.getItem('notification_config') || JSON.stringify({
+        channels: { browser: true },
+        autoReminder: { enabled: false, afterMinutes: 30 }
+    })),
+
+    setNotificationConfig: (config) => {
+        set({ notificationConfig: config });
+        localStorage.setItem('notification_config', JSON.stringify(config));
     }
 }));

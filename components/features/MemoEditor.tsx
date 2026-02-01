@@ -389,7 +389,52 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
             </button>
 
             <div className="relative">
-              {/* Reminder Feature Removed as per user request */}
+              <button
+                onClick={() => setShowReminderOptions(!showReminderOptions)}
+                className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title="Set Reminder"
+              >
+                <Icons.Bell className="w-4 h-4" />
+              </button>
+              {showReminderOptions && (
+                <div className="absolute bottom-full right-0 mb-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 z-50 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Reminder Time</label>
+                    <input
+                      type="datetime-local"
+                      ref={reminderInputRef}
+                      value={reminderAt}
+                      onChange={(e) => setReminderAt(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Repeat</label>
+                    <div className="flex gap-1 p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+                      {(['none', 'daily', 'weekly'] as RepeatInterval[]).map(r => (
+                        <button
+                          key={r}
+                          onClick={() => setReminderRepeat(r)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${reminderRepeat === r
+                            ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                            }`}
+                        >
+                          {r.charAt(0).toUpperCase() + r.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {reminderAt && (
+                    <button
+                      onClick={() => { setReminderAt(''); setReminderRepeat('none'); }}
+                      className="w-full pt-2 text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors border-t border-slate-100 dark:border-slate-700"
+                    >
+                      Clear Reminder
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

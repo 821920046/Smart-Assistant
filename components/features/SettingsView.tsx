@@ -5,7 +5,7 @@ import { useStore } from '../../services/store';
 const SettingsView: React.FC = () => {
   const {
     darkMode, toggleDarkMode, isSyncing, syncError, setSyncSettingsOpen,
-    clearHistory
+    clearHistory, notificationConfig, setNotificationConfig
   } = useStore();
 
   const [showKey, setShowKey] = useState(false);
@@ -66,10 +66,10 @@ const SettingsView: React.FC = () => {
             </p>
           </div>
           <div className={`w-3 h-3 rounded-full ${isSyncing
-              ? 'bg-amber-400 animate-pulse'
-              : syncError
-                ? 'bg-red-500'
-                : 'bg-emerald-400'
+            ? 'bg-amber-400 animate-pulse'
+            : syncError
+              ? 'bg-red-500'
+              : 'bg-emerald-400'
             }`} />
         </div>
         <button
