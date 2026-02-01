@@ -425,7 +425,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
                 <Icons.Bell className="w-4 h-4" />
               </button>
               {showReminderOptions && (
-                <div className="absolute bottom-full right-0 mb-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 z-50 space-y-4">
+                <div className="absolute bottom-full left-0 md:left-auto md:right-0 mb-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 z-50 space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Reminder Time</label>
                     <input
