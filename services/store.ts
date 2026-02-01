@@ -71,6 +71,14 @@ export const useStore = create<AppState>((set, get) => ({
 
             // Initial silent sync
             get().performSync(true);
+
+            // Listen for remote config restorations
+            window.addEventListener('notification-config-restored', (e: any) => {
+                const newConfig = e.detail;
+                if (newConfig) {
+                    set({ notificationConfig: newConfig });
+                }
+            });
         } catch (error) {
             console.error('Failed to init store:', error);
             set({ isLoading: false });
@@ -216,5 +224,7 @@ export const useStore = create<AppState>((set, get) => ({
     setNotificationConfig: (config) => {
         set({ notificationConfig: config });
         localStorage.setItem('notification_config', JSON.stringify(config));
+        // Trigger sync to persist settings to cloud
+        get().performSync(true);
     }
 }));
