@@ -12,6 +12,7 @@ import { syncService } from './services/sync';
 import { Memo } from './types';
 import { useStore } from './services/store';
 import { useMemoFilter } from './hooks/useMemoFilter';
+import { useNotificationScheduler } from './hooks/useNotificationScheduler';
 
 import SyncSettings from '@/components/features/SyncSettings';
 import ConflictResolver from './components/features/ConflictResolver';
@@ -21,8 +22,12 @@ const AppContent: React.FC = () => {
     memos, isLoading, init, filter, setFilter, searchQuery, setSearchQuery,
     isSyncSettingsOpen, setSyncSettingsOpen, isSidebarOpen, setSidebarOpen,
     conflictError, setConflictError, darkMode, toggleDarkMode,
-    isSyncing, syncError, performSync, setMemos, clearHistory, addMemo, updateMemo, deleteMemo
+    isSyncing, syncError, performSync, setMemos, clearHistory, addMemo, updateMemo, deleteMemo,
+    notificationConfig
   } = useStore();
+
+  // Initialize Notification Scheduler
+  useNotificationScheduler(memos, updateMemo, notificationConfig);
 
   const filteredMemos = useMemoFilter(memos, filter, searchQuery);
   const { addToast } = useToast();
@@ -130,7 +135,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen flex flex-col md:flex-row">
         <Sidebar />
 
-        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full pb-24 md:pb-8">
+        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full pb-32 md:pb-8">
           {/* Mobile Header */}
           <div className="md:hidden flex items-center justify-between mb-6 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50">
             <div className="flex items-center gap-3">

@@ -297,7 +297,7 @@ export const storage = {
   saveAudio: async (blob: Blob): Promise<string> => {
     try {
       const db = await storage.initDB();
-      const id = crypto.randomUUID();
+      const id = Date.now().toString(36) + Math.random().toString(36).substring(2);
       const audioData = { id, blob, createdAt: Date.now() };
 
       return new Promise<string>((resolve, reject) => {

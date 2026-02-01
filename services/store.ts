@@ -42,6 +42,8 @@ interface AppState {
     setNotificationConfig: (config: NotificationConfig) => void;
 }
 
+const safeId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+
 export const useStore = create<AppState>((set, get) => ({
     // Initial State
     memos: [],
@@ -78,29 +80,47 @@ export const useStore = create<AppState>((set, get) => ({
     setMemos: (memos) => set({ memos }),
 
     addMemo: async (memoData) => {
-        const newMemo: Memo = {
-            id: crypto.randomUUID(),
-            title: memoData.title || '',
-            content: memoData.content || '',
-            type: memoData.type || 'memo',
-            category: memoData.category || 'Personal',
-            priority: memoData.priority || 'normal',
-            tags: memoData.tags || [],
-            isArchived: false,
-            isFavorite: false,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            todos: memoData.todos || [],
-            sketchData: memoData.sketchData,
-            audio: memoData.audio,
-            dueDate: memoData.dueDate,
-            reminderAt: memoData.reminderAt,
-            reminderRepeat: memoData.reminderRepeat
-        };
+        try {
+            const config = get().notificationConfig;
+            let finalReminderAt = memoData.reminderAt;
 
-        await storage.upsertMemo(newMemo);
-        set(state => ({ memos: [newMemo, ...state.memos] }));
-        get().performSync(true);
+            // Auto-reminder logic
+            if (!finalReminderAt && config.autoReminder?.enabled && (memoData.type === 'todo' || get().filter === 'tasks')) {
+                const afterMinutes = config.autoReminder.afterMinutes || 30;
+                finalReminderAt = Date.now() + (afterMinutes * 60 * 1000);
+            }
+
+            const newMemo: Memo = {
+                id: safeId(),
+                title: memoData.title || '',
+                content: memoData.content || '',
+                type: memoData.type || (get().filter === 'tasks' ? 'todo' : 'memo'),
+                category: memoData.category || 'Personal',
+                priority: memoData.priority || 'normal',
+                tags: memoData.tags || [],
+                isArchived: false,
+                isFavorite: false,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                todos: memoData.todos || [],
+                sketchData: memoData.sketchData,
+                audio: memoData.audio,
+                dueDate: memoData.dueDate,
+                reminderAt: finalReminderAt,
+                reminderRepeat: memoData.reminderRepeat || 'none'
+            };
+
+            await storage.upsertMemo(newMemo);
+            set(state => ({ memos: [newMemo, ...state.memos] }));
+
+            // Trigger sync without blocking local state
+            get().performSync(true).catch(err => {
+                console.error('Silent sync failed after addMemo:', err);
+            });
+        } catch (error) {
+            console.error('Failed to add memo:', error);
+            throw error; // Let the UI handle it
+        }
     },
 
     updateMemo: async (updatedMemo) => {

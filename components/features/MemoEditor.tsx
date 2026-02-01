@@ -3,6 +3,7 @@ import { Icons, CATEGORIES } from '../../constants';
 import { Memo, TodoItem, Priority, RepeatInterval } from '../../types';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
+import { useToast } from '../../context/ToastContext';
 
 const SketchCanvas = React.lazy(() => import('@/components/features/SketchCanvas').then(m => ({ default: m.SketchCanvas })));
 
@@ -31,6 +32,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
 
   const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const isEditing = !!initialMemo;
 
@@ -124,7 +126,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         // AI analysis removed
       }
 
-      onSave({
+      await onSave({
         ...initialMemo,
         title: title.trim() || undefined,
         content: content || (sketchData ? '[Sketch]' : '') || (audioId ? `[音频笔记 (${Math.floor(finalDuration / 60)}:${(finalDuration % 60).toString().padStart(2, '0')})]` : ''),
@@ -141,6 +143,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         category: category
       });
 
+      addToast(isEditing ? '更新成功' : '创建成功', 'success');
+
       if (!isEditing) {
         setContent('');
         setTitle('');
@@ -153,6 +157,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         setCategory(defaultCategory || 'Personal');
         setShowReminderOptions(false);
       }
+    } catch (error) {
+      console.error('Error saving memo:', error);
+      addToast(error instanceof Error ? error.message : '保存失败', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -218,7 +225,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Description or details... Type here..."
-          className="w-full h-32 bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed"
+          className="w-full min-h-[128px] max-h-[50vh] bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed overflow-y-auto"
         />
 
         {sketchData && (
@@ -262,7 +269,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 gap-4">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 z-10">
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Category & Priority Selectors - Conditionally hidden */}

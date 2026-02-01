@@ -1,6 +1,13 @@
+const checkSecureContext = () => {
+  if (!window.crypto?.subtle) {
+    throw new Error("Encryption is only available in secure contexts (HTTPS or localhost). Please check your connection.");
+  }
+};
+
 export const encryption = {
   // Generate a key from a password using PBKDF2
   getKey: async (password: string, salt: Uint8Array): Promise<CryptoKey> => {
+    checkSecureContext();
     const enc = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
       "raw",
@@ -16,7 +23,7 @@ export const encryption = {
         salt: salt,
         iterations: 100000,
         hash: "SHA-256",
-      },
+      } as Pbkdf2Params,
       keyMaterial,
       { name: "AES-GCM", length: 256 },
       false,
@@ -26,6 +33,7 @@ export const encryption = {
 
   // Encrypt data
   encrypt: async (data: string, password: string): Promise<{ ciphertext: string; salt: string; iv: string }> => {
+    checkSecureContext();
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const key = await encryption.getKey(password, salt);
@@ -49,10 +57,11 @@ export const encryption = {
 
   // Decrypt data
   decrypt: async (encryptedData: { ciphertext: string; salt: string; iv: string }, password: string): Promise<string> => {
+    checkSecureContext();
     const salt = Uint8Array.from(atob(encryptedData.salt), c => c.charCodeAt(0));
     const iv = Uint8Array.from(atob(encryptedData.iv), c => c.charCodeAt(0));
     const ciphertext = Uint8Array.from(atob(encryptedData.ciphertext), c => c.charCodeAt(0));
-    
+
     const key = await encryption.getKey(password, salt);
 
     try {
@@ -64,7 +73,7 @@ export const encryption = {
         key,
         ciphertext
       );
-      
+
       const dec = new TextDecoder();
       return dec.decode(decrypted);
     } catch (e) {
@@ -74,6 +83,7 @@ export const encryption = {
 
   // Compute SHA-256 checksum
   computeChecksum: async (data: string): Promise<string> => {
+    checkSecureContext();
     const enc = new TextEncoder();
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', enc.encode(data));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
