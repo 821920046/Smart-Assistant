@@ -1,11 +1,11 @@
 import { NotificationConfig } from '../types';
 
 export const notificationService = {
-    async send(title: string, body: string, config: NotificationConfig, trackId?: string) {
+    async send(title: string, body: string, config: NotificationConfig) {
         const { channels } = config;
         const results: { channel: string; success: boolean; error?: any }[] = [];
 
-        // 1. Browser Notification
+        // 1. Browser Notification (Still direct as it's a client API)
         if (channels.browser && "Notification" in window) {
             if (Notification.permission === "granted") {
                 try {
@@ -21,54 +21,37 @@ export const notificationService = {
 
         const promises: Promise<any>[] = [];
 
+        // Helper to send via proxy
+        const sendViaProxy = async (channel: string, channelConfig: any) => {
+            try {
+                const res = await fetch('/api/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, body, channel, config: channelConfig })
+                });
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(errorText || `Proxy error: ${res.status}`);
+                }
+                results.push({ channel, success: true });
+            } catch (e) {
+                results.push({ channel, success: false, error: e instanceof Error ? e.message : String(e) });
+            }
+        };
+
         // 2. WeNotify Edge
         if (channels.weNotify?.enabled && channels.weNotify.endpoint) {
-            promises.push(
-                fetch(channels.weNotify.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(channels.weNotify.apiKey ? { 'Authorization': `Bearer ${channels.weNotify.apiKey}` } : {})
-                    },
-                    body: JSON.stringify({ title, body, timestamp: Date.now() })
-                }).then(() => results.push({ channel: 'weNotify', success: true }))
-                    .catch(e => results.push({ channel: 'weNotify', success: false, error: e }))
-            );
+            promises.push(sendViaProxy('weNotify', channels.weNotify));
         }
 
         // 3. WeChat Robot
         if (channels.wechat?.enabled && channels.wechat.webhookUrl) {
-            promises.push(
-                fetch(channels.wechat.webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        msgtype: 'text',
-                        text: { content: `${title}\n\n${body}` }
-                    })
-                }).then(() => results.push({ channel: 'wechat', success: true }))
-                    .catch(e => results.push({ channel: 'wechat', success: false, error: e }))
-            );
+            promises.push(sendViaProxy('wechat', channels.wechat));
         }
 
         // 4. Email (Resend)
         if (channels.email?.enabled && channels.email.apiKey && channels.email.to) {
-            promises.push(
-                fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${channels.email.apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        from: 'Smart Assistant <onboarding@resend.dev>',
-                        to: [channels.email.to],
-                        subject: title,
-                        text: body
-                    })
-                }).then(() => results.push({ channel: 'email', success: true }))
-                    .catch(e => results.push({ channel: 'email', success: false, error: e }))
-            );
+            promises.push(sendViaProxy('email', channels.email));
         }
 
         await Promise.allSettled(promises);
