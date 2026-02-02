@@ -63,8 +63,13 @@ export const onRequestPost: PagesFunction = async (context) => {
     }
 
     if (channel === 'weNotify') {
-      const { endpoint, apiKey } = config;
+      let { endpoint, apiKey } = config;
       if (!endpoint) return new Response('Missing endpoint', { status: 400 });
+
+      // Force/Append /wxsend if it's likely a WeNotify-Edge instance
+      if (!endpoint.endsWith('/wxsend') && !endpoint.includes('/api/')) {
+        endpoint = endpoint.replace(/\/$/, '') + '/wxsend';
+      }
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -73,10 +78,9 @@ export const onRequestPost: PagesFunction = async (context) => {
           ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
         },
         body: JSON.stringify({
-          token: apiKey, // Some WeNotify variants use token in body
+          token: apiKey, // Some variants use token in body
           title,
-          body,
-          content: body, // Compatibility for WeNotify engine
+          content: body, // WeNotify-Edge expects 'content'
           timestamp: Date.now()
         })
       });
