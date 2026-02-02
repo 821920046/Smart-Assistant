@@ -356,11 +356,25 @@ const SettingsView: React.FC = () => {
                 <input
                   type="number"
                   min="1"
-                  value={notificationConfig.autoReminder.afterMinutes}
-                  onChange={(e) => setNotificationConfig({
-                    ...notificationConfig,
-                    autoReminder: { ...notificationConfig.autoReminder, afterMinutes: parseInt(e.target.value) || 1 }
-                  })}
+                  value={notificationConfig.autoReminder.afterMinutes || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNotificationConfig({
+                      ...notificationConfig,
+                      autoReminder: {
+                        ...notificationConfig.autoReminder,
+                        afterMinutes: val === '' ? 0 : parseInt(val)
+                      }
+                    })
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value || parseInt(e.target.value) < 1) {
+                      setNotificationConfig({
+                        ...notificationConfig,
+                        autoReminder: { ...notificationConfig.autoReminder, afterMinutes: 1 }
+                      });
+                    }
+                  }}
                   className="w-20 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-sm text-slate-900 dark:text-white"
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-400">minutes</span>
