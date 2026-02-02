@@ -220,8 +220,8 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                     key={p}
                                     onClick={() => setConfig({ ...config, provider: p })}
                                     className={`py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${config.provider === p
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                                            : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                                        : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
                                         }`}
                                 >
                                     {p === 'none' ? '仅本地' : p === 'github_repo' ? 'GitHub Repo' : p}
@@ -232,8 +232,12 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
                     {config.provider === 'github_repo' && (
                         <div className="space-y-4 animate-card">
-                            <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2">
-                                核心原则：Local-First / 云端仅备份 / 单人使用 / 冲突可控
+                            <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2 leading-relaxed">
+                                <p className="font-bold mb-1 flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                                    核心原则：Local-First / 安全加密同步
+                                </p>
+                                提醒配置（含 API Key）将随数据一同加密存储在您的私有仓库中。清除缓存后，只需重新输入 Token 即可通过“云端恢复”找回所有设置。
                             </div>
                             <div className="relative">
                                 <input
@@ -247,7 +251,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                         onClick={handleCloudRestore}
                                         className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
                                     >
-                                        从云端恢复配置
+                                        云端找回配置
                                     </button>
                                 )}
                             </div>
@@ -276,8 +280,8 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                     <div className="flex justify-between font-bold text-slate-700 border-t border-slate-200 pt-2 mt-2">
                                         <span>Sync Data File Size:</span>
                                         <span className={syncFileStatus?.exists ? 'text-blue-600' : 'text-slate-400'}>
-                                            {syncFileStatus?.exists 
-                                                ? `${((syncFileStatus.size || 0) / 1024).toFixed(2)} KB` 
+                                            {syncFileStatus?.exists
+                                                ? `${((syncFileStatus.size || 0) / 1024).toFixed(2)} KB`
                                                 : 'Not Found (Empty)'}
                                         </span>
                                     </div>
