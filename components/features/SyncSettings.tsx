@@ -17,6 +17,10 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     const [syncFileStatus, setSyncFileStatus] = useState<{ exists: boolean, size?: number } | null>(null);
 
     useEffect(() => {
+        // 加载并尝试解密配置
+        syncService.getDecryptedConfig().then(decryptedConfig => {
+            setConfig(decryptedConfig);
+        });
         loadSnapshots();
         setLastSyncTime(syncService.getLastSyncTime());
     }, []);

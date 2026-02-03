@@ -72,6 +72,34 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
     }
   }, [defaultCategory, isEditing]);
 
+  // Debounced Auto-save for existing memos
+  useEffect(() => {
+    if (!isEditing || isProcessing) return;
+
+    // Check if anything meaningful changed from initialMemo
+    const hasChanged =
+      title !== (initialMemo?.title || '') ||
+      content !== (initialMemo?.content || '') ||
+      priority !== initialMemo?.priority ||
+      reminderAt !== (initialMemo?.reminderAt ? new Date(initialMemo.reminderAt).toISOString().slice(0, 16) : '');
+
+    if (!hasChanged) return;
+
+    const timer = setTimeout(() => {
+      onSave({
+        ...initialMemo,
+        title: title.trim() || undefined,
+        content: content || '',
+        priority: priority,
+        reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
+        reminderRepeat,
+        updatedAt: Date.now()
+      });
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timer);
+  }, [title, content, priority, reminderAt, reminderRepeat]);
+
   const dateInputRef = useRef<HTMLInputElement>(null);
   const reminderInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

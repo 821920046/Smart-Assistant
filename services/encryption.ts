@@ -88,5 +88,26 @@ export const encryption = {
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', enc.encode(data));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  // Helper for quick string encryption (e.g. for localStorage tokens)
+  encryptString: async (text: string, password: string): Promise<string> => {
+    if (!text || !password) return text;
+    const encrypted = await encryption.encrypt(text, password);
+    return JSON.stringify(encrypted);
+  },
+
+  decryptString: async (encryptedJson: string, password: string): Promise<string> => {
+    if (!encryptedJson || !password) return encryptedJson;
+    try {
+      const data = JSON.parse(encryptedJson);
+      // Basic heuristic to check if it's our encrypted object format
+      if (data && data.ciphertext && data.salt && data.iv) {
+        return await encryption.decrypt(data, password);
+      }
+      return encryptedJson; // Not encrypted or wrong format
+    } catch (e) {
+      return encryptedJson; // Fallback to raw if not JSON
+    }
   }
 };
