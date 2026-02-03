@@ -106,7 +106,9 @@ export class GitHubStrategy extends BaseSyncStrategy {
         try {
             const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { headers, cache: 'no-store' });
             if (res.status === 404) return { exists: false };
+            if (!res.ok) return { exists: false };
             const data = await res.json();
+            if (!data || Array.isArray(data)) return { exists: false };
             return { exists: true, size: data.size, sha: data.sha };
         } catch (e) {
             return { exists: false };
@@ -135,12 +137,20 @@ export class GitHubStrategy extends BaseSyncStrategy {
         const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${DATA_BRANCH}`, { headers });
         if (branchRes.ok) return;
 
+        // Fetch repo info to get default branch
         const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+        if (!repoRes.ok) throw new Error(`Fetch repo failed: ${repoRes.status}`);
         const repoData = await repoRes.json();
         const defaultBranch = repoData.default_branch || 'main';
 
+        // Get default branch commit SHA
         const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, { headers });
+        if (!refRes.ok) throw new Error(`Fetch ${defaultBranch} ref failed: ${refRes.status}`);
         const refData = await refRes.json();
+
+        if (!refData.object || !refData.object.sha) {
+            throw new Error(`Could not find SHA for branch ${defaultBranch}`);
+        }
 
         await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs`, {
             method: 'POST',
@@ -153,7 +163,9 @@ export class GitHubStrategy extends BaseSyncStrategy {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { headers });
         if (res.ok) {
             const data = await res.json();
-            return await fetch(url, { method: 'PUT', headers, body: JSON.stringify({ ...body, sha: data.sha }) });
+            if (data && !Array.isArray(data) && data.sha) {
+                return await fetch(url, { method: 'PUT', headers, body: JSON.stringify({ ...body, sha: data.sha }) });
+            }
         }
         return res;
     }
@@ -207,7 +219,9 @@ export class GitHubStrategy extends BaseSyncStrategy {
             const res = await fetch(apiUrl, { headers });
             if (res.ok) {
                 const data = await res.json();
-                sha = data.sha;
+                if (data && !Array.isArray(data)) {
+                    sha = data.sha;
+                }
             }
         } catch (e) { }
 
