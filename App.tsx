@@ -134,7 +134,7 @@ const AppContent: React.FC = () => {
     const handleExportEvent = () => handleExport();
     window.addEventListener('app-export', handleExportEvent);
     return () => window.removeEventListener('app-export', handleExportEvent);
-  }, []);
+  }, [handleExport]);
 
   if (isLoading) {
     return (
