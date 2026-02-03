@@ -18,54 +18,28 @@ interface MemoCardProps {
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
   const colors = {
-    important: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800',
-    normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+    important: 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900',
+    normal: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900',
+    secondary: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900'
   };
 
-  const renderStars = () => {
-    const starCount = priority === 'important' ? 3 : priority === 'normal' ? 2 : 1;
-
-    return (
-      <div className="flex gap-0.5" title={`${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`}>
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{
-              scale: i < starCount ? 1 : 0.3,
-              rotate: 0,
-              opacity: i < starCount ? 1 : 0.3
-            }}
-            transition={{
-              delay: i * 0.1,
-              type: "spring",
-              stiffness: 300,
-              damping: 20
-            }}
-          >
-            <Icons.Star
-              className={cn(
-                "w-3 h-3 transition-all duration-200",
-                i < starCount ? "fill-current" : "opacity-30"
-              )}
-            />
-          </motion.div>
-        ))}
-      </div>
-    );
+  const labels = {
+    important: 'High',
+    normal: 'Medium',
+    secondary: 'Low'
   };
 
   return (
     <motion.span
       className={cn(
-        "px-2 py-1 rounded-lg border text-xs font-medium",
+        "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider",
         colors[priority]
       )}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      {renderStars()}
+      <Icons.Priority priority={priority} className="w-2 h-2" />
+      <span>{labels[priority]}</span>
     </motion.span>
   );
 };

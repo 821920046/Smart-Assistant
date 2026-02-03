@@ -19,54 +19,28 @@ interface MemoCardProps {
 
 const PriorityTag = ({ priority }: { priority: Priority }) => {
   const colors = {
-    important: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800',
-    normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    secondary: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+    important: 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900',
+    normal: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900',
+    secondary: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900'
   };
 
-  const renderStars = () => {
-    const starCount = priority === 'important' ? 3 : priority === 'normal' ? 2 : 1;
-    
-    return (
-      <div className="flex gap-0.5" title={`${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`}>
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ 
-              scale: i < starCount ? 1 : 0.3, 
-              rotate: 0,
-              opacity: i < starCount ? 1 : 0.3
-            }}
-            transition={{ 
-              delay: i * 0.1, 
-              type: "spring", 
-              stiffness: 300, 
-              damping: 20 
-            }}
-          >
-            <Icons.Star 
-              className={cn(
-                "w-3 h-3 transition-all duration-200",
-                i < starCount ? "fill-current" : "opacity-30"
-              )} 
-            />
-          </motion.div>
-        ))}
-      </div>
-    );
+  const labels = {
+    important: 'High',
+    normal: 'Medium',
+    secondary: 'Low'
   };
 
   return (
-    <motion.span 
+    <motion.span
       className={cn(
-        "px-2 py-1 rounded-lg border text-xs font-medium",
+        "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider",
         colors[priority]
       )}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      {renderStars()}
+      <Icons.Priority priority={priority} className="w-2 h-2" />
+      <span>{labels[priority]}</span>
     </motion.span>
   );
 };
@@ -157,15 +131,15 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
 
   // Enhanced card variants
   const cardVariants = {
-    initial: { 
-      opacity: 0, 
-      scale: 0.9, 
+    initial: {
+      opacity: 0,
+      scale: 0.9,
       y: 20,
       rotateX: 10
     },
-    animate: { 
-      opacity: 1, 
-      scale: 1, 
+    animate: {
+      opacity: 1,
+      scale: 1,
       y: 0,
       rotateX: 0,
       transition: {
@@ -175,7 +149,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
         delay: index * 0.05
       }
     },
-    hover: { 
+    hover: {
       scale: compact ? 1.02 : 1.03,
       y: compact ? -2 : -4,
       rotateX: 0,
@@ -185,14 +159,14 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
         damping: 25
       }
     },
-    tap: { 
+    tap: {
       scale: 0.98,
       y: 0,
       transition: { duration: 0.1 }
     },
-    exit: { 
-      opacity: 0, 
-      scale: 0.9, 
+    exit: {
+      opacity: 0,
+      scale: 0.9,
       y: -20,
       rotateX: -10,
       transition: { duration: 0.2 }
@@ -236,10 +210,10 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
         "memo-card group relative cursor-pointer overflow-hidden",
         "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
         "shadow-sm hover:shadow-lg transition-all duration-300",
-        compact 
-          ? "p-4 rounded-xl" 
-          : hasTodos 
-            ? "p-6 rounded-xl" 
+        compact
+          ? "p-4 rounded-xl"
+          : hasTodos
+            ? "p-6 rounded-xl"
             : "p-6 rounded-2xl max-w-2xl mx-auto"
       )}
       style={{
@@ -270,20 +244,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <PriorityTag priority={memo.priority || 'normal'} />
-              {memo.tags?.map((tag, tagIndex) => (
-                <motion.span
-                  key={tag}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ 
-                    opacity: 1, 
-                    scale: 1,
-                    transition: { delay: 0.3 + tagIndex * 0.05 }
-                  }}
-                  className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600"
-                >
-                  #{tag}
-                </motion.span>
-              ))}
             </div>
           </div>
         )}
@@ -327,7 +287,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
             </motion.button>
 
             <div className="flex-1 min-w-0 text-left">
-              <motion.div 
+              <motion.div
                 className={cn(
                   "break-words",
                   compact ? 'mb-1' : 'mb-2',
@@ -363,7 +323,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
                     />
                   </div>
                   {!compact && !memo.isArchived && (
-                    <motion.div 
+                    <motion.div
                       className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-indigo-500/80 dark:text-indigo-400/80 uppercase tracking-widest group-hover/content:text-indigo-600 transition-colors"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: isHovered ? 1 : 0 }}
@@ -404,7 +364,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <motion.div 
+              <motion.div
                 className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0"
                 whileHover={{ scale: 1.1, rotate: 10 }}
                 whileTap={{ scale: 0.9 }}
@@ -436,17 +396,17 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
                         : 'p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:shadow-sm'
                     )}
                     initial={{ opacity: 0, x: -20 }}
-                    animate={{ 
-                      opacity: 1, 
+                    animate={{
+                      opacity: 1,
                       x: 0,
                       transition: { delay: 0.4 + todoIndex * 0.05 }
                     }}
                     whileHover={{ x: 4 }}
                   >
                     <motion.button
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        handleToggleTodo(todo.id); 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleTodo(todo.id);
                       }}
                       className={cn(
                         "mt-1 w-4 h-4 rounded border flex items-center justify-center transition-all",
@@ -479,7 +439,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
                         {title}
                       </p>
                       {desc.length > 0 && !todo.completed && (
-                        <motion.p 
+                        <motion.p
                           className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -509,7 +469,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
 
         {/* Enhanced Footer Actions */}
         {!compact && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-700/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -518,7 +478,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span>{new Date(memo.createdAt).toLocaleDateString()}</span>
               {memo.reminderAt && (
-                <motion.div 
+                <motion.div
                   className="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full"
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
@@ -530,7 +490,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
               )}
             </div>
 
-            <motion.div 
+            <motion.div
               className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 20 }}
@@ -538,9 +498,9 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact, index = 0 }) => {
             >
               {!memo.isArchived && (
                 <motion.button
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setIsEditing(true); 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
                     hapticFeedback('light');
                   }}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"

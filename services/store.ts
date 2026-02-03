@@ -103,7 +103,6 @@ export const useStore = create<AppState>((set, get) => ({
                 title: memoData.title || '',
                 content: memoData.content || '',
                 type: memoData.type || (get().filter === 'tasks' ? 'todo' : 'memo'),
-                category: memoData.category || 'Personal',
                 priority: memoData.priority || 'normal',
                 tags: memoData.tags || [],
                 isArchived: false,

@@ -15,7 +15,7 @@ export const useMemoFilter = (memos: Memo[], filter: string, searchQuery: string
       );
     }
 
-    // 2. Filter by View/Category
+    // 2. Filter by View
     switch (filter) {
       case 'tasks':
         // Show active memos of type 'todo'
@@ -42,27 +42,8 @@ export const useMemoFilter = (memos: Memo[], filter: string, searchQuery: string
         filtered = filtered.filter(m => m.isArchived);
         break;
       default:
-        // Assume it's a category or tag
-        if (filter.startsWith('#')) {
-          // Tag filter (if implemented in UI)
-          const tag = filter; // Tags usually stored with #? Or just text?
-          // In App.tsx tags are string[]. Usually user stores "tag". 
-          // If filter passed is "#tag", we might need to strip # or match exactly.
-          // Sidebar passes activeFilter.
-          // Let's assume standard category matching first.
-          // If it's a tag, it might just be the tag string.
-
-          // Check if it matches a category first?
-          // Since we don't import CATEGORIES, we rely on the fact that if it's not standard, it's a custom filter.
-
-          // If the user's tag includes #, match it.
-          filtered = filtered.filter(m => !m.isArchived && m.tags.includes(filter));
-        } else {
-          // Category filter (Sidebar "Folders")
-          // or Tag filter without #?
-          // Let's try matching category first, as that's explicit in Sidebar.
-          filtered = filtered.filter(m => !m.isArchived && m.category === filter);
-        }
+        // Assume it's a tag filter if it's not a built-in view
+        filtered = filtered.filter(m => !m.isArchived && m.tags.includes(filter));
         break;
     }
 

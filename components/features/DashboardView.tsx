@@ -73,10 +73,6 @@ const DashboardView: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium">Capture, Organize, and Achieve.</p>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={() => onNavigate('tasks')} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-100"><Icons.Plus className="w-5 h-5" /> New Task</button>
-                    <button onClick={() => onNavigate('notes')} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border rounded-2xl font-semibold shadow-sm"><Icons.FileText className="w-5 h-5" /> New Note</button>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
