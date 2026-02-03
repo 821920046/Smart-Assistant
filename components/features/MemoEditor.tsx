@@ -158,7 +158,8 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         reminderRepeat,
         type: initialMemo?.type || defaultType,
         updatedAt: Date.now(),
-        priority: priority
+        priority: priority,
+        reminded: initialMemo?.reminderAt !== reminderAt ? false : initialMemo?.reminded
       });
 
       addToast(isEditing ? '更新成功' : '创建成功', 'success');

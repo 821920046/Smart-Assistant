@@ -114,7 +114,8 @@ export const useStore = create<AppState>((set, get) => ({
                 audio: memoData.audio,
                 dueDate: memoData.dueDate,
                 reminderAt: finalReminderAt,
-                reminderRepeat: memoData.reminderRepeat || 'none'
+                reminderRepeat: memoData.reminderRepeat || 'none',
+                reminded: false
             };
 
             await storage.upsertMemo(newMemo);

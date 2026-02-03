@@ -37,7 +37,7 @@ export const useNotificationScheduler = (
       if (memo.isDeleted || memo.isArchived) return;
 
       // 1. Manual Reminder Logic
-      if (memo.reminderAt && now >= memo.reminderAt) {
+      if (memo.reminderAt && now >= memo.reminderAt && !memo.reminded) {
         const lastNotifiedAt = notifiedReminders.current.get(memo.id);
 
         // Trigger if not notified yet for THIS specific time
@@ -52,8 +52,17 @@ export const useNotificationScheduler = (
           // Handle repeat logic
           if (memo.reminderRepeat && memo.reminderRepeat !== 'none') {
             const nextTime = memo.reminderAt + (memo.reminderRepeat === 'daily' ? 86400000 : 86400000 * 7);
-            updateMemoRef.current({ ...memo, reminderAt: nextTime });
-            // The next tick will check this new time
+            updateMemoRef.current({
+              ...memo,
+              reminderAt: nextTime,
+              reminded: false
+            });
+          } else {
+            // For one-time reminders, mark as reminded persistently
+            updateMemoRef.current({
+              ...memo,
+              reminded: true
+            });
           }
         }
       }

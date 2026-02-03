@@ -46,6 +46,7 @@ export interface Memo {
   dueDate?: number;
   reminderAt?: number;
   reminderRepeat?: RepeatInterval; // Added periodic reminder support
+  reminded?: boolean; // Persistent flag to prevent duplicate notifications
   sketchData?: string;
   isArchived: boolean;
   isFavorite: boolean;
