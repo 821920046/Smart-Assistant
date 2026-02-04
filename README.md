@@ -147,14 +147,17 @@ Smart Assistant 允许您在没有中央服务器的情况下跨设备同步数�
 5.  *注意：您的同步密码用于加密数据。请勿丢失！*
 
 **进阶：云端自动提醒（Cloud-side Reminders）**
-如果您希望在关闭浏览器后仍能收到微信/邮件提醒，可以部署 Cloudflare Worker 定时任务：
-1.  在 Cloudflare 中新建一个 Worker，并将 `functions/cron.ts` 的内容粘贴进去。
-2.  在 Cloudflare 设置中添加以下 **Secrets**:
-    - `GITHUB_TOKEN`: 您的 GitHub 访问令牌。
-    - `GITHUB_REPO`: 您的数据仓库路径（如 `user/repo`）。
+> [!IMPORTANT]
+> **注意**：由于 Cloudflare 的限制，定时任务（Cron）不能直接放在 Pages 项目中，必须作为一个**独立的 Worker** 部署。
+
+1.  **新建 Worker**：在 Cloudflare 控制台点击 `Workers & Pages` -> `Create Worker`。
+2.  **粘贴代码**：将 `functions/cron.ts`（或我提供的兼容版代码）粘贴到 Worker 编辑器中。
+3.  **配置 Secrets**：在该 Worker 的 `Settings` -> `Variables` 中添加：
+    - `GITHUB_TOKEN`: 您的 GitHub 令牌。
+    - `GITHUB_REPO`: `用户名/仓库名`（如 `821920046/Smart-Assistant`）。
     - `ENCRYPTION_PASSWORD`: 您的同步加密密码。
-3.  在 Cloudflare 中添加 **Cron Trigger**，设置为 `* * * * *`（每分钟运行一次）。
-4.  新建一个名为 `NOTIFIED_CACHE` 的 **KV Namespace** 并关联到 Worker。
+4.  **设置定时器**：在 Worker 的 `Triggers` -> `Cron Triggers` 中添加 `* * * * *`。
+5.  **防止重复**：创建一个名为 `NOTIFIED_CACHE` 的 KV 命名空间并关联。
 
 ## 🤝 贡献
 
