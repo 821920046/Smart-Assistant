@@ -146,6 +146,16 @@ Smart Assistant 允许您在没有中央服务器的情况下跨设备同步数�
 4.  输入您的 Token、仓库名称 (`username/repo`) 和 **同步密码**。
 5.  *注意：您的同步密码用于加密数据。请勿丢失！*
 
+**进阶：云端自动提醒（Cloud-side Reminders）**
+如果您希望在关闭浏览器后仍能收到微信/邮件提醒，可以部署 Cloudflare Worker 定时任务：
+1.  在 Cloudflare 中新建一个 Worker，并将 `functions/cron.ts` 的内容粘贴进去。
+2.  在 Cloudflare 设置中添加以下 **Secrets**:
+    - `GITHUB_TOKEN`: 您的 GitHub 访问令牌。
+    - `GITHUB_REPO`: 您的数据仓库路径（如 `user/repo`）。
+    - `ENCRYPTION_PASSWORD`: 您的同步加密密码。
+3.  在 Cloudflare 中添加 **Cron Trigger**，设置为 `* * * * *`（每分钟运行一次）。
+4.  新建一个名为 `NOTIFIED_CACHE` 的 **KV Namespace** 并关联到 Worker。
+
 ## 🤝 贡献
 
 欢迎贡献！请随意提交 Pull Request。
