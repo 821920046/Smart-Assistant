@@ -38,14 +38,23 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                     }
                     setRepoInfo(null);
                 });
-            syncService.getRemoteFileStatus(config)
-                .then(setSyncFileStatus)
-                .catch((err) => {
-                    if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
-                        console.error('Failed to get file status:', err);
-                    }
-                    setSyncFileStatus(null);
-                });
+            
+            // Only check remote file status if user has synced before
+            // This avoids 404 errors for first-time users
+            const lastSyncTime = syncService.getLastSyncTime();
+            if (lastSyncTime > 0) {
+                syncService.getRemoteFileStatus(config)
+                    .then(setSyncFileStatus)
+                    .catch((err) => {
+                        if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
+                            console.error('Failed to get file status:', err);
+                        }
+                        setSyncFileStatus(null);
+                    });
+            } else {
+                // First time user, show as not synced
+                setSyncFileStatus({ exists: false });
+            }
         } else {
             setRepoInfo(null);
             setSyncFileStatus(null);
