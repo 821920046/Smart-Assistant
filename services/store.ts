@@ -65,8 +65,13 @@ export const useStore = create<AppState>((set, get) => ({
             const memos = await storage.getMemos();
             set({ memos, isLoading: false });
 
-            // Initial silent sync
-            get().performSync(true);
+            // Initial silent sync - only if sync is configured
+            const config = syncService.getConfig();
+            if (config.provider !== 'none' && config.settings.githubToken) {
+                get().performSync(true).catch(() => {
+                    // Silent fail on initial sync - user will see error only if they manually sync
+                });
+            }
         } catch (error) {
             console.error('Failed to init store:', error);
             set({ isLoading: false });
