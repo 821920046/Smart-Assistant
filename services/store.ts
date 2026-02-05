@@ -172,6 +172,11 @@ export const useStore = create<AppState>((set, get) => ({
         const config = syncService.getConfig();
         if (config.provider === 'none') return;
 
+        // Check if sync is properly configured
+        if (config.provider === 'github_repo' && !config.settings.githubToken) return;
+        if (config.provider === 'webdav' && !config.settings.webdavUrl) return;
+        if (config.provider === 'gist' && !config.settings.gistToken) return;
+
         set({ isSyncing: true, syncError: null });
         try {
             let merged: Memo[] = memos;
@@ -188,10 +193,16 @@ export const useStore = create<AppState>((set, get) => ({
                 lastSyncTime: syncService.getLastSyncTime()
             });
         } catch (error) {
-            console.error('Sync failed:', error);
+            // In silent mode, don't log 401 errors to console
+            const err = error as Error;
+            const isAuthError = err.message?.includes('401') || err.message?.includes('Unauthorized');
+            if (!silent || !isAuthError) {
+                console.error('Sync failed:', error);
+            }
+
             set({
                 isSyncing: false,
-                syncError: error as Error
+                syncError: err
             });
 
             if (error instanceof SyncConflictError) {

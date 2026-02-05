@@ -26,9 +26,26 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     }, []);
 
     useEffect(() => {
+        // Only fetch repo details if we have a valid token and repo configured
         if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
-            syncService.getRepoDetails(config).then(setRepoInfo).catch(() => setRepoInfo(null));
-            syncService.getRemoteFileStatus(config).then(setSyncFileStatus).catch(() => setSyncFileStatus(null));
+            // Silently fetch repo info - don't show 401 errors during initial load
+            syncService.getRepoDetails(config)
+                .then(setRepoInfo)
+                .catch((err) => {
+                    // Only log actual errors, not auth failures
+                    if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
+                        console.error('Failed to get repo details:', err);
+                    }
+                    setRepoInfo(null);
+                });
+            syncService.getRemoteFileStatus(config)
+                .then(setSyncFileStatus)
+                .catch((err) => {
+                    if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
+                        console.error('Failed to get file status:', err);
+                    }
+                    setSyncFileStatus(null);
+                });
         } else {
             setRepoInfo(null);
             setSyncFileStatus(null);

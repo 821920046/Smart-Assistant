@@ -97,9 +97,15 @@ const AppContent: React.FC = () => {
         }
     }, [syncError, addToast, setSyncSettingsOpen]);
 
-    // Auto Sync Triggers
+    // Auto Sync Triggers - only when sync is configured
     useEffect(() => {
         if (isLoading) return;
+
+        // Check if sync is properly configured
+        const config = syncService.getConfig();
+        if (config.provider === 'none') return;
+        if (config.provider === 'github_repo' && !config.settings.githubToken) return;
+        if (config.provider === 'webdav' && !config.settings.webdavUrl) return;
 
         const SYNC_INTERVAL = 5 * 60 * 1000;
         const SYNC_DEBOUNCE = 30 * 1000;
