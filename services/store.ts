@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Memo, NotificationConfig } from '../types';
+import { Memo } from '../types';
 import { storage } from './storage';
 import { syncService, SyncConflictError } from './sync';
 
@@ -36,10 +36,6 @@ interface AppState {
     toggleDarkMode: () => void;
 
     performSync: (silent?: boolean) => Promise<void>;
-
-    // Notification Actions
-    notificationConfig: NotificationConfig;
-    setNotificationConfig: (config: NotificationConfig) => void;
 }
 
 const safeId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -71,14 +67,6 @@ export const useStore = create<AppState>((set, get) => ({
 
             // Initial silent sync
             get().performSync(true);
-
-            // Listen for remote config restorations
-            window.addEventListener('notification-config-restored', (e: any) => {
-                const newConfig = e.detail;
-                if (newConfig) {
-                    set({ notificationConfig: newConfig });
-                }
-            });
         } catch (error) {
             console.error('Failed to init store:', error);
             set({ isLoading: false });
@@ -89,15 +77,6 @@ export const useStore = create<AppState>((set, get) => ({
 
     addMemo: async (memoData) => {
         try {
-            const config = get().notificationConfig;
-            let finalReminderAt = memoData.reminderAt;
-
-            // Auto-reminder logic
-            if (!finalReminderAt && config.autoReminder?.enabled && (memoData.type === 'todo' || get().filter === 'tasks')) {
-                const afterMinutes = config.autoReminder.afterMinutes || 30;
-                finalReminderAt = Date.now() + (afterMinutes * 60 * 1000);
-            }
-
             const newMemo: Memo = {
                 id: safeId(),
                 title: memoData.title || '',
@@ -113,7 +92,7 @@ export const useStore = create<AppState>((set, get) => ({
                 sketchData: memoData.sketchData,
                 audio: memoData.audio,
                 dueDate: memoData.dueDate,
-                reminderAt: finalReminderAt,
+                reminderAt: memoData.reminderAt,
                 reminderRepeat: memoData.reminderRepeat || 'none',
                 reminded: false
             };
@@ -216,15 +195,4 @@ export const useStore = create<AppState>((set, get) => ({
         }
     },
 
-    notificationConfig: JSON.parse(localStorage.getItem('notification_config') || JSON.stringify({
-        channels: { browser: true },
-        autoReminder: { enabled: false, afterMinutes: 30 }
-    })),
-
-    setNotificationConfig: (config) => {
-        set({ notificationConfig: config });
-        localStorage.setItem('notification_config', JSON.stringify(config));
-        // Trigger sync to persist settings to cloud
-        get().performSync(true);
-    }
 }));

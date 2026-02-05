@@ -2,5 +2,9 @@
   "syncType": "github",
   "repo": "821920046/Smart-Assistant",
   "encrypted": true,
+<<<<<<< HEAD
   "updatedAt": 1770206657572
+=======
+  "updatedAt": 1769528420368
+>>>>>>> parent of 4d61c91 (Update sync config)
 }

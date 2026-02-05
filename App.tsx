@@ -12,7 +12,7 @@ import { syncService } from './services/sync';
 import { Memo } from './types';
 import { useStore } from './services/store';
 import { useMemoFilter } from './hooks/useMemoFilter';
-import { useNotificationScheduler } from './hooks/useNotificationScheduler';
+
 
 import SyncSettings from '@/components/features/SyncSettings';
 import ConflictResolver from './components/features/ConflictResolver';
@@ -38,10 +38,6 @@ const AppContent: React.FC = () => {
     const performSync = useStore(state => state.performSync);
     const setMemos = useStore(state => state.setMemos);
     const updateMemo = useStore(state => state.updateMemo);
-    const notificationConfig = useStore(state => state.notificationConfig);
-
-    // Initialize Notification Scheduler
-    useNotificationScheduler(memos, updateMemo, notificationConfig);
 
     const filteredMemos = useMemoFilter(memos, filter, searchQuery);
     const { addToast } = useToast();

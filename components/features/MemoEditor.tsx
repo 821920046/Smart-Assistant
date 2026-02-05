@@ -1,6 +1,6 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react';
-import { Icons, CATEGORIES } from '../../constants';
-import { Memo, TodoItem, Priority, RepeatInterval } from '../../types';
+import { Icons } from '../../constants';
+import { Memo, TodoItem, Priority } from '../../types';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
 import { useToast } from '../../context/ToastContext';
@@ -22,36 +22,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
   const [isProcessing, setIsProcessing] = useState(false);
   const [priority, setPriority] = useState<Priority>(initialMemo?.priority || 'normal');
   const [dueDate, setDueDate] = useState<string>(initialMemo?.dueDate ? new Date(initialMemo.dueDate).toISOString().split('T')[0] : '');
-  const [reminderAt, setReminderAt] = useState<string>(initialMemo?.reminderAt ? new Date(initialMemo.reminderAt).toISOString().slice(0, 16) : '');
-  const [reminderRepeat, setReminderRepeat] = useState<RepeatInterval>(initialMemo?.reminderRepeat || 'none');
   const [sketchData, setSketchData] = useState<string | null>(initialMemo?.sketchData || null);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
-  const [showReminderOptions, setShowReminderOptions] = useState(false);
 
   const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { addToast } = useToast();
-
-  const reminderRef = useRef<HTMLDivElement>(null);
-
-  // Handle clicking outside to close reminder options
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (reminderRef.current && !reminderRef.current.contains(event.target as Node)) {
-        setShowReminderOptions(false);
-      }
-    };
-
-    if (showReminderOptions) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showReminderOptions]);
 
   const isEditing = !!initialMemo;
 
@@ -66,12 +42,6 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
     }
   }, [audioBlob]);
 
-  React.useEffect(() => {
-    if (defaultCategory && !isEditing) {
-      setCategory(defaultCategory);
-    }
-  }, [defaultCategory, isEditing]);
-
   // Debounced Auto-save for existing memos
   useEffect(() => {
     if (!isEditing || isProcessing) return;
@@ -80,8 +50,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
     const hasChanged =
       title !== (initialMemo?.title || '') ||
       content !== (initialMemo?.content || '') ||
-      priority !== initialMemo?.priority ||
-      reminderAt !== (initialMemo?.reminderAt ? new Date(initialMemo.reminderAt).toISOString().slice(0, 16) : '');
+      priority !== initialMemo?.priority;
 
     if (!hasChanged) return;
 
@@ -91,17 +60,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         title: title.trim() || undefined,
         content: content || '',
         priority: priority,
-        reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
-        reminderRepeat,
         updatedAt: Date.now()
       });
     }, 2000); // 2 second debounce
 
     return () => clearTimeout(timer);
-  }, [title, content, priority, reminderAt, reminderRepeat]);
+  }, [title, content, priority]);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const reminderInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertMarkdown = (type: 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote') => {
@@ -182,12 +148,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         sketchData: sketchData || undefined,
         audio: audioId ? { id: audioId, duration: finalDuration } : undefined,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
-        reminderAt: reminderAt ? new Date(reminderAt).getTime() : undefined,
-        reminderRepeat,
         type: initialMemo?.type || defaultType,
         updatedAt: Date.now(),
-        priority: priority,
-        reminded: initialMemo?.reminderAt !== reminderAt ? false : initialMemo?.reminded
+        priority: priority
       });
 
       addToast(isEditing ? '更新成功' : '创建成功', 'success');
@@ -196,12 +159,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         setContent('');
         setTitle('');
         setDueDate('');
-        setReminderAt('');
-        setReminderRepeat('none');
         setSketchData(null);
         resetRecording();
         setPriority('normal');
-        setShowReminderOptions(false);
       }
     } catch (error) {
       console.error('Error saving memo:', error);
@@ -398,55 +358,6 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
             >
               <Icons.Pen />
             </button>
-
-            <div className="relative" ref={reminderRef}>
-              <button
-                onClick={() => setShowReminderOptions(!showReminderOptions)}
-                className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${reminderAt ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                title="Set Reminder"
-              >
-                <Icons.Bell className="w-4 h-4" />
-              </button>
-              {showReminderOptions && (
-                <div className="absolute bottom-full left-0 md:left-auto md:right-0 mb-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 z-50 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Reminder Time</label>
-                    <input
-                      type="datetime-local"
-                      ref={reminderInputRef}
-                      value={reminderAt}
-                      onChange={(e) => setReminderAt(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Repeat</label>
-                    <div className="flex gap-1 p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
-                      {(['none', 'daily', 'weekly'] as RepeatInterval[]).map(r => (
-                        <button
-                          key={r}
-                          onClick={() => setReminderRepeat(r)}
-                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${reminderRepeat === r
-                            ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                            }`}
-                        >
-                          {r.charAt(0).toUpperCase() + r.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {reminderAt && (
-                    <button
-                      onClick={() => { setReminderAt(''); setReminderRepeat('none'); }}
-                      className="w-full pt-2 text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors border-t border-slate-100 dark:border-slate-700"
-                    >
-                      Clear Reminder
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

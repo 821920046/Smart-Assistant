@@ -2,31 +2,6 @@
 export type Priority = 'important' | 'normal' | 'secondary';
 export type RepeatInterval = 'none' | 'daily' | 'weekly';
 
-export interface NotificationConfig {
-  channels: {
-    browser: boolean;
-    weNotify?: {
-      enabled: boolean;
-      endpoint: string;
-      apiKey?: string;
-    };
-    wechat?: {
-      enabled: boolean;
-      webhookUrl: string;
-    };
-    email?: {
-      enabled: boolean;
-      apiKey: string;
-      to: string;
-    };
-  };
-  autoReminder: {
-    enabled: boolean;
-    afterMinutes: number; // Duration after creation to trigger reminder
-    priority?: Priority; // Minimum priority to auto-remind
-  };
-}
-
 export interface TodoItem {
   id: string;
   text: string;
@@ -77,7 +52,6 @@ export interface SyncData {
   memos: Memo[];
   todos: Memo[];
   whiteboards: Memo[];
-  notificationConfig?: NotificationConfig;
 }
 
 export interface SyncSnapshot {
