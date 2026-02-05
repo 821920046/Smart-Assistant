@@ -109,6 +109,39 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     const saveAndSync = async () => {
         setIsTesting(true);
         try {
+            // Validate configuration before saving
+            if (config.provider === 'github_repo') {
+                if (!config.settings.githubToken?.trim()) {
+                    alert('请输入 GitHub Personal Access Token');
+                    return;
+                }
+                if (!config.settings.githubRepo?.trim()) {
+                    alert('请输入 Repository (格式: username/repo)');
+                    return;
+                }
+                if (!config.settings.encryptionPassword?.trim()) {
+                    alert('请设置同步密码用于加密数据');
+                    return;
+                }
+
+                // Test connection before saving
+                try {
+                    const repoDetails = await syncService.getRepoDetails(config);
+                    if (!repoDetails) {
+                        alert('无法连接到仓库，请检查 Token 和仓库名称是否正确');
+                        return;
+                    }
+                } catch (err) {
+                    alert('连接测试失败: ' + (err as Error).message);
+                    return;
+                }
+            } else if (config.provider === 'webdav') {
+                if (!config.settings.webdavUrl?.trim()) {
+                    alert('请输入 WebDAV URL');
+                    return;
+                }
+            }
+
             syncService.saveConfig(config);
 
             if (config.provider === 'github_repo') {

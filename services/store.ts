@@ -65,12 +65,21 @@ export const useStore = create<AppState>((set, get) => ({
             const memos = await storage.getMemos();
             set({ memos, isLoading: false });
 
-            // Initial silent sync - only if sync is configured
+            // Initial silent sync - only if sync is properly configured
             const config = syncService.getConfig();
-            if (config.provider !== 'none' && config.settings.githubToken) {
+            const hasValidGithubConfig = config.provider === 'github_repo' && 
+                                         config.settings.githubToken?.trim() && 
+                                         config.settings.githubRepo?.trim();
+            const hasValidWebdavConfig = config.provider === 'webdav' && 
+                                         config.settings.webdavUrl?.trim();
+            
+            if (hasValidGithubConfig || hasValidWebdavConfig) {
                 get().performSync(true).catch(() => {
-                    // Silent fail on initial sync - user will see error only if they manually sync
+                    // Silent fail on initial sync
                 });
+            } else if (config.provider !== 'none') {
+                // Reset to none if config is invalid
+                syncService.saveConfig({ provider: 'none', settings: {} });
             }
         } catch (error) {
             console.error('Failed to init store:', error);
@@ -198,6 +207,11 @@ export const useStore = create<AppState>((set, get) => ({
             const isAuthError = err.message?.includes('401') || err.message?.includes('Unauthorized');
             if (!silent || !isAuthError) {
                 console.error('Sync failed:', error);
+            }
+
+            // If 401 error, reset sync config to prevent repeated errors
+            if (isAuthError) {
+                syncService.saveConfig({ provider: 'none', settings: {} });
             }
 
             set({

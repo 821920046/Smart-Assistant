@@ -197,7 +197,24 @@ const AppContent: React.FC = () => {
                 {isSyncSettingsOpen && (
                     <SyncSettings
                         onClose={() => setSyncSettingsOpen(false)}
-                        onSyncComplete={() => performSync(false)}
+                        onSyncComplete={() => {
+                            // Only trigger sync if configuration is valid
+                            const config = syncService.getConfig();
+                            let isValid = false;
+                            if (config.provider === 'github_repo' && config.settings.githubToken?.trim() && config.settings.githubRepo?.trim()) {
+                                isValid = true;
+                            } else if (config.provider === 'webdav' && config.settings.webdavUrl?.trim()) {
+                                isValid = true;
+                            } else if (config.provider === 'gist' && config.settings.gistToken?.trim()) {
+                                isValid = true;
+                            }
+                            if (isValid) {
+                                performSync(false);
+                            } else {
+                                // Clear invalid config to prevent future 401 errors
+                                syncService.saveConfig({ provider: 'none', settings: {} });
+                            }
+                        }}
                     />
                 )}
 
