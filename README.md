@@ -1,6 +1,6 @@
 # 🧠 Smart Assistant
 
-> **“本地优先”的个人知识管理工具。**  
+> **"本地优先"的个人知识管理工具。**  
 > 通过实时语音交互和隐私优先的同步功能，重新定义个人知识管理。
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -67,20 +67,20 @@
 
 ### 💾 数据管理
 *   **导入与导出：** 完整的 JSON 数据导出/导入功能，便于轻松备份和迁移。
-*   **灾难恢复：** “清除所有数据”选项可用于完全重置，确保隐私并解决潜在的状态冲突。
+*   **灾难恢复：** "清除所有数据"选项可用于完全重置，确保隐私并解决潜在的状态冲突。
 
 ### 🔒 隐私与同步
 *   **本地优先架构：** 数据存储在设备的 IndexedDB 中。基本使用无需服务器。
 *   **加密云同步：**
     *   **GitHub 仓库同步（推荐）：** 将数据存储在私有 GitHub 仓库中。
     *   **AES-256 加密：** 所有同步到云端的数据都使用用户定义的密码进行加密。即便是云服务提供商也无法读取您的笔记。
-    *   **其他提供商：** 支持 WebDAV（如坚果云/Nextcloud）和 Supabase。
+    *   **其他提供商：** 支持 WebDAV（如坚果云/Nextcloud）。
 *   **冲突解决：** 智能冲突检测，配有专用 UI 来解决设备间的数据差异。
 *   **本地快照：** 自动本地备份和历史记录管理，防止数据丢失。
 
 ### 📝 高级编辑器
 *   **创意白板：** 集成画布用于草绘创意，支持多色笔刷和无限撤销/重做。
-*   **丰富语境：** 支持标签、全文搜索、归档和“专注模式”。
+*   **丰富语境：** 支持标签、全文搜索、归档和"专注模式"。
 
 ## 🛠️ 技术栈
 
@@ -103,7 +103,7 @@
 
 ### 数据与同步
 *   **本地存储：** 原生 [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (v4 with Indexes)
-*   **同步服务：** GitHub API / WebDAV / Supabase
+*   **同步服务：** GitHub API / WebDAV
 *   **加密：** Web Crypto API (AES-GCM 256-bit)
 *   **PWA：** [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (离线优先)
 
@@ -111,77 +111,6 @@
 *   **测试：** [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/)
 *   **代码质量：** ESLint + TypeScript 严格模式
 *   **构建工具：** Vite 6 (极速构建)
-
-## 🚀 快速开始
-
-### 先决条件
-*   Node.js 18+
-
-### 安装
-
-1.  **克隆仓库**
-    ```bash
-    git clone https://github.com/your-username/smart-assistant.git
-    cd smart-assistant
-    ```
-
-2.  **安装依赖**
-    ```bash
-    npm install
-    ```
-
-3.  **本地运行**
-    ```bash
-    npm run dev
-    ```
-
-## 🔄 同步指南
-
-Smart Assistant 允许您在没有中央服务器的情况下跨设备同步数据。
-
-**推荐：GitHub 私有仓库同步**
-1.  在 GitHub 上创建一个**新的空私有仓库**（例如 `my-notes-data`）。
-2.  生成一个具有 `repo` 权限范围的 **Personal Access Token (Classic)**。
-3.  在 Smart Assistant 中，点击 **管理同步 (Manage Sync)** -> **GitHub Repo**。
-4.  输入您的 Token、仓库名称 (`username/repo`) 和 **同步密码**。
-5.  *注意：您的同步密码用于加密数据。请勿丢失！*
-
-**进阶：云端自动提醒（Cloud-side Reminders）**
-> [!IMPORTANT]
-> **注意**：由于 Cloudflare 的限制，定时任务（Cron）不能直接放在 Pages 项目中，必须作为一个**独立的 Worker** 部署。
-
-1.  **新建 Worker**：在 Cloudflare 控制台点击 `Workers & Pages` -> `Create Worker`。
-2.  **粘贴代码**：将 `functions/cron.ts`（或我提供的兼容版代码）粘贴到 Worker 编辑器中。
-3.  **配置 Secrets**：在该 Worker 的 `Settings` -> `Variables` 中添加：
-    - `GITHUB_TOKEN`: 您的 GitHub 令牌。
-    - `GITHUB_REPO`: `用户名/仓库名`（如 `821920046/Smart-Assistant`）。
-    - `ENCRYPTION_PASSWORD`: 您的同步加密密码。
-4.  **设置定时器**：在 Worker 的 `Triggers` -> `Cron Triggers` 中添加 `* * * * *`。
-5.  **防止重复**：创建一个名为 `NOTIFIED_CACHE` 的 KV 命名空间并关联。
-
-## 🤝 贡献
-
-欢迎贡献！请随意提交 Pull Request。
-
-## 🎯 UI/UX 特色
-
-### 🎨 设计亮点
-*   **现代视觉语言：** Glass Morphism + 渐变色彩的组合设计
-*   **流畅动画：** 60fps 的 Spring 物理动画系统
-*   **智能反馈：** 触觉 + 视觉的双重用户反馈
-*   **响应式布局：** 完美适配手机、平板、桌面各种设备
-
-### 📱 移动端特性
-*   **手势支持：** 滑动导航、长按菜单、拖拽操作
-*   **PWA 体验：** 原生应用般的安装和使用体验
-*   **离线优先：** 完整的离线功能和数据同步
-*   **性能优化：** 虚拟化列表确保大数据集的流畅体验
-
-### ⚡ 性能优化
-*   **GPU 加速：** 所有动画和变换使用硬件加速
-*   **智能加载：** 懒加载、预加载、代码分割的完美结合
-*   **内存管理：** 优化的组件生命周期和内存回收
-*   **渲染优化：** 最小化重渲染和智能的 diff 算法
 
 ## 🚀 快速开始
 
@@ -211,6 +140,23 @@ Smart Assistant 允许您在没有中央服务器的情况下跨设备同步数�
     npm run build
     ```
 
+## 🔄 同步指南
+
+Smart Assistant 允许您在没有中央服务器的情况下跨设备同步数据。
+
+**推荐：GitHub 私有仓库同步**
+1.  在 GitHub 上创建一个**新的空私有仓库**（例如 `my-notes-data`）。
+2.  生成一个具有 `repo` 权限范围的 **Personal Access Token (Classic)**。
+3.  在 Smart Assistant 中，点击 **设置 (Settings)** -> **Configure Sync Settings**。
+4.  选择 **GitHub Repo** 并输入您的 Token、仓库名称 (`username/repo`) 和 **同步密码**。
+5.  *注意：您的同步密码用于加密数据。请勿丢失！*
+
+**替代方案：WebDAV 同步**
+1.  在设置中选择 **WebDAV** 同步方式。
+2.  输入您的 WebDAV 服务器地址（如坚果云 `dav.jianguoyun.com/dav/`）。
+3.  输入用户名和应用密码。
+4.  保存配置后即可自动同步。
+
 ## 🧪 测试
 
 ```bash
@@ -229,8 +175,32 @@ npm run test:watch
 *   **首次加载:** < 2s
 *   **交互响应:** < 100ms
 *   **动画帧率:** 60fps
-*   **包体积:** 458 kB (gzipped: 140 kB)
+*   **包体积:** ~460 kB (gzipped: ~140 kB)
 *   **内存占用:** < 50MB (正常使用)
+
+## 🤝 贡献
+
+欢迎贡献！请随意提交 Pull Request。
+
+## 🎯 UI/UX 特色
+
+### 🎨 设计亮点
+*   **现代视觉语言：** Glass Morphism + 渐变色彩的组合设计
+*   **流畅动画：** 60fps 的 Spring 物理动画系统
+*   **智能反馈：** 触觉 + 视觉的双重用户反馈
+*   **响应式布局：** 完美适配手机、平板、桌面各种设备
+
+### 📱 移动端特性
+*   **手势支持：** 滑动导航、长按菜单、拖拽操作
+*   **PWA 体验：** 原生应用般的安装和使用体验
+*   **离线优先：** 完整的离线功能和数据同步
+*   **性能优化：** 虚拟化列表确保大数据集的流畅体验
+
+### ⚡ 性能优化
+*   **GPU 加速：** 所有动画和变换使用硬件加速
+*   **智能加载：** 懒加载、预加载、代码分割的完美结合
+*   **内存管理：** 优化的组件生命周期和内存回收
+*   **渲染优化：** 最小化重渲染和智能的 diff 算法
 
 ## 📄 许可证
 
@@ -242,5 +212,6 @@ npm run test:watch
 
 感谢所有为开源社区做出贡献的开发者们，特别是 React、Framer Motion、Tailwind CSS 等优秀项目的维护者。
 
-**UI 优化完成时间:** 2026-01-27  
-**优化类型:** 全面 UI/UX 重构与性能优化
+**项目维护者:** 821920046  
+**优化完成时间:** 2026-02-05  
+**优化类型:** 全面 UI/UX 重构、代码清理与性能优化
