@@ -26,33 +26,32 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     }, []);
 
     useEffect(() => {
-        // Only fetch repo details if we have a valid token and repo configured
-        if (config.provider === 'github_repo' && config.settings.githubToken && config.settings.githubRepo) {
-            // Silently fetch repo info - don't show 401 errors during initial load
+        // Strict validation: token and repo must be non-empty strings
+        const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
+        const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
+        
+        if (config.provider === 'github_repo' && hasValidToken && hasValidRepo) {
+            // Silently fetch repo info
             syncService.getRepoDetails(config)
                 .then(setRepoInfo)
                 .catch((err) => {
-                    // Only log actual errors, not auth failures
-                    if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
-                        console.error('Failed to get repo details:', err);
+                    // If 401, token is invalid - reset config
+                    if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                        console.warn('Invalid GitHub token detected, resetting sync config');
+                        const resetConfig = { provider: 'none' as SyncProvider, settings: {} };
+                        syncService.saveConfig(resetConfig);
+                        setConfig(resetConfig);
                     }
                     setRepoInfo(null);
                 });
             
             // Only check remote file status if user has synced before
-            // This avoids 404 errors for first-time users
             const lastSyncTime = syncService.getLastSyncTime();
             if (lastSyncTime > 0) {
                 syncService.getRemoteFileStatus(config)
                     .then(setSyncFileStatus)
-                    .catch((err) => {
-                        if (!err.message?.includes('401') && !err.message?.includes('Unauthorized')) {
-                            console.error('Failed to get file status:', err);
-                        }
-                        setSyncFileStatus(null);
-                    });
+                    .catch(() => setSyncFileStatus(null));
             } else {
-                // First time user, show as not synced
                 setSyncFileStatus({ exists: false });
             }
         } else {

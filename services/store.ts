@@ -181,10 +181,20 @@ export const useStore = create<AppState>((set, get) => ({
         const config = syncService.getConfig();
         if (config.provider === 'none') return;
 
-        // Check if sync is properly configured
-        if (config.provider === 'github_repo' && !config.settings.githubToken) return;
-        if (config.provider === 'webdav' && !config.settings.webdavUrl) return;
-        if (config.provider === 'gist' && !config.settings.gistToken) return;
+        // Strict validation of sync configuration
+        if (config.provider === 'github_repo') {
+            const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
+            const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
+            if (!hasValidToken || !hasValidRepo) return;
+        }
+        if (config.provider === 'webdav') {
+            const hasValidUrl = typeof config.settings.webdavUrl === 'string' && config.settings.webdavUrl.trim().length > 0;
+            if (!hasValidUrl) return;
+        }
+        if (config.provider === 'gist') {
+            const hasValidToken = typeof config.settings.gistToken === 'string' && config.settings.gistToken.trim().length > 0;
+            if (!hasValidToken) return;
+        }
 
         set({ isSyncing: true, syncError: null });
         try {

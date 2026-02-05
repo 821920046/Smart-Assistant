@@ -97,15 +97,26 @@ const AppContent: React.FC = () => {
         }
     }, [syncError, addToast, setSyncSettingsOpen]);
 
-    // Auto Sync Triggers - only when sync is configured
+    // Auto Sync Triggers - only when sync is properly configured
     useEffect(() => {
         if (isLoading) return;
 
-        // Check if sync is properly configured
+        // Strict validation of sync configuration
         const config = syncService.getConfig();
         if (config.provider === 'none') return;
-        if (config.provider === 'github_repo' && !config.settings.githubToken) return;
-        if (config.provider === 'webdav' && !config.settings.webdavUrl) return;
+        
+        // Validate GitHub config - token must be non-empty string
+        if (config.provider === 'github_repo') {
+            const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
+            const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
+            if (!hasValidToken || !hasValidRepo) return;
+        }
+        
+        // Validate WebDAV config
+        if (config.provider === 'webdav') {
+            const hasValidUrl = typeof config.settings.webdavUrl === 'string' && config.settings.webdavUrl.trim().length > 0;
+            if (!hasValidUrl) return;
+        }
 
         const SYNC_INTERVAL = 5 * 60 * 1000;
         const SYNC_DEBOUNCE = 30 * 1000;

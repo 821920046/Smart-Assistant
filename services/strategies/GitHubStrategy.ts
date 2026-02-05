@@ -187,9 +187,11 @@ export class GitHubStrategy extends BaseSyncStrategy {
 
         try {
             const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+            if (res.status === 401) throw new Error('Unauthorized');
             if (!res.ok) return null;
             return await res.json();
         } catch (e) {
+            if (e instanceof Error && e.message === 'Unauthorized') throw e;
             return null;
         }
     }
