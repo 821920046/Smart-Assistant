@@ -212,16 +212,25 @@ export const useStore = create<AppState>((set, get) => ({
                 lastSyncTime: syncService.getLastSyncTime()
             });
         } catch (error) {
-            // In silent mode, don't log 401 errors to console
+            // In silent mode, don't log 401/Unauthorized errors to console
             const err = error as Error;
-            const isAuthError = err.message?.includes('401') || err.message?.includes('Unauthorized');
-            if (!silent || !isAuthError) {
-                console.error('Sync failed:', error);
-            }
-
+            const isAuthError = err.message?.includes('401') || 
+                               err.message?.includes('Unauthorized') || 
+                               err.message?.includes('Invalid GitHub token');
+            
             // If 401 error, reset sync config to prevent repeated errors
             if (isAuthError) {
                 syncService.saveConfig({ provider: 'none', settings: {} });
+                // Clear any existing sync error to prevent toast
+                set({
+                    isSyncing: false,
+                    syncError: null
+                });
+                return;
+            }
+            
+            if (!silent) {
+                console.error('Sync failed:', error);
             }
 
             set({

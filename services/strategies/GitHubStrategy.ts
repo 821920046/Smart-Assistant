@@ -139,6 +139,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
 
         // Fetch repo info to get default branch
         const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+        if (repoRes.status === 401) throw new Error('Unauthorized: Invalid GitHub token');
         if (!repoRes.ok) throw new Error(`Fetch repo failed: ${repoRes.status}`);
         const repoData = await repoRes.json();
         const defaultBranch = repoData.default_branch || 'main';

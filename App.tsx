@@ -84,7 +84,10 @@ const AppContent: React.FC = () => {
         if (syncError) {
             if (syncError.name === 'SyncConflictError') {
                 // Handled via conflictError in store
-            } else if (syncError.message.includes('401') || syncError.message.includes('Key')) {
+            } else if (syncError.message.includes('401') || syncError.message.includes('Unauthorized')) {
+                // 401 errors are handled by resetting config in store
+                // Don't show toast for auth errors
+            } else if (syncError.message.includes('Key')) {
                 addToast("Authentication failed. Please check your sync settings.", "error");
                 setSyncSettingsOpen(true);
             } else if (syncError.message.includes('409')) {
