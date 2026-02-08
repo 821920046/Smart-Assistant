@@ -12,20 +12,36 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
     const [isTesting, setIsTesting] = useState(false);
     const [snapshots, setSnapshots] = useState<{ id: number, date: string, data: any }[]>([]);
     const [lastSyncTime, setLastSyncTime] = useState<number>(0);
+    const [isConfigReady, setIsConfigReady] = useState(false);
+
+    const isEncryptedToken = (token: string | undefined): boolean => {
+        if (!token) return false;
+        return token.includes('ciphertext') && token.includes('salt');
+    };
 
     const [repoInfo, setRepoInfo] = useState<{ size: number } | null>(null);
     const [syncFileStatus, setSyncFileStatus] = useState<{ exists: boolean, size?: number } | null>(null);
 
     useEffect(() => {
-        // 加载并尝试解密配置
+        // Load and decrypt config FIRST, then mark as ready
         syncService.getDecryptedConfig().then(decryptedConfig => {
             setConfig(decryptedConfig);
+            setIsConfigReady(true);
         });
         loadSnapshots();
         setLastSyncTime(syncService.getLastSyncTime());
     }, []);
 
     useEffect(() => {
+        // CRITICAL: Don't call GitHub API until config is decrypted
+        if (!isConfigReady) return;
+
+        // Extra safety: skip if token still looks encrypted
+        if (isEncryptedToken(config.settings.githubToken)) {
+            console.warn('Token still encrypted, skipping API call');
+            return;
+        }
+
         // Strict validation: token and repo must be non-empty strings
         const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
         const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
@@ -56,7 +72,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
             setRepoInfo(null);
             setSyncFileStatus(null);
         }
-    }, [config.provider, config.settings.githubToken, config.settings.githubRepo]);
+    }, [isConfigReady, config.provider, config.settings.githubToken, config.settings.githubRepo]);
 
     const handleCleanupRemote = async () => {
         if (!confirm('Are you sure you want to delete the remote sync file? This will not delete the repository history, but will remove the current data file. Local data will not be affected.')) return;
