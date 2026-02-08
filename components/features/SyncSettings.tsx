@@ -29,22 +29,20 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
         // Strict validation: token and repo must be non-empty strings
         const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
         const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
-        
+
         if (config.provider === 'github_repo' && hasValidToken && hasValidRepo) {
             // Silently fetch repo info
             syncService.getRepoDetails(config)
                 .then(setRepoInfo)
                 .catch((err) => {
-                    // If 401, token is invalid - reset config
+                    // If 401, token may be invalid - warn but don't auto-reset
                     if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
-                        console.warn('Invalid GitHub token detected, resetting sync config');
-                        const resetConfig = { provider: 'none' as SyncProvider, settings: {} };
-                        syncService.saveConfig(resetConfig);
-                        setConfig(resetConfig);
+                        console.warn('GitHub token may be invalid or expired');
+                        // Don't auto-reset, let user fix it manually 
                     }
                     setRepoInfo(null);
                 });
-            
+
             // Only check remote file status if user has synced before
             const lastSyncTime = syncService.getLastSyncTime();
             if (lastSyncTime > 0) {

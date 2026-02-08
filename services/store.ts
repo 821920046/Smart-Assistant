@@ -175,22 +175,29 @@ export const useStore = create<AppState>((set, get) => ({
         const { isSyncing, memos } = get();
         if (isSyncing) return;
 
-        const config = syncService.getConfig();
+        // Use decrypted config as sync needs plain tokens
+        const config = await syncService.getDecryptedConfig();
         if (config.provider === 'none') return;
+
+        // Helper to check if token looks like encrypted data
+        const isEncrypted = (token: string | undefined): boolean => {
+            if (!token) return false;
+            return token.includes('ciphertext') && token.includes('salt');
+        };
 
         // Strict validation of sync configuration
         if (config.provider === 'github_repo') {
             const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
             const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
-            if (!hasValidToken || !hasValidRepo) return;
+            if (!hasValidToken || !hasValidRepo || isEncrypted(config.settings.githubToken)) return;
         }
         if (config.provider === 'webdav') {
             const hasValidUrl = typeof config.settings.webdavUrl === 'string' && config.settings.webdavUrl.trim().length > 0;
-            if (!hasValidUrl) return;
+            if (!hasValidUrl || isEncrypted(config.settings.webdavPass)) return;
         }
         if (config.provider === 'gist') {
             const hasValidToken = typeof config.settings.gistToken === 'string' && config.settings.gistToken.trim().length > 0;
-            if (!hasValidToken) return;
+            if (!hasValidToken || isEncrypted(config.settings.gistToken)) return;
         }
 
         set({ isSyncing: true, syncError: null });
@@ -215,13 +222,13 @@ export const useStore = create<AppState>((set, get) => ({
                 err.message?.includes('Unauthorized') ||
                 err.message?.includes('Invalid GitHub token');
 
-            // If 401 error, reset sync config to prevent repeated errors
+            // Handle auth error by stopping sync and setting error
             if (isAuthError) {
-                syncService.saveConfig({ provider: 'none', settings: {} });
-                // Clear any existing sync error to prevent toast
+                // DON'T auto-reset config anymore, just stop syncing
+                // and show the error so the user knows they need to fix the token
                 set({
                     isSyncing: false,
-                    syncError: null
+                    syncError: new Error('Sync failed: Unauthorized. Please check your token in settings.')
                 });
                 return;
             }
