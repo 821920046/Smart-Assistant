@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Icons } from '../../constants';
-import { Gauge } from '../ui/Gauge';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { storage } from '../../services/storage';
 import { useStore } from '../../services/store';
 
 const DashboardView: React.FC = () => {
-    const { memos, addMemo, setFilter: onNavigate, isSyncing } = useStore();
+    const { memos, addMemo, isSyncing } = useStore();
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
@@ -72,7 +71,7 @@ const DashboardView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-12">
             {/* Hero Header */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-8 shadow-2xl shadow-violet-500/20">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-50"></div>
@@ -82,24 +81,46 @@ const DashboardView: React.FC = () => {
                 <div className="relative z-10">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-violet-200 text-sm font-medium mb-1">{getGreeting()}</p>
-                            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                            <p className="text-violet-200 text-xs md:text-sm font-medium mb-1">{getGreeting()}</p>
+                            <h1 className="text-2xl md:text-4xl font-bold text-white flex items-center gap-2 md:gap-3">
                                 Dashboard
                                 {isSyncing && (
-                                    <span className="flex items-center gap-2 text-sm font-medium text-violet-200 bg-white/10 px-3 py-1 rounded-full">
-                                        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                                    <span className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-sm font-medium text-violet-200 bg-white/10 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
+                                        <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                                         Syncing
                                     </span>
                                 )}
                             </h1>
-                            <p className="text-violet-200/80 mt-2 text-sm md:text-base">Capture, Organize, and Achieve.</p>
+                            <p className="text-violet-200/80 mt-1 md:mt-2 text-xs md:text-base">Capture, Organize, and Achieve.</p>
                         </div>
-                        <div className="hidden md:flex items-center gap-4">
+                        <div className="hidden sm:flex items-center gap-4">
                             <div className="text-right">
-                                <p className="text-3xl font-bold text-white">{activeTodos.length}</p>
-                                <p className="text-violet-200 text-xs uppercase tracking-wider">Active Tasks</p>
+                                <p className="text-2xl md:text-3xl font-bold text-white">{activeTodos.length}</p>
+                                <p className="text-violet-200 text-[10px] md:text-xs uppercase tracking-wider">Active Tasks</p>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <button
+                            onClick={handleVoiceClick}
+                            className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${isRecording
+                                ? 'bg-rose-500 text-white animate-pulse'
+                                : 'bg-white text-violet-600 hover:bg-violet-50'
+                                }`}
+                        >
+                            {isRecording ? (
+                                <>
+                                    <Icons.Stop width={18} height={18} fill="currentColor" />
+                                    <span>{formatTime(recordingTime)}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Icons.Mic width={18} height={18} />
+                                    <span className="text-sm">Voice Note</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -170,7 +191,7 @@ const DashboardView: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Voice Card */}
+                {/* Quick Capture Card */}
                 <div className="group relative bg-white dark:bg-slate-800/80 rounded-3xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                     <div className={`absolute inset-0 bg-gradient-to-br ${isRecording ? 'from-rose-500/10 to-red-500/10' : 'from-cyan-500/5 via-transparent to-teal-500/5'} transition-all duration-300`}></div>
                     <div className="relative z-10">
@@ -186,8 +207,8 @@ const DashboardView: React.FC = () => {
                             <button
                                 onClick={handleVoiceClick}
                                 className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95 ${isRecording
-                                        ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse'
-                                        : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 hover:from-violet-500 hover:to-indigo-600 hover:shadow-lg hover:shadow-violet-500/30'
+                                    ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse'
+                                    : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 hover:from-violet-500 hover:to-indigo-600 hover:shadow-lg hover:shadow-violet-500/30'
                                     }`}
                             >
                                 {isRecording ? (
@@ -216,5 +237,5 @@ const DashboardView: React.FC = () => {
         </div>
     );
 };
-export default DashboardView;
 
+export default DashboardView;

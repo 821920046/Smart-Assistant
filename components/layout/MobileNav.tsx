@@ -13,9 +13,10 @@ const MobileNav: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', icon: Icons.Home, label: 'Home' },
-    { id: 'notes', icon: Icons.FileText, label: 'Notes' },
-    { id: 'tasks', icon: Icons.CheckSquare, label: 'Tasks' },
-    { id: 'settings', icon: Icons.Settings, label: 'Settings' },
+    { id: 'todo', label: 'Tasks', icon: Icons.List },
+    { id: 'memo', label: 'Notes', icon: Icons.FileText },
+    { id: 'whiteboard', label: 'Board', icon: Icons.Edit },
+    { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ];
 
   const getTabIndex = (tabId: string) => navItems.findIndex(item => item.id === tabId);
@@ -77,7 +78,7 @@ const MobileNav: React.FC = () => {
             const isActive = activeFilter === item.id;
             const isPrevActive = getTabIndex(activeTab) === index - 1;
             const isNextActive = getTabIndex(activeTab) === index + 1;
-            
+
             return (
               <motion.button
                 key={item.id}
@@ -90,8 +91,8 @@ const MobileNav: React.FC = () => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
+                animate={{
+                  opacity: 1,
                   y: 0,
                   scale: isActive ? 1.1 : 1,
                   transition: { delay: index * 0.05 }
@@ -129,17 +130,17 @@ const MobileNav: React.FC = () => {
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <item.icon 
+                  <item.icon
                     className={cn(
                       'w-6 h-6',
                       isActive && 'fill-current'
-                    )} 
-                    strokeWidth={isActive ? 2.5 : 2} 
+                    )}
+                    strokeWidth={isActive ? 2.5 : 2}
                   />
                 </motion.div>
 
                 {/* Label */}
-                <motion.span 
+                <motion.span
                   className={cn(
                     'text-[10px] font-medium relative z-10 transition-all duration-300',
                     isActive ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-600 dark:text-slate-400'

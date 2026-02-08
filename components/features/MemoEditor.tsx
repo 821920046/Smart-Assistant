@@ -240,7 +240,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800/90 rounded-3xl p-5 md:p-7 mb-8 relative z-20 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50">
+    <div className="bg-white dark:bg-slate-800/90 rounded-3xl p-4 md:p-7 mb-8 relative z-20 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50">
       {/* Recording Indicator */}
       {isRecording && (
         <div className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-full text-xs font-bold shadow-lg shadow-rose-500/30 animate-pulse z-30">
@@ -265,7 +265,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Start typing... Use Ctrl+B for bold, Ctrl+I for italic"
-          className="w-full min-h-[160px] max-h-[50vh] bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed overflow-y-auto focus:outline-none"
+          className="w-full min-h-[140px] md:min-h-[160px] max-h-[50vh] bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed overflow-y-auto focus:outline-none"
         />
 
         {/* Word Count */}
@@ -323,57 +323,57 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         )}
       </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pt-5 mt-5 border-t border-slate-100 dark:border-slate-700/50">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Formatting Toolbar - Scrollable on Mobile */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth mt-4 border border-slate-100/50 dark:border-slate-700/20">
+        {toolbarButtons.map((btn, idx) =>
+          btn.type === 'divider' ? (
+            <div key={idx} className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-0.5 shrink-0" />
+          ) : (
+            <button
+              key={btn.type}
+              onClick={() => insertMarkdown(btn.type as 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote')}
+              className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all shrink-0"
+              title={btn.shortcut ? `${btn.title} (${btn.shortcut})` : btn.title}
+            >
+              <btn.icon className="w-4 h-4" />
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Action Toolbar - Optimized for Mobile */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 mt-4 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Priority Selector */}
           {!hideSelectors && (
-            <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-1">
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-0.5">
               {(Object.keys(priorityConfig) as Priority[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPriority(p)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-xs font-medium border ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl transition-all text-[10px] sm:text-xs font-medium border ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive}`}
                   title={priorityConfig[p].label}
                 >
                   {priorityConfig[p].icon}
-                  <span className="hidden sm:inline">{priorityConfig[p].shortLabel}</span>
+                  <span className="inline">{priorityConfig[p].shortLabel}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Format Toolbar */}
-          <div className="flex items-center p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-0.5">
-            {toolbarButtons.map((btn, idx) =>
-              btn.type === 'divider' ? (
-                <div key={idx} className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-1" />
-              ) : (
-                <button
-                  key={btn.type}
-                  onClick={() => insertMarkdown(btn.type as 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote')}
-                  className="p-2.5 rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all"
-                  title={btn.shortcut ? `${btn.title} (${btn.shortcut})` : btn.title}
-                >
-                  <btn.icon className="w-4 h-4" />
-                </button>
-              )
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl">
+          {/* Quick Actions (Mic, Sketch, Date) */}
+          <div className="flex items-center gap-0.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl">
             {/* Due Date */}
             <div className="relative">
               <button
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className={`p-2.5 rounded-xl transition-all ${dueDate ? 'text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+                className={`p-2 rounded-xl transition-all ${dueDate ? 'text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
                 title={dueDate ? `Due: ${new Date(dueDate).toLocaleDateString()}` : 'Set Due Date'}
               >
                 <Icons.Clock className="w-4 h-4" />
               </button>
               {showDatePicker && (
-                <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
+                <div className="absolute bottom-full left-0 mb-2 p-3 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Due Date</p>
                   <input
                     ref={dateInputRef}
@@ -385,17 +385,6 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
                     }}
                     className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
-                  {dueDate && (
-                    <button
-                      onClick={() => {
-                        setDueDate('');
-                        setShowDatePicker(false);
-                      }}
-                      className="w-full mt-2 px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
-                    >
-                      Clear Date
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -403,17 +392,15 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
             {/* Voice Recording */}
             <button
               onClick={isRecording ? stopRecording : startRecording}
-              className={`p-2.5 rounded-xl transition-all ${isRecording ? 'text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
-              title={isRecording ? 'Stop Recording' : 'Start Recording'}
+              className={`p-2 rounded-xl transition-all ${isRecording ? 'text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
             >
-              {isRecording ? <Icons.Stop className="w-4 h-4" /> : <Icons.Mic className="w-4 h-4" />}
+              <Icons.Mic className="w-4 h-4" />
             </button>
 
             {/* Sketch */}
             <button
               onClick={() => setShowWhiteboard(true)}
-              className={`p-2.5 rounded-xl transition-all ${sketchData ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
-              title="Draw Sketch"
+              className={`p-2 rounded-xl transition-all ${sketchData ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
             >
               <Icons.Pen className="w-4 h-4" />
             </button>
@@ -425,36 +412,21 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
           {isEditing && (
             <button
               onClick={onCancel}
-              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-xs hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
             >
-              <Icons.X className="w-4 h-4" />
               Cancel
             </button>
           )}
           <button
             onClick={handleSave}
             disabled={(!content.trim() && !sketchData && !audioBlob && !initialMemo?.audio) || isProcessing}
-            className="flex-1 lg:flex-none px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none flex items-center justify-center gap-2"
+            className="flex-1 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-50"
           >
-            {isProcessing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>{isEditing ? 'Updating...' : 'Saving...'}</span>
-              </>
-            ) : (
-              <>
-                {isEditing ? <Icons.Check className="w-4 h-4" /> : <Icons.Plus className="w-4 h-4" />}
-                <span>
-                  {isEditing
-                    ? (initialMemo.type === 'todo' || defaultType === 'todo' ? 'Update Task' : 'Update Note')
-                    : (defaultType === 'todo' ? 'Create Task' : 'Create Note')
-                  }
-                </span>
-              </>
-            )}
+            {isProcessing ? 'Saving...' : (isEditing ? 'Save Changes' : 'Quick Save')}
           </button>
         </div>
       </div>
+
 
       {/* Due Date Badge */}
       {dueDate && (

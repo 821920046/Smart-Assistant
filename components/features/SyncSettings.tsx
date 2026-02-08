@@ -134,32 +134,34 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
             // Validate configuration before saving
             if (config.provider === 'github_repo') {
                 if (!config.settings.githubToken?.trim()) {
-                    alert('请输入 GitHub Personal Access Token');
+                    alert('Please enter your GitHub Personal Access Token');
                     return;
                 }
                 if (!config.settings.githubRepo?.trim()) {
-                    alert('请输入 Repository (格式: username/repo)');
+                    alert('Please enter your Repository (format: username/repo)');
                     return;
                 }
                 if (!config.settings.encryptionPassword?.trim()) {
-                    alert('请设置同步密码用于加密数据');
+                    alert('Please set a sync password to encrypt your data');
                     return;
                 }
 
                 // Test connection before saving
                 try {
                     const repoDetails = await syncService.getRepoDetails(config);
-                    if (!repoDetails) {
-                        alert('无法连接到仓库，请检查 Token 和仓库名称是否正确');
-                        return;
+                    if (repoDetails) { // Assuming repoDetails indicates success if not null/undefined
+                        // addToast('Connection successful!', 'success'); // addToast is not defined in the original code
+                    } else {
+                        alert('Could not connect to repository. Please check your Token and Repository name.');
+                        return; // Added return to stop execution if connection fails
                     }
                 } catch (err) {
-                    alert('连接测试失败: ' + (err as Error).message);
-                    return;
+                    alert('Connection test failed: ' + (err as Error).message);
+                    return; // Added return to stop execution if connection fails
                 }
             } else if (config.provider === 'webdav') {
                 if (!config.settings.webdavUrl?.trim()) {
-                    alert('请输入 WebDAV URL');
+                    alert('Please enter your WebDAV URL');
                     return;
                 }
             }
@@ -182,10 +184,11 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                 }
             }
             if (typeof onClose === 'function') {
+                // addToast('Settings saved successfully', 'success'); // addToast is not defined in the original code
                 onClose();
             }
         } catch (e) {
-            alert('配置有误: ' + (e as Error).message);
+            alert('Configuration error: ' + (e as Error).message);
         } finally {
             setIsTesting(false);
         }
@@ -263,7 +266,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
             <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-card">
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">同步设置</h2>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Sync Settings</h2>
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
                             {lastSyncTime ? `Last Sync: ${new Date(lastSyncTime).toLocaleString()}` : 'Not synced yet'}
                         </p>
@@ -289,7 +292,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
                 <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto no-scrollbar">
                     <section className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">选择同步方案</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose Provider</label>
                         <div className="grid grid-cols-2 gap-3">
                             {(['github_repo', 'none', 'webdav'] as SyncProvider[]).map(p => (
                                 <button
@@ -300,7 +303,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                         : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'
                                         }`}
                                 >
-                                    {p === 'none' ? '仅本地' : p === 'github_repo' ? 'GitHub Repo' : p}
+                                    {p === 'none' ? 'Local Only' : p === 'github_repo' ? 'GitHub Repo' : p}
                                 </button>
                             ))}
                         </div>
@@ -308,12 +311,12 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
                     {config.provider === 'github_repo' && (
                         <div className="space-y-4 animate-card">
-                            <div className="bg-blue-50/50 p-4 rounded-2xl text-xs text-blue-600 mb-2 leading-relaxed">
+                            <div className="bg-blue-50/50 p-4 rounded-2xl text-[11px] md:text-xs text-blue-600 mb-2 leading-relaxed">
                                 <p className="font-bold mb-1 flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                                    核心原则：Local-First / 安全加密同步
+                                    Core Principle: Local-First / Secure Sync
                                 </p>
-                                提醒配置（含 API Key）将随数据一同加密存储在您的私有仓库中。清除缓存后，只需重新输入 Token 即可通过“云端恢复”找回所有设置。
+                                Configurations (including API keys) are encrypted and stored in your private repository. After clearing cache, simply re-enter your Token to recover all settings via "Cloud Restore".
                             </div>
                             <div className="relative">
                                 <input
@@ -327,7 +330,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                         onClick={handleCloudRestore}
                                         className="absolute right-2 top-2 bottom-2 px-3 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-xl hover:bg-blue-200 transition-colors"
                                     >
-                                        云端找回配置
+                                        Recover Config
                                     </button>
                                 )}
                             </div>
@@ -344,7 +347,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                             />
                             <p className="text-[10px] text-slate-400 px-2">
-                                数据将使用 AES-256 加密存储在您的私有仓库中。
+                                Data is stored in your private repository using AES-256 encryption.
                             </p>
 
                             {repoInfo && (
@@ -381,20 +384,20 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                     {config.provider === 'webdav' && (
                         <div className="space-y-4 animate-card">
                             <input
-                                type="text" placeholder="WebDAV URL (如坚果云 dav.jianguoyun.com/dav/)"
+                                type="text" placeholder="WebDAV URL (e.g. dav.jianguoyun.com/dav/)"
                                 value={config.settings.webdavUrl || ''}
                                 onChange={e => updateSetting('webdavUrl', e.target.value)}
                                 className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                             />
                             <div className="grid grid-cols-2 gap-3">
                                 <input
-                                    type="text" placeholder="用户名"
+                                    type="text" placeholder="Username"
                                     value={config.settings.webdavUser || ''}
                                     onChange={e => updateSetting('webdavUser', e.target.value)}
                                     className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                                 />
                                 <input
-                                    type="password" placeholder="应用密码"
+                                    type="password" placeholder="Passcode"
                                     value={config.settings.webdavPass || ''}
                                     onChange={e => updateSetting('webdavPass', e.target.value)}
                                     className="px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -405,7 +408,7 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
 
                     <section className="space-y-4 pt-4 border-t border-slate-100">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">本地历史快照 (Auto Backup)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Local Snapshots (Auto Backup)</label>
                             <div className="flex gap-2">
                                 <button onClick={handleCreateSnapshot} className="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-lg">NEW BACKUP</button>
                                 <button onClick={loadSnapshots} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-2 py-1">REFRESH</button>
@@ -435,14 +438,14 @@ const SyncSettings: React.FC<SyncSettingsProps> = ({ onClose, onSyncComplete }) 
                         onClick={onClose}
                         className="flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
                     >
-                        取消
+                        Cancel
                     </button>
                     <button
                         onClick={saveAndSync}
                         disabled={isTesting}
                         className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all"
                     >
-                        {isTesting ? '正在验证...' : '保存并开始同步'}
+                        {isTesting ? 'Verifying...' : 'Save & Start Sync'}
                     </button>
                 </footer>
             </div>
