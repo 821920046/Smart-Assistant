@@ -48,7 +48,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
         try {
             const res = await fetch(apiUrl, { headers });
             if (res.ok) {
-                const data = await res.json();
+                const data = await res.json() as any;
                 sha = data.sha;
                 const content = atob(data.content);
                 const encryptedData = JSON.parse(content);
@@ -107,7 +107,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
             const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { headers, cache: 'no-store' });
             if (res.status === 404) return { exists: false };
             if (!res.ok) return { exists: false };
-            const data = await res.json();
+            const data = await res.json() as any;
             if (!data || Array.isArray(data)) return { exists: false };
             return { exists: true, size: data.size, sha: data.sha };
         } catch (e) {
@@ -141,13 +141,13 @@ export class GitHubStrategy extends BaseSyncStrategy {
         const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
         if (repoRes.status === 401) throw new Error('Unauthorized: Invalid GitHub token');
         if (!repoRes.ok) throw new Error(`Fetch repo failed: ${repoRes.status}`);
-        const repoData = await repoRes.json();
+        const repoData = await repoRes.json() as any;
         const defaultBranch = repoData.default_branch || 'main';
 
         // Get default branch commit SHA
         const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, { headers });
         if (!refRes.ok) throw new Error(`Fetch ${defaultBranch} ref failed: ${refRes.status}`);
-        const refData = await refRes.json();
+        const refData = await refRes.json() as any;
 
         if (!refData.object || !refData.object.sha) {
             throw new Error(`Could not find SHA for branch ${defaultBranch}`);
@@ -163,7 +163,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
     private async retryWithFreshSha(url: string, headers: any, body: any, owner: string, repo: string) {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sync-data.json?ref=${DATA_BRANCH}&t=${Date.now()}`, { headers });
         if (res.ok) {
-            const data = await res.json();
+            const data = await res.json() as any;
             if (data && !Array.isArray(data) && data.sha) {
                 return await fetch(url, { method: 'PUT', headers, body: JSON.stringify({ ...body, sha: data.sha }) });
             }
@@ -190,7 +190,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
             const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
             if (res.status === 401) throw new Error('Unauthorized');
             if (!res.ok) return null;
-            return await res.json();
+            return await res.json() as any;
         } catch (e) {
             if (e instanceof Error && e.message === 'Unauthorized') throw e;
             return null;
@@ -221,7 +221,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
         try {
             const res = await fetch(apiUrl, { headers });
             if (res.ok) {
-                const data = await res.json();
+                const data = await res.json() as any;
                 if (data && !Array.isArray(data)) {
                     sha = data.sha;
                 }
@@ -245,7 +245,7 @@ export class GitHubStrategy extends BaseSyncStrategy {
             headers: { 'Authorization': `token ${cleanToken}` }
         });
         if (!userRes.ok) throw new Error('Invalid Token');
-        const user = await userRes.json();
+        const user = await userRes.json() as any;
         const username = user.login;
 
         const searchUrl = `https://api.github.com/search/code?q=filename:.sync-config.json+user:${username}&t=${Date.now()}`;
@@ -254,14 +254,14 @@ export class GitHubStrategy extends BaseSyncStrategy {
         });
         if (!searchRes.ok) throw new Error('Search failed.');
 
-        const searchData = await searchRes.json();
+        const searchData = await searchRes.json() as any;
         if (!searchData.items || searchData.items.length === 0) return null;
 
         const fileUrl = searchData.items[0].url;
         const fileRes = await fetch(`${fileUrl}&t=${Date.now()}`, {
             headers: { 'Authorization': `token ${cleanToken}` }
         });
-        const fileData = await fileRes.json();
+        const fileData = await fileRes.json() as any;
         const content = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
         const json = JSON.parse(content);
 

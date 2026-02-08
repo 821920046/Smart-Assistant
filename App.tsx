@@ -107,14 +107,14 @@ const AppContent: React.FC = () => {
         // Strict validation of sync configuration
         const config = syncService.getConfig();
         if (config.provider === 'none') return;
-        
+
         // Validate GitHub config - token must be non-empty string
         if (config.provider === 'github_repo') {
             const hasValidToken = typeof config.settings.githubToken === 'string' && config.settings.githubToken.trim().length > 0;
             const hasValidRepo = typeof config.settings.githubRepo === 'string' && config.settings.githubRepo.trim().length > 0;
             if (!hasValidToken || !hasValidRepo) return;
         }
-        
+
         // Validate WebDAV config
         if (config.provider === 'webdav') {
             const hasValidUrl = typeof config.settings.webdavUrl === 'string' && config.settings.webdavUrl.trim().length > 0;
@@ -205,6 +205,18 @@ const AppContent: React.FC = () => {
                         </div>
                     </div>
 
+                    {conflictError && (
+                        <ConflictResolver
+                            error={conflictError}
+                            config={syncService.getConfig()}
+                            onResolve={(resolvedMemos: Memo[]) => {
+                                setMemos(resolvedMemos);
+                                setConflictError(null);
+                                addToast('Sync conflict resolved.', 'success');
+                            }}
+                            onCancel={() => setConflictError(null)}
+                        />
+                    )}
                     <MainContent />
                 </main>
 
@@ -232,18 +244,7 @@ const AppContent: React.FC = () => {
                     />
                 )}
 
-                {conflictError && (
-                    <ConflictResolver
-                        error={conflictError}
-                        config={syncService.getConfig()}
-                        onResolve={(resolvedMemos: Memo[]) => {
-                            setMemos(resolvedMemos);
-                            setConflictError(null);
-                            addToast('Sync conflict resolved.', 'success');
-                        }}
-                        onCancel={() => setConflictError(null)}
-                    />
-                )}
+                {/* Sync Conflict and Settings handled above or as overlays */}
 
                 <MobileNav />
             </div>
