@@ -4,7 +4,6 @@ import { storage } from '../services/storage';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useSyncService } from './useSyncService';
-import { useNotificationScheduler } from './useNotificationScheduler';
 import { useStore } from '../services/store';
 import { RETENTION_PERIOD_MS } from '../config/constants';
 
@@ -45,9 +44,7 @@ export const useMemoData = () => {
     await performSync(newMemos, setMemos, true); // Silent sync
   }, [performSync]);
 
-  const { notificationConfig } = useStore();
-  // Notification Scheduler
-  useNotificationScheduler(memos, updateMemo, notificationConfig);
+
 
   // Initialize App Data
   useEffect(() => {
@@ -94,10 +91,7 @@ export const useMemoData = () => {
       todos: memoData.todos || [],
       tags: memoData.tags || [],
       audio: memoData.audio,
-      category: memoData.category || 'Personal',
       dueDate: memoData.dueDate,
-      reminderAt: memoData.reminderAt,
-      reminderRepeat: memoData.reminderRepeat || 'none',
       sketchData: memoData.sketchData,
       createdAt: now,
       updatedAt: now,

@@ -60,27 +60,161 @@ const DashboardView: React.FC = () => {
     const completionRate = totalToday === 0 ? 0 : Math.round((completedToday / totalToday) * 100);
 
     const importantCount = activeTodos.filter(m => m.priority === 'important').length;
-    let pressureStatus = { text: "All under control", color: "#22C55E" };
-    if (importantCount > 3) pressureStatus = { text: "High pressure", color: "#EF4444" };
-    else if (importantCount > 0) pressureStatus = { text: "Need attention", color: "#F59E0B" };
+    let pressureStatus = { text: "All clear", color: "#10B981", bg: "from-emerald-500/10 to-teal-500/10" };
+    if (importantCount > 3) pressureStatus = { text: "High load", color: "#EF4444", bg: "from-rose-500/10 to-red-500/10" };
+    else if (importantCount > 0) pressureStatus = { text: "Active", color: "#F59E0B", bg: "from-amber-500/10 to-orange-500/10" };
+
+    const getGreeting = () => {
+        const hour = now.getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
-                        Dashboard {isSyncing && <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full animate-pulse ml-2" />}
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Capture, Organize, and Achieve.</p>
+        <div className="space-y-8">
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-8 shadow-2xl shadow-violet-500/20">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-50"></div>
+                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+                <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl"></div>
+
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-violet-200 text-sm font-medium mb-1">{getGreeting()}</p>
+                            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                                Dashboard
+                                {isSyncing && (
+                                    <span className="flex items-center gap-2 text-sm font-medium text-violet-200 bg-white/10 px-3 py-1 rounded-full">
+                                        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                                        Syncing
+                                    </span>
+                                )}
+                            </h1>
+                            <p className="text-violet-200/80 mt-2 text-sm md:text-base">Capture, Organize, and Achieve.</p>
+                        </div>
+                        <div className="hidden md:flex items-center gap-4">
+                            <div className="text-right">
+                                <p className="text-3xl font-bold text-white">{activeTodos.length}</p>
+                                <p className="text-violet-200 text-xs uppercase tracking-wider">Active Tasks</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Gauge title="Today's Progress" value={completedToday} max={totalToday || 1} color="#6366F1" centerContent={<div className="text-center"><div className="text-3xl font-bold dark:text-white">{completionRate}%</div><div className="text-[10px] text-slate-400 font-bold uppercase">Done</div></div>} />
-                <Gauge title="Tasks Pressure" value={importantCount} max={10} color={pressureStatus.color} centerContent={<div className="text-center"><div className="text-3xl font-bold" style={{ color: pressureStatus.color }}>{importantCount}</div><div className="text-[10px] text-slate-400 font-bold uppercase">High Priority</div></div>} />
-                <Gauge title={isRecording ? "Recording..." : "Voice Center"} value={recordingTime} max={60} color={isRecording ? "#EF4444" : "#F43F5E"} centerContent={<div className="text-center cursor-pointer" onClick={handleVoiceClick}>{isRecording ? <div className="text-2xl font-bold text-red-500">{formatTime(recordingTime)}</div> : <Icons.Mic className="w-10 h-10 text-slate-300 mx-auto" />}</div>} />
+                {/* Progress Card */}
+                <div className="group relative bg-white dark:bg-slate-800/80 rounded-3xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Today's Progress</h3>
+                            <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                <Icons.TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-20 flex-shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-700" />
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="url(#progressGradient)" strokeWidth="8" strokeLinecap="round"
+                                        strokeDasharray={`${completionRate * 2.51} 251`} className="transition-all duration-1000" />
+                                    <defs>
+                                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#6366F1" />
+                                            <stop offset="100%" stopColor="#8B5CF6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-lg font-bold text-slate-900 dark:text-white">{completionRate}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white">{completedToday}/{totalToday}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Tasks completed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Pressure Card */}
+                <div className={`group relative bg-white dark:bg-slate-800/80 rounded-3xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${pressureStatus.bg} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Task Pressure</h3>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${pressureStatus.color}20` }}>
+                                <Icons.Zap className="w-4 h-4" style={{ color: pressureStatus.color }} />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-20 flex-shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-700" />
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke={pressureStatus.color} strokeWidth="8" strokeLinecap="round"
+                                        strokeDasharray={`${Math.min(importantCount * 25, 251)} 251`} className="transition-all duration-1000" />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-lg font-bold" style={{ color: pressureStatus.color }}>{importantCount}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-lg font-bold text-slate-900 dark:text-white">{pressureStatus.text}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">High priority tasks</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Voice Card */}
+                <div className="group relative bg-white dark:bg-slate-800/80 rounded-3xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${isRecording ? 'from-rose-500/10 to-red-500/10' : 'from-cyan-500/5 via-transparent to-teal-500/5'} transition-all duration-300`}></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                {isRecording ? "Recording..." : "Quick Capture"}
+                            </h3>
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isRecording ? 'bg-rose-100 dark:bg-rose-900/30' : 'bg-cyan-100 dark:bg-cyan-900/30'}`}>
+                                <Icons.Mic className={`w-4 h-4 ${isRecording ? 'text-rose-600 dark:text-rose-400 animate-pulse' : 'text-cyan-600 dark:text-cyan-400'}`} />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={handleVoiceClick}
+                                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95 ${isRecording
+                                        ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse'
+                                        : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 hover:from-violet-500 hover:to-indigo-600 hover:shadow-lg hover:shadow-violet-500/30'
+                                    }`}
+                            >
+                                {isRecording ? (
+                                    <Icons.Stop className="w-8 h-8 text-white" />
+                                ) : (
+                                    <Icons.Mic className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
+                                )}
+                            </button>
+                            <div>
+                                {isRecording ? (
+                                    <>
+                                        <p className="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono">{formatTime(recordingTime)}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Tap to stop</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white">Voice Note</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Tap to start</p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
 export default DashboardView;
+

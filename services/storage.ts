@@ -167,19 +167,11 @@ export const storage = {
    */
   exportSnapshot: async (): Promise<SyncData> => {
     const memos = await storage.getMemos(true);
-    let notificationConfig;
-    try {
-      const saved = localStorage.getItem('notification_config');
-      if (saved) notificationConfig = JSON.parse(saved);
-    } catch (e) {
-      console.warn('Failed to parse notification config for export');
-    }
 
     return {
       memos: memos.filter(m => m.type === 'memo'),
       todos: memos.filter(m => m.type === 'todo'),
-      whiteboards: memos.filter(m => m.type === 'sketch'),
-      notificationConfig
+      whiteboards: memos.filter(m => m.type === 'sketch')
     };
   },
 
@@ -190,12 +182,6 @@ export const storage = {
     await storage.clearDatabase();
     const allItems = [...data.memos, ...data.todos, ...data.whiteboards];
     await storage.saveMemos(allItems);
-
-    if (data.notificationConfig) {
-      localStorage.setItem('notification_config', JSON.stringify(data.notificationConfig));
-      // Notify the store to reload its state
-      window.dispatchEvent(new CustomEvent('notification-config-restored', { detail: data.notificationConfig }));
-    }
   },
 
   /**

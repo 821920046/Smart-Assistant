@@ -404,12 +404,6 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-700/50">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span>{new Date(memo.createdAt).toLocaleDateString()}</span>
-              {memo.reminderAt && (
-                <div className="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
-                  <Icons.Bell className="w-3 h-3" />
-                  <span>{new Date(memo.reminderAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              )}
             </div>
 
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

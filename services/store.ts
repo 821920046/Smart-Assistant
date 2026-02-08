@@ -67,12 +67,12 @@ export const useStore = create<AppState>((set, get) => ({
 
             // Initial silent sync - only if sync is properly configured
             const config = syncService.getConfig();
-            const hasValidGithubConfig = config.provider === 'github_repo' && 
-                                         config.settings.githubToken?.trim() && 
-                                         config.settings.githubRepo?.trim();
-            const hasValidWebdavConfig = config.provider === 'webdav' && 
-                                         config.settings.webdavUrl?.trim();
-            
+            const hasValidGithubConfig = config.provider === 'github_repo' &&
+                config.settings.githubToken?.trim() &&
+                config.settings.githubRepo?.trim();
+            const hasValidWebdavConfig = config.provider === 'webdav' &&
+                config.settings.webdavUrl?.trim();
+
             if (hasValidGithubConfig || hasValidWebdavConfig) {
                 get().performSync(true).catch(() => {
                     // Silent fail on initial sync
@@ -105,10 +105,7 @@ export const useStore = create<AppState>((set, get) => ({
                 todos: memoData.todos || [],
                 sketchData: memoData.sketchData,
                 audio: memoData.audio,
-                dueDate: memoData.dueDate,
-                reminderAt: memoData.reminderAt,
-                reminderRepeat: memoData.reminderRepeat || 'none',
-                reminded: false
+                dueDate: memoData.dueDate
             };
 
             await storage.upsertMemo(newMemo);
@@ -214,10 +211,10 @@ export const useStore = create<AppState>((set, get) => ({
         } catch (error) {
             // In silent mode, don't log 401/Unauthorized errors to console
             const err = error as Error;
-            const isAuthError = err.message?.includes('401') || 
-                               err.message?.includes('Unauthorized') || 
-                               err.message?.includes('Invalid GitHub token');
-            
+            const isAuthError = err.message?.includes('401') ||
+                err.message?.includes('Unauthorized') ||
+                err.message?.includes('Invalid GitHub token');
+
             // If 401 error, reset sync config to prevent repeated errors
             if (isAuthError) {
                 syncService.saveConfig({ provider: 'none', settings: {} });
@@ -228,7 +225,7 @@ export const useStore = create<AppState>((set, get) => ({
                 });
                 return;
             }
-            
+
             if (!silent) {
                 console.error('Sync failed:', error);
             }

@@ -1,6 +1,5 @@
 
 export type Priority = 'important' | 'normal' | 'secondary';
-export type RepeatInterval = 'none' | 'daily' | 'weekly';
 
 export interface TodoItem {
   id: string;
@@ -19,16 +18,13 @@ export interface Memo {
   createdAt: number;
   updatedAt: number;
   dueDate?: number;
-  reminderAt?: number;
-  reminderRepeat?: RepeatInterval; // Added periodic reminder support
-  reminded?: boolean; // Persistent flag to prevent duplicate notifications
   sketchData?: string;
   isArchived: boolean;
   isFavorite: boolean;
   isDeleted?: boolean;
   remoteId?: string;
   priority: Priority;
-  completedAt?: number; // 任务完成时间，用于自动清理
+  completedAt?: number;
   audio?: {
     id: string;
     duration: number;
