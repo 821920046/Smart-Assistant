@@ -1,4 +1,4 @@
-import React, { useState, useRef, Suspense, useEffect } from 'react';
+import React, { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import { Icons } from '../../constants';
 import { Memo, TodoItem, Priority } from '../../types';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
@@ -24,12 +24,17 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
   const [dueDate, setDueDate] = useState<string>(initialMemo?.dueDate ? new Date(initialMemo.dueDate).toISOString().split('T')[0] : '');
   const [sketchData, setSketchData] = useState<string | null>(initialMemo?.sketchData || null);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { addToast } = useToast();
 
   const isEditing = !!initialMemo;
+
+  // Word count calculation
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const charCount = content.length;
 
   useEffect(() => {
     if (audioBlob) {
@@ -46,11 +51,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
   useEffect(() => {
     if (!isEditing || isProcessing) return;
 
-    // Check if anything meaningful changed from initialMemo
     const hasChanged =
       title !== (initialMemo?.title || '') ||
       content !== (initialMemo?.content || '') ||
-      priority !== initialMemo?.priority;
+      priority !== initialMemo?.priority ||
+      dueDate !== (initialMemo?.dueDate ? new Date(initialMemo.dueDate).toISOString().split('T')[0] : '');
 
     if (!hasChanged) return;
 
@@ -60,17 +65,18 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         title: title.trim() || undefined,
         content: content || '',
         priority: priority,
+        dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         updatedAt: Date.now()
       });
-    }, 2000); // 2 second debounce
+    }, 2000);
 
     return () => clearTimeout(timer);
-  }, [title, content, priority]);
+  }, [title, content, priority, dueDate]);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const insertMarkdown = (type: 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote') => {
+  const insertMarkdown = useCallback((type: 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote' | 'link') => {
     if (!textareaRef.current) return;
     const { selectionStart, selectionEnd, value } = textareaRef.current;
     const before = value.substring(0, selectionStart);
@@ -81,11 +87,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
     let newCursorPos = 0;
 
     if (type === 'bold') {
-      newText = `${before}**${selected}**${after}`;
-      newCursorPos = selectionEnd + 4;
+      newText = `${before}**${selected || 'bold text'}**${after}`;
+      newCursorPos = selected ? selectionEnd + 4 : selectionStart + 2;
     } else if (type === 'italic') {
-      newText = `${before}_${selected}_${after}`;
-      newCursorPos = selectionEnd + 2;
+      newText = `${before}_${selected || 'italic text'}_${after}`;
+      newCursorPos = selected ? selectionEnd + 2 : selectionStart + 1;
     } else if (type === 'list') {
       newText = `${before}\n- ${selected}${after}`;
       newCursorPos = selectionEnd + 3;
@@ -96,11 +102,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       newText = `${before}\n## ${selected}${after}`;
       newCursorPos = selectionEnd + 4;
     } else if (type === 'code') {
-      newText = `${before}\n\`\`\`\n${selected}\n\`\`\`\n${after}`;
+      newText = `${before}\n\`\`\`\n${selected || 'code'}\n\`\`\`\n${after}`;
       newCursorPos = selectionEnd + 5;
     } else if (type === 'quote') {
       newText = `${before}\n> ${selected}${after}`;
       newCursorPos = selectionEnd + 3;
+    } else if (type === 'link') {
+      newText = `${before}[${selected || 'link text'}](url)${after}`;
+      newCursorPos = selected ? selectionEnd + 7 : selectionStart + 1;
     }
 
     setContent(newText);
@@ -108,10 +117,37 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
-  };
+  }, []);
+
+  // Keyboard shortcuts handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          insertMarkdown('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          insertMarkdown('italic');
+          break;
+        case 'l':
+          e.preventDefault();
+          insertMarkdown('list');
+          break;
+        case 'k':
+          e.preventDefault();
+          insertMarkdown('link');
+          break;
+        case 's':
+          e.preventDefault();
+          handleSave();
+          break;
+      }
+    }
+  }, [insertMarkdown]);
 
   const localParseTasks = (text: string): TodoItem[] => {
-    // Only parse lines that start with -, *, or 1. as tasks
     const lines = text.split('\n').filter(l => /^(?:[-*]|\d+\.)\s/.test(l.trim()));
     return lines.map(line => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -135,14 +171,10 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         finalDuration = recordingTime;
       }
 
-      if (content.trim() && content !== initialMemo?.content) {
-        // AI analysis removed
-      }
-
       await onSave({
         ...initialMemo,
         title: title.trim() || undefined,
-        content: content || (sketchData ? '[Sketch]' : '') || (audioId ? `[音频笔记 (${Math.floor(finalDuration / 60)}:${(finalDuration % 60).toString().padStart(2, '0')})]` : ''),
+        content: content || (sketchData ? '[Sketch]' : '') || (audioId ? `[Audio Note (${Math.floor(finalDuration / 60)}:${(finalDuration % 60).toString().padStart(2, '0')})]` : ''),
         todos,
         tags,
         sketchData: sketchData || undefined,
@@ -153,7 +185,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
         priority: priority
       });
 
-      addToast(isEditing ? '更新成功' : '创建成功', 'success');
+      addToast(isEditing ? 'Updated successfully' : 'Created successfully', 'success');
 
       if (!isEditing) {
         setContent('');
@@ -165,7 +197,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       }
     } catch (error) {
       console.error('Error saving memo:', error);
-      addToast(error instanceof Error ? error.message : '保存失败', 'error');
+      addToast(error instanceof Error ? error.message : 'Save failed', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -173,86 +205,118 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
 
   const priorityConfig = {
     important: {
-      label: 'High',
-      icon: <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-200" />,
-      active: 'bg-rose-50 border-rose-200 ring-2 ring-rose-500 ring-offset-1 dark:ring-offset-slate-900',
-      inactive: 'bg-slate-50 border-slate-100 hover:bg-rose-50 hover:border-rose-100'
+      label: 'High Priority',
+      shortLabel: 'High',
+      icon: <div className="w-3 h-3 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 shadow-sm shadow-rose-300" />,
+      active: 'bg-rose-50 border-rose-200 ring-2 ring-rose-500 ring-offset-1 dark:bg-rose-900/20 dark:border-rose-800 dark:ring-offset-slate-900',
+      inactive: 'bg-slate-50 border-slate-200 hover:bg-rose-50 hover:border-rose-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-rose-900/20'
     },
     normal: {
-      label: 'Medium',
-      icon: <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-200" />,
-      active: 'bg-amber-50 border-amber-200 ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-slate-900',
-      inactive: 'bg-slate-50 border-slate-100 hover:bg-amber-50 hover:border-amber-100'
+      label: 'Medium Priority',
+      shortLabel: 'Medium',
+      icon: <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shadow-amber-300" />,
+      active: 'bg-amber-50 border-amber-200 ring-2 ring-amber-500 ring-offset-1 dark:bg-amber-900/20 dark:border-amber-800 dark:ring-offset-slate-900',
+      inactive: 'bg-slate-50 border-slate-200 hover:bg-amber-50 hover:border-amber-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-amber-900/20'
     },
     secondary: {
-      label: 'Low',
-      icon: <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200" />,
-      active: 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-slate-900',
-      inactive: 'bg-slate-50 border-slate-100 hover:bg-emerald-50 hover:border-emerald-100'
+      label: 'Low Priority',
+      shortLabel: 'Low',
+      icon: <div className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm shadow-emerald-300" />,
+      active: 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500 ring-offset-1 dark:bg-emerald-900/20 dark:border-emerald-800 dark:ring-offset-slate-900',
+      inactive: 'bg-slate-50 border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-emerald-900/20'
     }
   };
 
-  return (
-    <div className="memo-card p-4 md:p-6 mb-8 relative z-20">
-      {/* Input Area */}
-      <div className="relative space-y-3">
-        {isRecording && (
-          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-full text-xs font-bold shadow-lg animate-pulse z-30">
-            <div className="w-2 h-2 bg-white rounded-full" />
-            <span>Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
-          </div>
-        )}
+  const toolbarButtons = [
+    { type: 'h1' as const, icon: Icons.Heading1, title: 'Heading 1', shortcut: '' },
+    { type: 'h2' as const, icon: Icons.Heading2, title: 'Heading 2', shortcut: '' },
+    { type: 'divider' as const },
+    { type: 'bold' as const, icon: Icons.Bold, title: 'Bold', shortcut: 'Ctrl+B' },
+    { type: 'italic' as const, icon: Icons.Italic, title: 'Italic', shortcut: 'Ctrl+I' },
+    { type: 'divider' as const },
+    { type: 'list' as const, icon: Icons.ListOrdered, title: 'List', shortcut: 'Ctrl+L' },
+    { type: 'quote' as const, icon: Icons.Quote, title: 'Quote', shortcut: '' },
+    { type: 'code' as const, icon: Icons.Code, title: 'Code Block', shortcut: '' },
+  ];
 
+  return (
+    <div className="bg-white dark:bg-slate-800/90 rounded-3xl p-5 md:p-7 mb-8 relative z-20 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700/50">
+      {/* Recording Indicator */}
+      {isRecording && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-full text-xs font-bold shadow-lg shadow-rose-500/30 animate-pulse z-30">
+          <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+          <span>Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+        </div>
+      )}
+
+      {/* Input Area */}
+      <div className="relative space-y-4">
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title (optional)"
-          className="w-full bg-transparent border-none text-xl font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0"
+          className="w-full bg-transparent border-none text-2xl font-bold text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:ring-0 p-0 focus:outline-none"
         />
 
         <textarea
           ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Description or details... Type here..."
-          className="w-full min-h-[128px] max-h-[50vh] bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed overflow-y-auto"
+          onKeyDown={handleKeyDown}
+          placeholder="Start typing... Use Ctrl+B for bold, Ctrl+I for italic"
+          className="w-full min-h-[160px] max-h-[50vh] bg-transparent border-none resize-none text-base text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 p-0 leading-relaxed overflow-y-auto focus:outline-none"
         />
 
+        {/* Word Count */}
+        <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-700/50 pt-3">
+          <div className="flex items-center gap-4">
+            <span>{charCount} characters</span>
+            <span>{wordCount} words</span>
+          </div>
+          {isEditing && (
+            <span className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+              Auto-saving
+            </span>
+          )}
+        </div>
+
+        {/* Sketch Preview */}
         {sketchData && (
-          <div className="relative mt-4 group w-32 h-32 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="relative mt-4 group w-36 h-36 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shadow-lg">
             <img src={sketchData} alt="Sketch" className="w-full h-full object-cover" />
             <button
               onClick={() => setSketchData(null)}
-              className="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all backdrop-blur-sm"
             >
-              <Icons.Trash />
+              <Icons.Trash className="w-5 h-5" />
+              <span className="text-sm font-medium">Remove</span>
             </button>
           </div>
         )}
 
+        {/* Audio Preview */}
         {(isRecording || audioBlob) && (
-          <div className="relative mt-4 group w-full md:w-fit flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isRecording ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}>
-              <Icons.Mic className="w-5 h-5" />
+          <div className="relative mt-4 flex items-center gap-4 p-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-750 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isRecording ? 'bg-gradient-to-br from-rose-500 to-red-600 animate-pulse' : 'bg-gradient-to-br from-indigo-500 to-violet-600'}`}>
+              <Icons.Mic className="w-6 h-6 text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{isRecording ? 'Recording...' : 'Audio Note'}</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{isRecording ? 'Recording in progress...' : 'Audio Note'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Duration: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</p>
             </div>
             {audioUrl && !isRecording && (
-              <audio src={audioUrl} controls className="h-8 w-32 md:w-48 ml-2" />
+              <audio src={audioUrl} controls className="h-10 w-40" />
             )}
             {!isRecording && (
               <button
                 onClick={() => {
-                  if (confirm('Are you sure you want to discard this recording?')) {
-                    resetRecording();
-                  }
+                  if (confirm('Discard this recording?')) resetRecording();
                 }}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1"
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-400 hover:text-rose-500 transition-all"
               >
-                <Icons.X className="w-4 h-4" />
+                <Icons.X className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -260,142 +324,157 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 z-10">
-
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Action Selectors */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pt-5 mt-5 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Priority Selector */}
           {!hideSelectors && (
-            <>
-              <div className="flex p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 min-h-[40px] shadow-inner">
-                {(Object.keys(priorityConfig) as Priority[]).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPriority(p)}
-                    className={`flex items-center justify-center w-10 py-1.5 rounded-lg transition-all ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive
-                      }`}
-                    title={priorityConfig[p].label}
-                  >
-                    {priorityConfig[p].icon}
-                  </button>
-                ))}
-              </div>
-
-              <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
-            </>
+            <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-1">
+              {(Object.keys(priorityConfig) as Priority[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-xs font-medium border ${priority === p ? priorityConfig[p].active : priorityConfig[p].inactive}`}
+                  title={priorityConfig[p].label}
+                >
+                  {priorityConfig[p].icon}
+                  <span className="hidden sm:inline">{priorityConfig[p].shortLabel}</span>
+                </button>
+              ))}
+            </div>
           )}
 
-          {/* Editor Toolbar - Consolidated */}
-          <div className="flex items-center gap-0.5 p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar min-h-[40px] shadow-inner">
-            <button
-              onClick={() => insertMarkdown('h1')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Heading 1"
-            >
-              <Icons.Heading1 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => insertMarkdown('h2')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Heading 2"
-            >
-              <Icons.Heading2 className="w-4 h-4" />
-            </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0" />
-            <button
-              onClick={() => insertMarkdown('bold')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Bold"
-            >
-              <Icons.Bold className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => insertMarkdown('italic')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Italic"
-            >
-              <Icons.Italic className="w-4 h-4" />
-            </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0" />
-            <button
-              onClick={() => insertMarkdown('list')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="List"
-            >
-              <Icons.ListOrdered className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => insertMarkdown('quote')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Quote"
-            >
-              <Icons.Quote className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => insertMarkdown('code')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex-shrink-0"
-              title="Code Block"
-            >
-              <Icons.Code className="w-4 h-4" />
-            </button>
+          {/* Format Toolbar */}
+          <div className="flex items-center p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-0.5">
+            {toolbarButtons.map((btn, idx) =>
+              btn.type === 'divider' ? (
+                <div key={idx} className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-1" />
+              ) : (
+                <button
+                  key={btn.type}
+                  onClick={() => insertMarkdown(btn.type as 'bold' | 'italic' | 'list' | 'h1' | 'h2' | 'code' | 'quote')}
+                  className="p-2.5 rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all"
+                  title={btn.shortcut ? `${btn.title} (${btn.shortcut})` : btn.title}
+                >
+                  <btn.icon className="w-4 h-4" />
+                </button>
+              )
+            )}
           </div>
 
-          <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block" />
-
           {/* Action Buttons */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl">
+            {/* Due Date */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className={`p-2.5 rounded-xl transition-all ${dueDate ? 'text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+                title={dueDate ? `Due: ${new Date(dueDate).toLocaleDateString()}` : 'Set Due Date'}
+              >
+                <Icons.Clock className="w-4 h-4" />
+              </button>
+              {showDatePicker && (
+                <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Due Date</p>
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => {
+                      setDueDate(e.target.value);
+                      setShowDatePicker(false);
+                    }}
+                    className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  {dueDate && (
+                    <button
+                      onClick={() => {
+                        setDueDate('');
+                        setShowDatePicker(false);
+                      }}
+                      className="w-full mt-2 px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                    >
+                      Clear Date
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Voice Recording */}
             <button
               onClick={isRecording ? stopRecording : startRecording}
-              className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${isRecording ? 'text-red-600 bg-red-50 dark:bg-red-900/30 animate-pulse' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isRecording ? "Stop Recording" : "Record Audio"}
+              className={`p-2.5 rounded-xl transition-all ${isRecording ? 'text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+              title={isRecording ? 'Stop Recording' : 'Start Recording'}
             >
               {isRecording ? <Icons.Stop className="w-4 h-4" /> : <Icons.Mic className="w-4 h-4" />}
             </button>
 
+            {/* Sketch */}
             <button
               onClick={() => setShowWhiteboard(true)}
-              className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${sketchData ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Draw"
+              className={`p-2.5 rounded-xl transition-all ${sketchData ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+              title="Draw Sketch"
             >
-              <Icons.Pen />
+              <Icons.Pen className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={(!content.trim() && !sketchData && !audioBlob && !initialMemo?.audio) || isProcessing}
-          className="w-full md:w-auto px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-blue-900/30 hover:bg-blue-600 hover:shadow-blue-200 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
-        >
-          {isProcessing ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>{isEditing ? 'Updating...' : 'Processing...'}</span>
-            </>
-          ) : (
-            <>
-              {isEditing ? <Icons.Check /> : <Icons.Plus />}
-              <span>
-                {isEditing
-                  ? (initialMemo.type === 'todo' || defaultType === 'todo' ? 'Update Task' : 'Update Note')
-                  : (defaultType === 'todo' ? 'Create Task' : 'Create Note')
-                }
-              </span>
-            </>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {isEditing && (
+            <button
+              onClick={onCancel}
+              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition-all flex items-center gap-2"
+            >
+              <Icons.X className="w-4 h-4" />
+              Cancel
+            </button>
           )}
-        </button>
-        {isEditing && (
           <button
-            onClick={onCancel}
-            className="w-full md:w-auto px-6 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition-all flex items-center justify-center gap-2"
+            onClick={handleSave}
+            disabled={(!content.trim() && !sketchData && !audioBlob && !initialMemo?.audio) || isProcessing}
+            className="flex-1 lg:flex-none px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none flex items-center justify-center gap-2"
           >
-            取消
+            {isProcessing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>{isEditing ? 'Updating...' : 'Saving...'}</span>
+              </>
+            ) : (
+              <>
+                {isEditing ? <Icons.Check className="w-4 h-4" /> : <Icons.Plus className="w-4 h-4" />}
+                <span>
+                  {isEditing
+                    ? (initialMemo.type === 'todo' || defaultType === 'todo' ? 'Update Task' : 'Update Note')
+                    : (defaultType === 'todo' ? 'Create Task' : 'Create Note')
+                  }
+                </span>
+              </>
+            )}
           </button>
-        )}
+        </div>
       </div>
 
+      {/* Due Date Badge */}
+      {dueDate && (
+        <div className="mt-4 flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 rounded-full border border-violet-200 dark:border-violet-800">
+            <Icons.Clock className="w-3 h-3" />
+            <span>Due: {new Date(dueDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+            <button
+              onClick={() => setDueDate('')}
+              className="hover:text-rose-500 transition-colors"
+            >
+              <Icons.X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Whiteboard Modal */}
       {showWhiteboard && (
-        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div></div>}>
+        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"><div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div></div>}>
           <SketchCanvas
             initialData={sketchData || undefined}
             onSave={(data: string) => {
@@ -405,6 +484,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
             onCancel={() => setShowWhiteboard(false)}
           />
         </Suspense>
+      )}
+
+      {/* Click outside to close date picker */}
+      {showDatePicker && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowDatePicker(false)} />
       )}
     </div>
   );
