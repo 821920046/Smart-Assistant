@@ -13,7 +13,7 @@ const MobileNav: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', icon: Icons.Home, label: 'Home' },
-    { id: 'todo', label: 'Tasks', icon: Icons.List },
+    { id: 'tasks', label: 'Tasks', icon: Icons.List },
     { id: 'notes', label: 'Notes', icon: Icons.FileText }, // Changed from 'memo' to 'notes' to match MainContent filter
     { id: 'whiteboard', label: 'Board', icon: Icons.Edit },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
@@ -50,7 +50,7 @@ const MobileNav: React.FC = () => {
   const handleTabPress = (tabId: string) => {
     // If clicking the already active tab
     if (activeFilter === tabId) {
-      if (tabId === 'todo') {
+      if (tabId === 'tasks') {
         window.dispatchEvent(new CustomEvent('trigger-create-memo', { detail: { type: 'todo' } }));
         hapticFeedback('success');
       } else if (tabId === 'notes') {
@@ -63,6 +63,14 @@ const MobileNav: React.FC = () => {
     setActiveFilter(tabId);
     setActiveTab(tabId);
     hapticFeedback('selection');
+
+    // Auto-focus input when switching to creation views
+    if (tabId === 'tasks' || tabId === 'notes') {
+      setTimeout(() => {
+        const type = tabId === 'tasks' ? 'todo' : 'memo';
+        window.dispatchEvent(new CustomEvent('trigger-create-memo', { detail: { type } }));
+      }, 50);
+    }
   };
 
   const indicatorPosition = (getTabIndex(activeTab) * 20); // 20% per tab
