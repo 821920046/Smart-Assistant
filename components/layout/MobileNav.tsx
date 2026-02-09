@@ -7,14 +7,14 @@ import { useSwipe } from '../../hooks/useSwipe';
 import { cn } from '../../utils/cn';
 
 const MobileNav: React.FC = () => {
-  const { filter: activeFilter, setFilter: setActiveFilter } = useStore();
+  const { filter: activeFilter, setFilter: setActiveFilter, isSketching } = useStore();
   const [activeTab, setActiveTab] = useState(activeFilter);
   const { hapticFeedback } = useHaptic();
 
   const navItems = [
     { id: 'dashboard', icon: Icons.Home, label: 'Home' },
     { id: 'todo', label: 'Tasks', icon: Icons.List },
-    { id: 'memo', label: 'Notes', icon: Icons.FileText },
+    { id: 'notes', label: 'Notes', icon: Icons.FileText }, // Changed from 'memo' to 'notes' to match MainContent filter
     { id: 'whiteboard', label: 'Board', icon: Icons.Edit },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ];
@@ -24,6 +24,7 @@ const MobileNav: React.FC = () => {
   // Enhanced swipe navigation
   useSwipe({
     onSwipeLeft: () => {
+      if (isSketching) return;
       const currentIndex = getTabIndex(activeFilter);
       if (currentIndex < navItems.length - 1) {
         const nextTab = navItems[currentIndex + 1];
@@ -33,6 +34,7 @@ const MobileNav: React.FC = () => {
       }
     },
     onSwipeRight: () => {
+      if (isSketching) return;
       const currentIndex = getTabIndex(activeFilter);
       if (currentIndex > 0) {
         const prevTab = navItems[currentIndex - 1];
@@ -46,19 +48,31 @@ const MobileNav: React.FC = () => {
   });
 
   const handleTabPress = (tabId: string) => {
+    // If clicking the already active tab
+    if (activeFilter === tabId) {
+      if (tabId === 'todo') {
+        window.dispatchEvent(new CustomEvent('trigger-create-memo', { detail: { type: 'todo' } }));
+        hapticFeedback('success');
+      } else if (tabId === 'notes') {
+        window.dispatchEvent(new CustomEvent('trigger-create-memo', { detail: { type: 'memo' } }));
+        hapticFeedback('success');
+      }
+      return;
+    }
+
     setActiveFilter(tabId);
     setActiveTab(tabId);
     hapticFeedback('selection');
   };
 
-  const indicatorPosition = (getTabIndex(activeTab) * 25); // 25% per tab
+  const indicatorPosition = (getTabIndex(activeTab) * 20); // 20% per tab
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       {/* Active Tab Indicator */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500">
         <motion.div
-          className="h-full w-1/4 bg-white shadow-lg"
+          className="h-full w-1/5 bg-white shadow-lg"
           initial={false}
           animate={{
             x: `${indicatorPosition}%`

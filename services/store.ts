@@ -36,7 +36,12 @@ interface AppState {
     toggleDarkMode: () => void;
 
     performSync: (silent?: boolean) => Promise<void>;
+
+    // UI Flags
+    isSketching: boolean;
+    setIsSketching: (isSketching: boolean) => void;
 }
+
 
 const safeId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
@@ -55,6 +60,9 @@ export const useStore = create<AppState>((set, get) => ({
     conflictError: null,
     darkMode: localStorage.getItem('theme') === 'dark' ||
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    isSketching: false,
+
+    setIsSketching: (isSketching) => set({ isSketching }),
 
     // Initialize
     init: async () => {

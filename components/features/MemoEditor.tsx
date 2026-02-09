@@ -47,6 +47,25 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
     }
   }, [audioBlob]);
 
+  // Listen for external Create Triggers (e.g. from MobileNav)
+  useEffect(() => {
+    const handleTrigger = (e: CustomEvent) => {
+      // Check if we check for type match? Maybe not necessary if we are already in the correct view.
+      // But if we want to be safe:
+      const type = e.detail?.type;
+
+      // Focus the textarea
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        // Scroll into view if needed
+        textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
+
+    window.addEventListener('trigger-create-memo' as any, handleTrigger);
+    return () => window.removeEventListener('trigger-create-memo' as any, handleTrigger);
+  }, []);
+
   // Debounced Auto-save for existing memos
   useEffect(() => {
     if (!isEditing || isProcessing) return;

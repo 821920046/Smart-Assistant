@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Icons } from '../../constants';
+import { useStore } from '../../services/store';
 
 interface SketchCanvasProps {
     initialData?: string;
@@ -39,7 +40,19 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ initialData, onSave,
     }
     const [textObjects, setTextObjects] = useState<TextObject[]>([]);
 
+    const { setIsSketching } = useStore();
+
     // Initialize Canvas Context and Dimensions
+    useEffect(() => {
+        setIsSketching(true);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            setIsSketching(false);
+            document.body.style.overflow = '';
+        };
+    }, [setIsSketching]);
+
     useEffect(() => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
