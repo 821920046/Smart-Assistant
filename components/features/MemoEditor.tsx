@@ -364,7 +364,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({ onSave, onCancel, initialMemo, 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 mt-4 border-t border-slate-100 dark:border-slate-700/50">
         <div className="flex flex-wrap items-center gap-2">
           {/* Priority Selector */}
-          {!hideSelectors && (
+          {!hideSelectors && (initialMemo?.type || defaultType) !== 'memo' && (
             <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-0.5">
               {(Object.keys(priorityConfig) as Priority[]).map((p) => (
                 <button
