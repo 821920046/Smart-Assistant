@@ -227,7 +227,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
       />
 
       {/* Priority indicator line */}
-      {memo.priority === 'important' && (
+      {memo.priority === 'important' && memo.type !== 'memo' && (
         <motion.div
           className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500"
           initial={{ scaleY: 0 }}
@@ -241,7 +241,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
         {!compact && (
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <PriorityTag priority={memo.priority || 'normal'} />
+              {memo.type !== 'memo' && <PriorityTag priority={memo.priority || 'normal'} />}
               {memo.tags?.map((tag, tagIndex) => (
                 <motion.span
                   key={tag}
@@ -393,7 +393,7 @@ const MemoCard: React.FC<MemoCardProps> = ({ memo, compact }) => {
           {/* Compact Footer */}
           {compact && (
             <div className="flex items-center justify-between text-xs text-slate-400 mt-auto pt-2">
-              <PriorityTag priority={memo.priority || 'normal'} />
+              {memo.type !== 'memo' && <PriorityTag priority={memo.priority || 'normal'} />}
               <span>{new Date(memo.createdAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}</span>
             </div>
           )}
