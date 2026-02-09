@@ -37,7 +37,7 @@ const MemoDetailModal: React.FC<MemoDetailModalProps> = ({
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
     }
-    
+
     return () => {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
@@ -89,29 +89,31 @@ const MemoDetailModal: React.FC<MemoDetailModalProps> = ({
             {/* Meta & Tags */}
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-2">
-                <div className={`px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 ${memo.priority === 'important' ? 'bg-rose-500 text-white' :
+                {memo.type !== 'memo' && (
+                  <div className={`px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 ${memo.priority === 'important' ? 'bg-rose-500 text-white' :
                     memo.priority === 'secondary' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400' :
                       'bg-indigo-500 text-white'
-                  }`} title={`${memo.priority || 'Normal'} Priority`}>
-                  <div className="flex gap-0.5">
-                    {memo.priority === 'important' && (
-                      <>
+                    }`} title={`${memo.priority || 'Normal'} Priority`}>
+                    <div className="flex gap-0.5">
+                      {memo.priority === 'important' && (
+                        <>
+                          <Icons.Star className="w-3.5 h-3.5 fill-current" />
+                          <Icons.Star className="w-3.5 h-3.5 fill-current" />
+                          <Icons.Star className="w-3.5 h-3.5 fill-current" />
+                        </>
+                      )}
+                      {(memo.priority === 'normal' || !memo.priority) && (
+                        <>
+                          <Icons.Star className="w-3.5 h-3.5 fill-current" />
+                          <Icons.Star className="w-3.5 h-3.5 fill-current" />
+                        </>
+                      )}
+                      {memo.priority === 'secondary' && (
                         <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                        <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                        <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                      </>
-                    )}
-                    {(memo.priority === 'normal' || !memo.priority) && (
-                      <>
-                        <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                        <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                      </>
-                    )}
-                    {memo.priority === 'secondary' && (
-                      <Icons.Star className="w-3.5 h-3.5 fill-current" />
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
                 {memo.tags?.map(tag => (
                   <span key={tag} className="text-[11px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700/50">
                     #{tag}
